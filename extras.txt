@@ -1,0 +1,5 @@
+https://github.com/Aegide/custom-fusion-sprites,,
+https://github.com/Color-Printer/pkmn-route-rando,,
+https://github.com/theresamai/pokemon_battle_ASM,,
+https://github.com/CardinalSys/PokemonRedBlueMultiplayer,,
+https://github.com/MrCheeze/pokered-self-replicator,,
