@@ -27,8 +27,8 @@ In addition, you can make a 'custom.txt' for any othe repos you want to manage, 
 ## Requirements
 
 The follow programs are needed:
-  * python
-  * git
+  * python (3.7+)
+  * git (2.4+)
   * gh (Github CLI)
 
 If Windows:

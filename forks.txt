@@ -87,7 +87,7 @@ https://github.com/kennethblite/nuzlocke_PokeRed,pokered,
 https://github.com/longlostsoul/EvoYellow,pokeyellow,0.2.5
 https://github.com/luckytyphlosion/pokered-chaos,pokered,0.3.0
 https://github.com/luckytyphlosion/pokered_fastmenu,pokered,
-https://github.com/lvl-3-g/Gold97SGB,pokegold,0.6.1
+https://github.com/lvl-3-g/Gold97SGB,pokegold,0.3.10
 https://github.com/mahoushoujorose/pkmnplusgreen,pokered,
 https://github.com/nmhermalin/crystalprime,pokecrystal,
 https://github.com/oatspear/crystal50,pokecrystal,0.6.0-rc2
@@ -95,7 +95,6 @@ https://github.com/opiter09/ASM-Machina,pokered,0.5.2
 https://github.com/piclarv/pokelavender,pokered,
 https://github.com/pkmncoraldev/polishedcoral,pokecrystal,0.6.1
 https://github.com/pokeachromicdevs/pokeoctober,pokecrystal,0.4.1
-
 https://github.com/surskitty/crystalis,pokecrystal,0.4.2
 https://github.com/susieqt/pokesus,pokegold,0.6.1
 https://github.com/tshadowknight/Pokemon-Roaming-Red,pokered,0.4.1
