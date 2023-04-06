@@ -131,7 +131,7 @@ class repository:
 
     def get_commit_data(self):
         commit = self.git('rev-parse HEAD', capture_output=True)[0]
-        date = self.git('--no-pager log -1 --format="%ai"', capture_output=True)[0][1:-1]
+        date = self.git('--no-pager log -1 --format="%ai"', capture_output=True)[0][:-1]
         return commit, date
 
     def get_commits(self):
