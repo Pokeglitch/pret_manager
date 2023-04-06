@@ -236,6 +236,9 @@ class remote(repository):
     def update(self):
         super().update()
         self.submodules()
+        if os.path.exists(self.dir_repo + '/.rgbds-version'):
+            with open(self.dir_repo + '/.rgbds-version', 'r') as f:
+                self.rgbds = f.read()
         return self
         
     def submodules(self):
@@ -338,6 +341,7 @@ class fork(disassembly):
         else:
             if not self.first_commit:
                 self.get_commits()
+
             # if a source does not exist, check the hashes
             if not self.source:
                 for repo in repository.groups["pret"]:
@@ -421,6 +425,7 @@ class RGBDS(repository):
 
 class List:
     def __init__(self, name, subclass=remote):
+        Lists[name] = self
         self.repos = {}
         self.subclass = subclass
         self.name = name
@@ -507,7 +512,7 @@ def validate_glob():
             error('No matches for glob pattern: ' + args.glob)
 
 def init():
-    global rgbds, Lists
+    global rgbds
 
     List("pret", disassembly)
     List("forks", fork)
@@ -517,54 +522,58 @@ def init():
 
     rgbds = RGBDS('rgbds', 'https://github.com/gbdev/rgbds')
 
-parser = argparse.ArgumentParser(
-    prog='pret_manager',
-    description='Manage various pret related projects'
-)
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        prog='pret_manager',
+        description='Manage various pret related projects'
+    )
 
-parser.add_argument('-dir', '-d', nargs='+', help='Path of directories to manage')
-parser.add_argument('-remote', '-r', nargs='+', help='URL of remote repositories to manage')
-parser.add_argument('-glob', '-g', help='glob pattern of directories to manage')
-parser.add_argument('-verbose', '-v', action='store_true', help='Display all log messages')
-parser.add_argument('-update', '-u', action='store_true', help='Pull the managed repositories')
-parser.add_argument('-build', '-b', nargs='*', help='Build the managed repositories')
-parser.add_argument('-clean', '-c', action='store_true', help='Clean the managed repositories')
+    parser.add_argument('-dir', '-d', nargs='+', help='Path of directories to manage')
+    parser.add_argument('-remote', '-r', nargs='+', help='URL of remote repositories to manage')
+    parser.add_argument('-glob', '-g', help='glob pattern of directories to manage')
+    parser.add_argument('-verbose', '-v', action='store_true', help='Display all log messages')
+    parser.add_argument('-update', '-u', action='store_true', help='Pull the managed repositories')
+    parser.add_argument('-build', '-b', nargs='*', help='Build the managed repositories')
+    parser.add_argument('-clean', '-c', action='store_true', help='Clean the managed repositories')
 
-targets = []
+    targets = []
 
-try:
-    args = parser.parse_args()
-    verbose = args.verbose
+    try:
+        args = parser.parse_args()
+        verbose = args.verbose
 
-    if args.update:
-        print('pret-manager:\tUpdating repository')
-        subprocess.run('git pull', capture_output=True) 
-    
+        if args.update:
+            print('pret-manager:\tUpdating repository')
+            subprocess.run('git pull', capture_output=True) 
+        
+        init()
+
+        validate_dirs(args.dir)
+        validate_remote()
+        validate_glob()
+
+
+        if not targets:
+            targets = repository.all
+
+        # assign defaults if none are submitted
+        if args.build is None and not args.update and not args.clean:
+            args.update = True
+            args.build = []
+
+        for target in targets:
+            if target != rgbds:
+                if args.update:
+                    target.update()
+
+                if args.build is not None:
+                    target.build(*args.build)
+
+                if args.clean:
+                    target.clean()
+
+    except Exception as e:
+        print(e)
+else:
+    verbose=True
     init()
-
-    validate_dirs(args.dir)
-    validate_remote()
-    validate_glob()
-
-
-    if not targets:
-        targets = repository.all
-
-    # assign defaults if none are submitted
-    if args.build is None and not args.update and not args.clean:
-        args.update = True
-        args.build = []
-
-    for target in targets:
-        if target != rgbds:
-            if args.update:
-                target.update()
-
-            if args.build is not None:
-                target.build(*args.build)
-
-            if args.clean:
-                target.clean()
-
-except Exception as e:
-    print(e)

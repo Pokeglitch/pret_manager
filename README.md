@@ -77,13 +77,18 @@ This will dictate what commands will be applied to the managed reopsitories
 If no commands are provided, it will first execute **update** followed by **build**
 
 ## Potential Future Work
-  * Allow users to point to own rgbds directory
+  * Option to clean and retry for failed builds
+    * Option to mark as failed and wont attempt to build again unless unmarked
+  * Allow users to point to own rgbds directory in config file
+  * Launch game in emulator
+    * Allow users to point emulator in config file
   * Organize based on major/minor hacks
     * Or, based on how many commits removed it is from the source
   * Way to select which specific repos you want to include in your local collection
   * See if builds that fail can be fixed through this tool
   * Have specific branch/commits in the .txt files
   * Way to use different python, node versions
+    * Or install missing python, node modules
   * Include rom box-arts
   * Use actual rom name instead of repo name
   * Auto-detect forks of pokeyellow
