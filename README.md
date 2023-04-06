@@ -50,7 +50,7 @@ This will select what repositories to manage.
 
   * -dir, -d
     * Path(s) of directories to manage
-  * -remote', '-r
+  * -remote' -r
     * URL(s) of remote repositories to manage
     * Note that this will only work repositories that already exist locally
       * To add a new remote repository, add a line to 'custom.txt'
