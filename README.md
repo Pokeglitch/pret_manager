@@ -78,8 +78,8 @@ If no commands are provided, it will first execute **update** followed by **buil
 
 ## Potential Future Work
   * Organize based on major/minor hacks
-    * Or, how many commits removed it is from the source
-  * Way to select which specific repos you want to include
+    * Or, based on how many commits removed it is from the source
+  * Way to select which specific repos you want to include in your local collection
   * See if builds that fail can be fixed through this tool
   * Have specific branch/commits in the .txt files
   * Way to use different python, node versions

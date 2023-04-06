@@ -562,9 +562,8 @@ try:
 
     # assign defaults if none are submitted
     if args.build is None and not args.update and not args.clean:
-        #args.update = True
-        #args.build = []
-        pass
+        args.update = True
+        args.build = []
 
     for target in targets:
         if target != rgbds:
