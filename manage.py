@@ -6,8 +6,10 @@ rgbds = None
 
 # prepend wsl if platform is windows
 def wsl(commands):
-    return ['wsl'] + commands if platform.system() == 'Windows' else commands
+    return 'wsl ' + commands if platform.system() == 'Windows' else commands
 
+def multi(*cmds):
+    return '(' + ' && '.join([*cmds]) + ')'
 
 # remove invalid windows path chars from name
 def legal_name(name):
@@ -114,11 +116,11 @@ class repository:
         if not os.path.exists(cwd):
             cwd = '.'
 
-        description = "'" + ' '.join(args) + "'"
+        description = "'" + args + "'"
         self.print("Executing " + description)
         
         process = subprocess.run(args, capture_output=capture_output, cwd=cwd)
-        
+
         if process.returncode:
             # print the error if it hasnt already been been displayed
             if capture_output:
@@ -128,38 +130,36 @@ class repository:
         return process.stdout.decode('utf-8').split('\n') if capture_output else process
 
     def get_commit_data(self):
-        commit = self.git('rev-parse','HEAD', capture_output=True)[0]
-        date = self.git('--no-pager', 'log', '-1', '--format="%ai"', capture_output=True)[0][1:-1]
+        commit = self.git('rev-parse HEAD', capture_output=True)[0]
+        date = self.git('--no-pager log -1 --format="%ai"', capture_output=True)[0][1:-1]
         return commit, date
 
     def get_commits(self):
-        self.first_commit = self.git('rev-list','--max-parents=0','HEAD', capture_output=True)[0]
+        self.first_commit = self.git('rev-list --max-parents=0 HEAD', capture_output=True)[0]
         self.last_commit, self.last_commit_date = self.get_commit_data()
 
     def set_dir(self):
         self.dir = self.base + self.name + '/'
 
     def get_url(self):
-        return self.git('config','--get','remote.origin.url', capture_output=True)[0]
+        return self.git('config --get remote.origin.url', capture_output=True)[0]
 
-    def prefix(self, prefix, args, capture_output, cwd):
-        if not isinstance(prefix, list):
-            prefix = [prefix]
+    def gh(self, args, capture_output=True):
+        return self.run('gh ' + args, capture_output, '.')
 
-        command = prefix + list(args)
-        return self.run(command, capture_output, cwd)
-
-    def gh(self, *args, capture_output=True):
-        return self.prefix('gh', args, capture_output, '.')
-
-    def git(self, *args, capture_output=False):
-        return self.prefix('git', args, capture_output, self.dir_repo)
+    def git(self, args, capture_output=False):
+        return self.run('git ' + args, capture_output, self.dir_repo)
 
     def pull(self):
         return self.git('pull')
 
-    def make(self, *args, capture_output=False, cwd=None):
-        return self.prefix(wsl(['make']), args, capture_output, cwd if cwd else self.dir_repo)
+    def make(self, *args, capture_output=False, cwd=None, version=None):
+        command =' '.join(['make', *args])
+
+        if version is not None:
+            command = multi(rgbds.use(version), command)
+
+        return self.run(wsl(command), capture_output, cwd if cwd else self.dir_repo)
 
     def clean(self):
         return self.make('clean', capture_output=verbose)
@@ -169,7 +169,7 @@ class repository:
 
     def download(self, overwrite=False):
         self.print('Checking releases', True)
-        releases = self.gh('release','list','-R', self.url)
+        releases = self.gh('release list -R  "' + self.url + '"')
 
         # if any exist, then download
         if len(releases) > 1:
@@ -184,8 +184,8 @@ class repository:
 
                     if not os.path.exists(path) or overwrite:
                         self.print('Downloading ' + title, True)
-                        self.gh('release', 'download', id, '-R', self.url, '-D', path, '-p', '*','--clobber')
-                        self.gh('release', 'download', id, '-R', self.url, '-D', path, '-A', 'zip','--clobber')
+                        self.gh('release download ' + id + ' -R "' + self.url + '" -D "' + path + '" -p * --clobber')
+                        self.gh('release download ' + id + ' -R "' + self.url + '" -D "' + path + '" -A zip --clobber')
 
                     else:
                         self.print('Skipping ' + path)
@@ -207,7 +207,7 @@ class repository:
     def update(self):
         self.print("Updating local repository", True)
         if not os.path.exists(self.dir_repo):
-            self.git('clone', self.url, self.dir_repo)
+            self.git('clone "' + self.url + '" "' + self.dir_repo + '"')
         else:
             self.print(self.dir_repo + ' already exists')
 
@@ -255,11 +255,11 @@ class remote(repository):
                 if name == 'extras':
                     url = url.replace('/kanzure/pokemon-reverse-engineering-tools.git','/pret/pokemon-reverse-engineering-tools.git')
 
-                self.git('submodule', 'set-url', name, url)
+                self.git('submodule set-url "' + name + '" "' + url + '"')
 
                 submodules[name] = url
 
-            self.git('submodule', 'update','--init')
+            self.git('submodule update --init')
 
         for name in submodules:
             dir = self.dir_repo + '/' + name
@@ -268,14 +268,12 @@ class remote(repository):
                 os.rmdir(dir)
 
             if not os.path.exists(dir):
-                self.git('submodule', 'add','-f', submodules[name], name)
+                self.git('submodule add -f "' + submodules[name] + '" "' + name + '"')
 
 class disassembly(remote):
     def build_rgbds(self, version):
-        rgbds.use(version)
-
         # if new, successful build, copy any roms to build dir
-        if self.make(capture_output=verbose).returncode:
+        if self.make(version=version).returncode:
             self.print('Build failed for: ' + self.build_name)
         else:
             self.move_roms()
@@ -296,7 +294,7 @@ class disassembly(remote):
 
     def build(self, *args):
         if len(args):
-            self.git('checkout', *args)
+            self.git(' '.join(['checkout', *args]))
         
         commit, date = self.get_commit_data()
         self.build_name = date[:10] + ' ' + commit[:8]
@@ -311,11 +309,11 @@ class disassembly(remote):
             self.build_rgbds(self.rgbds)
 
         if len(args):
-            self.git('switch', '-')
+            self.git('switch -')
 
     def try_build(self, *args):
         if len(args):
-            self.git('checkout', *args)
+            self.git(' '.join(['checkout', *args]))
         
         commit, date = self.get_commit_data()
         self.build_name = date[:10] + ' ' + commit[:8]
@@ -329,7 +327,7 @@ class disassembly(remote):
                 break
 
         if len(args):
-            self.git('switch', '-')
+            self.git('switch -')
 
 class fork(disassembly):
     def move(self):
@@ -396,7 +394,7 @@ class RGBDS(repository):
             for tarball in glob.glob(cwd + '/*.tar.gz'):
                 self.print('Extracting ' + name, True)
 
-                process = subprocess.run(['tar','-xzvf', tarball, '-C', cwd+'/rgbds'], capture_output=True) # extract
+                process = subprocess.run('tar -xzvf "' + tarball + '" -C "' +  cwd + '/rgbds"', capture_output=True) # extract
 
                 if process.returncode:
                     self.print("Failed to extract " + tarball, True)
@@ -416,18 +414,10 @@ class RGBDS(repository):
                 self.print("Failed to build " + name, True)
                 return
 
-        self.releases[version] = path
+        self.releases[version] = self.run(wsl('pwd'), cwd=path, capture_output=True)[0]
 
-    def use(self, release):
-        if release not in self.releases:
-            self.print('Invalid release: ' + release, True)
-            return
-
-        target = '/usr/local/bin/'
-        process = subprocess.run(wsl(['cd',target,'&&','rm','rgbasm','rgbfix','rgblink','rgbgfx']), capture_output=True) # remove prior version
-        process = subprocess.run(wsl(['cp','rgbasm','rgbfix','rgblink','rgbgfx', target]), capture_output=True, cwd=self.releases[release]) # set new version
-        
-        self.print('Set release to ' + release, True)
+    def use(self, version):
+        return 'PATH="' + self.releases[version] + ':$PATH"'
 
 class List:
     def __init__(self, name, subclass=remote):
@@ -548,7 +538,7 @@ try:
 
     if args.update:
         print('pret-manager:\tUpdating repository')
-        subprocess.run(['git','pull'], capture_output=True) 
+        subprocess.run('git pull', capture_output=True) 
     
     init()
 

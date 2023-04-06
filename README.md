@@ -77,6 +77,7 @@ This will dictate what commands will be applied to the managed reopsitories
 If no commands are provided, it will first execute **update** followed by **build**
 
 ## Potential Future Work
+  * Allow users to point to own rgbds directory
   * Organize based on major/minor hacks
     * Or, based on how many commits removed it is from the source
   * Way to select which specific repos you want to include in your local collection
