@@ -135,7 +135,7 @@ class repository:
         return commit, date
 
     def get_commits(self):
-        self.first_commit = self.git('rev-list --max-parents=0 HEAD', capture_output=True)[0]
+        self.first_commit = self.git('rev-list','--max-parents=0','HEAD', capture_output=True)[0]
         self.last_commit, self.last_commit_date = self.get_commit_data()
 
     def set_dir(self):
@@ -171,6 +171,8 @@ class repository:
     def download(self, overwrite=False):
         self.print('Checking releases', True)
         releases = self.gh('release','list','-R', self.url)
+
+        self.release_order = []
 
         # if any exist, then download
         if len(releases) > 1:
@@ -279,8 +281,9 @@ class disassembly(remote):
         # if new, successful build, copy any roms to build dir
         if self.make(version=version).returncode:
             self.print('Build failed for: ' + self.build_name)
+            return False
         else:
-            self.move_roms()
+            return self.move_roms()
 
     def move_roms(self):
         mkdir(self.dir_roms, self.build_dir)
@@ -333,6 +336,7 @@ class disassembly(remote):
         if len(args):
             self.git('switch','-')
 
+# TODO - see if the name contains pokered/pokeyellow/pokecrystal/pokegold
 class fork(disassembly):
     def move(self):
         # dont move if already in correct location
@@ -369,10 +373,10 @@ class fork(disassembly):
             shutil.move(old_dir, self.dir)
 
 class RGBDS(repository):
-    def __init__(self, *args):
+    def __init__(self, update_all_rgbds, *args):
         super().__init__(*args)
         self.releases = {}
-        self.update()
+        self.update(update_all_rgbds)
 
     def set_dir(self):
         self.dir = self.base
@@ -387,7 +391,7 @@ class RGBDS(repository):
             else:
                 version = match.group(1)
 
-                # only confirm build required releases
+                # only build required releases
                 if version in repository.versions or update_all:
                     self.build(release, version)
 
@@ -455,8 +459,14 @@ class List:
     def update(self):
         self.foreach('update')
 
+    def move(self):
+        self.foreach('move')
+
     def build(self,*args):
         self.foreach('build',*args)
+
+    def try_build(self,*args):
+        self.foreach('try_build',*args)
 
     def clean(self):
         self.foreach('clean')
@@ -512,7 +522,7 @@ def validate_glob():
         else:
             error('No matches for glob pattern: ' + args.glob)
 
-def init():
+def init(update_all_rgbds=False):
     global rgbds
 
     List("pret", disassembly)
@@ -521,7 +531,7 @@ def init():
     List("extras")
     List("custom")
 
-    rgbds = RGBDS('rgbds', 'https://github.com/gbdev/rgbds')
+    rgbds = RGBDS(update_all_rgbds, 'rgbds', 'https://github.com/gbdev/rgbds')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -577,4 +587,4 @@ if __name__ == '__main__':
         print(e)
 else:
     verbose=True
-    init()
+    init(True)
