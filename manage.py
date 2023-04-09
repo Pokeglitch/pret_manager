@@ -287,7 +287,7 @@ class disassembly(remote):
 
     def move_roms(self):
         mkdir(self.dir_roms, self.build_dir)
-        roms = [file for file in Path(self.dir_repo).iterdir() if file.suffix in ['.gb','.gbc']]
+        roms = [file for file in Path(self.dir_repo).iterdir() if file.suffix in ['.gb','.gbc','.pocket']]
         if roms:
             names = [rom.name for rom in roms]
             for rom, name in zip(roms, names):

@@ -137,3 +137,4 @@ https://github.com/strager/pokered-bugfree,pokered,0.3.0
 https://github.com/waicalibre/pokered-eo,pokered,0.5.2
 https://github.com/xCrystal/pokecrystal-randofuser,pokecrystal,0.2.5
 https://github.com/xCrystal/pokecrystal_challenge_cup,pokecrystal,
+https://github.com/BestPig/pokered-gbc-pocket,pokered,0.5.2
