@@ -77,19 +77,44 @@ This will dictate what commands will be applied to the managed reopsitories
 If no commands are provided, it will first execute **update** followed by **build**
 
 ## Potential Future Work
+
+### **Functionality**
+  * Can use specific 'make' commands for each repo
+  * Manage pret repos separately (no need to rebuild with new commit)
   * Option to clean and retry for failed builds
     * Option to mark as failed and wont attempt to build again unless unmarked
-  * Allow users to point to own rgbds directory in config file
-  * Launch game in emulator
-    * Allow users to point emulator in config file
-  * Organize based on major/minor hacks
-    * Or, based on how many commits removed it is from the source
-  * Way to select which specific repos you want to include in your local collection
   * See if builds that fail can be fixed through this tool
-  * Have specific branch/commits in the .txt files
-  * Way to use different python, node versions
-    * Or install missing python, node modules
-  * Include rom box-arts
-  * Use actual rom name instead of repo name
+  * Way to use different python, node versions (and/or install missing)
   * Auto-detect forks of pokeyellow
   * Make/Apply IPS Patches
+    * No ned to select source, since its already known and the source rom is already built
+  * Assign forks as branches of the original source
+  
+### **Data**
+
+Switch to JSON format in a single file
+  * Can group by Author
+  * Field for hack name (rather than name of the repository)
+  * Field for tags (major, minor, etc)
+  * Field for specific commit/branch builds (if not using Github Releases)
+  * List of known RGBDS versions that fail/build, and last commit which was tested
+
+JSON config file for user preferences:
+  * Default emulator
+    * Specific emulator for specific repos/builds
+  * Point to own rgbds directory (instead of building in this repo)
+  * Which repos to ignore/include
+
+### **GUI**
+  * Update all config file options visually
+  * Display status of all repos (perform a fetch at the start)
+    * Show how many commits since fork
+  * Select specific repositorys for building
+    * Can select specific branches/commits
+    * Can select specific different rgbds/python/node versions
+  * Can select specific 'make' commands
+    * Need to parse Makefile
+  * Include rom box-arts
+  * Launch game in emulator/open repo in VS Code
+  * Display README when a game is selected
+  
