@@ -502,7 +502,6 @@ def validate_dirs(dirs):
             elif dir in repository.by_dir:
                 add_target(repository.by_dir[dir])
             else:
-                print(dir, repository.by_dir.keys())
                 error('Directory not a valid target: ' + dir)
 
 def validate_remote():

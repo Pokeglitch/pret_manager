@@ -138,3 +138,11 @@ https://github.com/waicalibre/pokered-eo,pokered,0.5.2
 https://github.com/xCrystal/pokecrystal-randofuser,pokecrystal,0.2.5
 https://github.com/xCrystal/pokecrystal_challenge_cup,pokecrystal,
 https://github.com/BestPig/pokered-gbc-pocket,pokered,0.5.2
+https://github.com/Fotomac/nostalgia-red,pokered,0.3.1
+https://github.com/Fotomac/nostalgia-red-gbc,pokered,
+https://github.com/Fotomac/nostalgia-yellow,pokeyellow,0.3.0
+https://github.com/KrustyKong/pokecrystal-battletower-enhanced,pokecrystal,0.4.1
+https://github.com/Masaru2/pokecrystal-r,pokecrystal,0.6.0-rc2
+https://github.com/SoupPotato/gold97,pokecrystal,0.5.2
+https://github.com/pkmncoraldev/pokecoral,pokecrystal,0.2.5
+https://github.com/tshadowknight/Pokemon-Roaming-Red-Tajiri,pokered,0.4.1
