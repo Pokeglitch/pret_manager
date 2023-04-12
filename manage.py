@@ -3,6 +3,18 @@ from pathlib import Path
 
 rgbds = None
 
+sets = {}
+
+def add_to_set(name, key, repo):
+    if name not in sets:
+        sets[name] = {}
+
+    if key in sets[name]:
+        if repo not in sets[name][key]:
+            sets[name][key].append(repo)
+    else:
+        sets[name][key] = [repo]
+
 # prepend wsl if platform is windows
 def wsl(commands):
     return ['wsl'] + commands if platform.system() == 'Windows' else commands
@@ -465,7 +477,7 @@ def validate_glob():
         else:
             error('No matches for glob pattern: ' + args.glob)
 
-base_classes = {
+group_classes = {
     "pret" : disassembly,
     "forks": fork,
     "hacks" : remote,
@@ -485,10 +497,20 @@ def load(filepath):
         for title in data[author]:
             url = author_url + title
             o = data[author][title]
-            source = o["source"] if "source" in o else ""
+            source = ("poke" + o["source"]) if "source" in o else ""
             rgbds = o["rgbds"] if "rgbds" in o else ""
-            base = o["base"]
-            base_classes[base](base, url, source, rgbds)
+            group = o["group"]
+            repo = group_classes[group](group, url, source, rgbds)
+
+            if "source" in o:
+                add_to_set("sources", o["source"], repo)
+            add_to_set("authors", author, repo)
+            add_to_set("groups", group, repo)
+
+            if "tags" in o:
+                tags = o["tags"] if isinstance(o["tags"], list) else [o["tags"]]
+                for tag in tags:
+                    add_to_set("tags", tag, repo)
 
 def init():
     global rgbds

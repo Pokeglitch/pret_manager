@@ -83,7 +83,8 @@ If no commands are provided, it will first execute **update** followed by **buil
   * Manage pret repos separately (no need to rebuild with new commit)
   * Option to clean and retry for failed builds
     * Option to mark as failed and wont attempt to build again unless unmarked
-  * See if builds that fail can be fixed through this tool
+  * Specific scripts to fix builds for certain repos
+    * i.e. pokegold-spaceworld, poketcg2
   * Way to use different python, node versions (and/or install missing)
   * Auto-detect forks of pokeyellow
   * Make/Apply IPS Patches
