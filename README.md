@@ -87,15 +87,15 @@ If no commands are provided, it will first execute **update** followed by **buil
   * Way to use different python, node versions (and/or install missing)
   * Auto-detect forks of pokeyellow
   * Make/Apply IPS Patches
-    * No ned to select source, since its already known and the source rom is already built
+    * No need to select source, since its already known and the source rom is already built
   * Assign forks as branches of the original source
   
 ### **Data**
 
-Switch to JSON format in a single file
-  * Can group by Author
+In data.json:
   * Field for hack name (rather than name of the repository)
   * Field for tags (major, minor, etc)
+    * Way to update/build by tag
   * Field for specific commit/branch builds (if not using Github Releases)
   * List of known RGBDS versions that fail/build, and last commit which was tested
 

@@ -1,4 +1,0 @@
-https://github.com/pret/pokered,,0.6.1
-https://github.com/pret/pokeyellow,,0.6.1
-https://github.com/pret/pokegold,,0.6.1
-https://github.com/pret/pokecrystal,,0.6.1

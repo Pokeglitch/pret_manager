@@ -1,0 +1,966 @@
+{
+  "pret": {
+    "pokered": {
+      "rgbds": "0.6.1",
+      "base": "pret"
+    },
+    "pokeyellow": {
+      "rgbds": "0.6.1",
+      "base": "pret"
+    },
+    "pokegold": {
+      "rgbds": "0.6.1",
+      "base": "pret"
+    },
+    "pokecrystal": {
+      "rgbds": "0.6.1",
+      "base": "pret"
+    }
+  },
+  "8bitZeta": {
+    "modern-ancient-engine": {
+      "source": "pokecrystal",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    }
+  },
+  "AGiLE-EaGLE1994": {
+    "pokebetared": {
+      "source": "pokered",
+      "rgbds": "0.5.2",
+      "base": "forks"
+    }
+  },
+  "AmateurPanda92": {
+    "pokemon-rby-dx": {
+      "source": "pokeyellow",
+      "rgbds": "0.4.1",
+      "base": "forks"
+    }
+  },
+  "AndrewC101": {
+    "PokemonTrueRed": {
+      "source": "pokered",
+      "base": "forks"
+    }
+  },
+  "AtmaBuster": {
+    "crystalleaf": {
+      "source": "pokecrystal",
+      "rgbds": "0.6.0-rc2",
+      "base": "forks"
+    },
+    "pokeplat-gen2": {
+      "source": "pokecrystal",
+      "rgbds": "0.4.1",
+      "base": "forks"
+    },
+    "pokeplat-gen2-old": {
+      "source": "pokecrystal",
+      "base": "forks"
+    }
+  },
+  "Ax461": {
+    "pokeblack": {
+      "source": "pokered",
+      "rgbds": "0.5.2",
+      "base": "forks"
+    }
+  },
+  "AzureKeys": {
+    "BW3G": {
+      "source": "pokecrystal",
+      "base": "forks"
+    }
+  },
+  "BloodlessNS": {
+    "ancientruby": {
+      "source": "pokecrystal",
+      "rgbds": "0.3.10",
+      "base": "forks"
+    }
+  },
+  "CameruptQDX": {
+    "PF-Roaming-Red": {
+      "source": "pokered",
+      "rgbds": "0.4.1",
+      "base": "forks"
+    }
+  },
+  "CrossVR": {
+    "pokecrystal-restored": {
+      "source": "pokecrystal",
+      "base": "forks"
+    }
+  },
+  "Dabomstew": {
+    "pokecrystal-speedchoice": {
+      "source": "pokecrystal",
+      "rgbds": "0.6.0-rc2",
+      "base": "forks"
+    },
+    "pokered-speedchoice": {
+      "source": "pokered",
+      "base": "forks"
+    },
+    "pokecrystal-speedchoice-legacy": {
+      "source": "pokecrystal",
+      "base": "forks"
+    }
+  },
+  "DarkSideHunterX": {
+    "pokepink": {
+      "source": "pokeyellow",
+      "rgbds": "0.4.1",
+      "base": "forks"
+    }
+  },
+  "Dracrius": {
+    "pocketrgb-en": {
+      "source": "pokered",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    }
+  },
+  "Eshasunrise": {
+    "Retyped-Red": {
+      "source": "pokered",
+      "rgbds": "0.5.2",
+      "base": "forks"
+    }
+  },
+  "Fotomac": {
+    "Pokemon-Tri-Color-Nostalgia-Series": {
+      "source": "pokered",
+      "base": "forks"
+    },
+    "pokered-e": {
+      "source": "pokecrystal",
+      "base": "forks"
+    },
+    "nostalgia-red": {
+      "source": "pokered",
+      "rgbds": "0.3.1",
+      "base": "forks"
+    },
+    "nostalgia-red-gbc": {
+      "source": "pokered",
+      "base": "forks"
+    },
+    "nostalgia-yellow": {
+      "source": "pokeyellow",
+      "rgbds": "0.3.0",
+      "base": "forks"
+    }
+  },
+  "FrenchOrange": {
+    "pokezelda": {
+      "source": "pokecrystal",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    }
+  },
+  "Idain": {
+    "Another-PKMN-Crystal-Remaster": {
+      "source": "pokecrystal",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    }
+  },
+  "JustRegularLuna": {
+    "RedPlusPlus": {
+      "source": "pokered",
+      "rgbds": "0.5.2",
+      "base": "forks"
+    },
+    "pokecopper": {
+      "source": "pokegold",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    },
+    "rpp-backup": {
+      "source": "pokered",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    }
+  },
+  "KDLPro": {
+    "Redv2.0": {
+      "source": "pokecrystal",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    }
+  },
+  "Kamy41": {
+    "Pokered-Pro": {
+      "source": "pokered",
+      "rgbds": "0.5.2",
+      "base": "forks"
+    }
+  },
+  "LIJI32": {
+    "pokeadom": {
+      "source": "pokered",
+      "base": "forks"
+    }
+  },
+  "MajorAgnostic": {
+    "Pokemon-Crystal-Ultimate": {
+      "source": "pokecrystal",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    }
+  },
+  "MineRobber9000": {
+    "pokered-nuzlocke": {
+      "source": "pokered",
+      "rgbds": "0.4.1",
+      "base": "forks"
+    },
+    "pokereddebug": {
+      "source": "pokered",
+      "rgbds": "0.4.1",
+      "base": "forks"
+    }
+  },
+  "Monkiikong": {
+    "Pokemon-Crystal-Plus": {
+      "source": "pokecrystal",
+      "base": "forks"
+    }
+  },
+  "MoriyaFaith": {
+    "neocrystal": {
+      "source": "pokecrystal",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    },
+    "neocrystalDX": {
+      "source": "pokecrystal",
+      "rgbds": "0.6.0-rc2",
+      "base": "forks"
+    },
+    "pokejp": {
+      "source": "pokered",
+      "rgbds": "0.4.1",
+      "base": "forks"
+    }
+  },
+  "NekrobaDA": {
+    "Pokemon_Crystal_Cross": {
+      "source": "pokecrystal",
+      "rgbds": "0.4.2",
+      "base": "forks"
+    }
+  },
+  "PeteyMcFly": {
+    "Pokemon_Super_Crystal": {
+      "source": "pokecrystal",
+      "rgbds": "0.4.1",
+      "base": "forks"
+    }
+  },
+  "PiaCarrot": {
+    "ancient-engine": {
+      "source": "pokecrystal",
+      "rgbds": "0.5.2",
+      "base": "forks"
+    },
+    "ancientplatinum": {
+      "source": "pokecrystal",
+      "rgbds": "0.5.2",
+      "base": "forks"
+    },
+    "pokeorange": {
+      "source": "pokecrystal",
+      "base": "forks"
+    }
+  },
+  "PlagueVonKarma": {
+    "kep-hack": {
+      "source": "pokered",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    }
+  },
+  "PlaguedHikikomori": {
+    "Plaguemon": {
+      "source": "pokered",
+      "base": "forks"
+    }
+  },
+  "Pokeglitch": {
+    "poketre2": {
+      "source": "pokered",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    }
+  },
+  "Raguzero": {
+    "Midele-Crystal-v1.4b-FINAL": {
+      "source": "pokecrystal",
+      "rgbds": "0.4.2",
+      "base": "forks"
+    },
+    "Midele-Red-v1.3h-FINAL-": {
+      "source": "pokered",
+      "base": "forks"
+    }
+  },
+  "Rangi42": {
+    "polishedcrystal": {
+      "source": "pokecrystal",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    },
+    "redstarbluestar": {
+      "source": "pokered",
+      "rgbds": "0.5.2",
+      "base": "forks"
+    },
+    "bronze2": {
+      "source": "pokecrystal",
+      "rgbds": "0.2.5",
+      "base": "forks"
+    }
+  },
+  "Reminiscon": {
+    "Pokemon-Ruthless-Red": {
+      "source": "pokered",
+      "rgbds": "0.5.2",
+      "base": "forks"
+    }
+  },
+  "RenaKunisaki": {
+    "pokered": {
+      "source": "pokered",
+      "base": "forks"
+    }
+  },
+  "Salsbar": {
+    "unovared": {
+      "source": "pokered",
+      "rgbds": "0.3.10",
+      "base": "forks"
+    }
+  },
+  "SeasickShore": {
+    "capumon": {
+      "source": "pokered",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    },
+    "protogs": {
+      "source": "pokegold",
+      "base": "forks"
+    }
+  },
+  "SnydOfficial": {
+    "pokeedm": {
+      "source": "pokered",
+      "base": "forks"
+    }
+  },
+  "Sotomura": {
+    "pokecrystalred": {
+      "source": "pokecrystal",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    }
+  },
+  "SoupPotato": {
+    "Sourcrystal": {
+      "source": "pokecrystal",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    },
+    "pokecrystal_SpriteBase": {
+      "source": "pokecrystal",
+      "base": "forks"
+    },
+    "gold97": {
+      "source": "pokecrystal",
+      "rgbds": "0.5.2",
+      "base": "forks"
+    }
+  },
+  "Soviet5lo": {
+    "proto_crystal_custom": {
+      "source": "pokecrystal",
+      "rgbds": "0.3.10",
+      "base": "forks"
+    }
+  },
+  "SteppoBlazer": {
+    "pokesparkyellow": {
+      "source": "pokeyellow",
+      "base": "forks"
+    }
+  },
+  "Superegz": {
+    "Pokemon-Perfect-Crystal": {
+      "source": "pokecrystal",
+      "rgbds": "0.2.5",
+      "base": "forks"
+    }
+  },
+  "TAz00": {
+    "pokered-magikarp-edition": {
+      "source": "pokered",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    }
+  },
+  "TheScarletSword": {
+    "pokereddeluxe": {
+      "source": "pokered",
+      "base": "forks"
+    }
+  },
+  "TheSeaTree": {
+    "pokeperidot": {
+      "source": "pokecrystal",
+      "rgbds": "0.4.1",
+      "base": "forks"
+    }
+  },
+  "TomJinW": {
+    "PKMN_GSCHS": {
+      "source": "pokegold",
+      "base": "forks"
+    }
+  },
+  "TrainerTaiga": {
+    "PokemonDarkVoid": {
+      "source": "pokecrystal",
+      "rgbds": "0.4.1",
+      "base": "forks"
+    }
+  },
+  "TwitchPlaysPokemon": {
+    "chattycrystal": {
+      "source": "pokecrystal",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    },
+    "pokechattyyellow": {
+      "source": "pokeyellow",
+      "base": "forks"
+    },
+    "pokerbg": {
+      "source": "pokered",
+      "rgbds": "0.5.2",
+      "base": "forks"
+    },
+    "pokergb-authentic": {
+      "source": "pokered",
+      "rgbds": "0.5.2",
+      "base": "forks"
+    },
+    "chattycrystal-randomized": {
+      "source": "pokecrystal",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    },
+    "pokecrystal-randofused": {
+      "source": "pokecrystal",
+      "rgbds": "0.4.2",
+      "base": "forks"
+    },
+    "pokedualredblue": {
+      "source": "pokered",
+      "rgbds": "0.4.1",
+      "base": "forks"
+    },
+    "pokemonAnniversaryRed": {
+      "source": "pokered",
+      "base": "forks"
+    },
+    "tpp_burning_red": {
+      "source": "pokecrystal",
+      "base": "forks"
+    },
+    "tppcrystal251pub": {
+      "source": "pokecrystal",
+      "rgbds": "0.2.5",
+      "base": "forks"
+    }
+  },
+  "Vortyne": {
+    "pureRGB": {
+      "source": "pokered",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    }
+  },
+  "ZoomTen": {
+    "pokelostsilver": {
+      "source": "pokegold",
+      "rgbds": "0.6.0-rc2",
+      "base": "forks"
+    }
+  },
+  "aaaaaa123456789": {
+    "pokecrystal16": {
+      "source": "pokecrystal",
+      "rgbds": "0.5.2",
+      "base": "forks"
+    }
+  },
+  "aforward9600": {
+    "JohtoLegends": {
+      "source": "pokecrystal",
+      "rgbds": "0.5.2",
+      "base": "forks"
+    }
+  },
+  "athendrix": {
+    "pokecrystalplus": {
+      "source": "pokecrystal",
+      "rgbds": "0.6.0-rc2",
+      "base": "forks"
+    }
+  },
+  "averykatko": {
+    "poccathyrsas": {
+      "source": "pokered",
+      "base": "forks"
+    }
+  },
+  "danielah05": {
+    "buried-pokered": {
+      "source": "pokered",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    }
+  },
+  "dannye": {
+    "pokered-crysaudio": {
+      "source": "pokered",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    },
+    "pokered-gbc": {
+      "source": "pokered",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    },
+    "pokered-gen-II": {
+      "source": "pokered",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    },
+    "pokered-prototype": {
+      "source": "pokered",
+      "base": "forks"
+    },
+    "pokeyellow-crysaudio": {
+      "source": "pokeyellow",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    },
+    "CrystalComplete": {
+      "source": "pokecrystal",
+      "base": "forks"
+    },
+    "pokeyellow-gen-II": {
+      "source": "pokered",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    }
+  },
+  "gofastlily": {
+    "gen-1-minimum-battles": {
+      "source": "pokeyellow",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    }
+  },
+  "huderlem": {
+    "maize": {
+      "source": "pokered",
+      "base": "forks"
+    },
+    "pokered_battle_factory": {
+      "source": "pokered",
+      "rgbds": "0.3.10",
+      "base": "forks"
+    }
+  },
+  "hyperdriveguy": {
+    "deseret-crystal": {
+      "source": "pokecrystal",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    }
+  },
+  "i0brendan0": {
+    "pokecrystal2": {
+      "source": "pokecrystal",
+      "rgbds": "0.4.2",
+      "base": "forks"
+    },
+    "pokecrystal2-new": {
+      "source": "pokecrystal",
+      "rgbds": "0.3.10",
+      "base": "forks"
+    },
+    "pokeyellow-clefairy": {
+      "source": "pokeyellow",
+      "rgbds": "0.4.1",
+      "base": "forks"
+    }
+  },
+  "jojobear13": {
+    "shinpokered": {
+      "source": "pokered",
+      "rgbds": "0.5.2",
+      "base": "forks"
+    }
+  },
+  "kennethblite": {
+    "nuzlocke_PokeRed": {
+      "source": "pokered",
+      "base": "forks"
+    }
+  },
+  "longlostsoul": {
+    "EvoYellow": {
+      "source": "pokeyellow",
+      "rgbds": "0.2.5",
+      "base": "forks"
+    }
+  },
+  "luckytyphlosion": {
+    "pokered-chaos": {
+      "source": "pokered",
+      "rgbds": "0.3.0",
+      "base": "forks"
+    },
+    "pokered_fastmenu": {
+      "source": "pokered",
+      "base": "forks"
+    },
+    "pokecathode": {
+      "source": "pokecrystal",
+      "rgbds": "0.3.10",
+      "base": "forks"
+    },
+    "pokered-256kb": {
+      "source": "pokered",
+      "rgbds": "0.3.0",
+      "base": "forks"
+    },
+    "pokered-animorphs": {
+      "source": "pokered",
+      "base": "forks"
+    },
+    "pokered-challenge": {
+      "source": "pokered",
+      "base": "forks"
+    },
+    "pokered-hombone": {
+      "source": "pokered",
+      "rgbds": "0.3.0",
+      "base": "forks"
+    },
+    "pokered-jp": {
+      "source": "pokered",
+      "base": "forks"
+    },
+    "pokered-troll": {
+      "source": "pokered",
+      "rgbds": "0.4.1",
+      "base": "forks"
+    },
+    "pokered_fastBGupdate": {
+      "source": "pokered",
+      "base": "forks"
+    },
+    "CrystalClearPasswords": {
+      "base": "extras"
+    },
+    "gs-ace-helper": {
+      "rgbds": "0.5.2",
+      "base": "extras"
+    }
+  },
+  "lvl-3-g": {
+    "Gold97SGB": {
+      "source": "pokegold",
+      "rgbds": "0.3.10",
+      "base": "forks"
+    }
+  },
+  "mahoushoujorose": {
+    "pkmnplusgreen": {
+      "source": "pokered",
+      "base": "forks"
+    }
+  },
+  "nmhermalin": {
+    "crystalprime": {
+      "source": "pokecrystal",
+      "base": "forks"
+    }
+  },
+  "oatspear": {
+    "crystal50": {
+      "source": "pokecrystal",
+      "rgbds": "0.6.0-rc2",
+      "base": "forks"
+    }
+  },
+  "opiter09": {
+    "ASM-Machina": {
+      "source": "pokered",
+      "rgbds": "0.5.2",
+      "base": "forks"
+    }
+  },
+  "piclarv": {
+    "pokelavender": {
+      "source": "pokered",
+      "base": "forks"
+    }
+  },
+  "pkmncoraldev": {
+    "polishedcoral": {
+      "source": "pokecrystal",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    },
+    "pokecoral": {
+      "source": "pokecrystal",
+      "rgbds": "0.2.5",
+      "base": "forks"
+    }
+  },
+  "pokeachromicdevs": {
+    "pokeoctober": {
+      "source": "pokecrystal",
+      "rgbds": "0.4.1",
+      "base": "forks"
+    }
+  },
+  "surskitty": {
+    "crystalis": {
+      "source": "pokecrystal",
+      "rgbds": "0.4.2",
+      "base": "forks"
+    }
+  },
+  "susieqt": {
+    "pokesus": {
+      "source": "pokegold",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    }
+  },
+  "tshadowknight": {
+    "Pokemon-Roaming-Red": {
+      "source": "pokered",
+      "rgbds": "0.4.1",
+      "base": "forks"
+    },
+    "proto_crystal": {
+      "source": "pokecrystal",
+      "rgbds": "0.3.10",
+      "base": "forks"
+    },
+    "Pokemon-Roaming-Red-Tajiri": {
+      "source": "pokered",
+      "rgbds": "0.4.1",
+      "base": "forks"
+    }
+  },
+  "vulcandth": {
+    "pokedarkgs": {
+      "source": "pokecrystal",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    }
+  },
+  "wisejustin": {
+    "Red-Blue-Remastered": {
+      "source": "pokecrystal",
+      "rgbds": "0.2.5",
+      "base": "forks"
+    }
+  },
+  "wolfboyft": {
+    "pokehalls": {
+      "source": "pokecrystal",
+      "rgbds": "0.2.5",
+      "base": "forks"
+    },
+    "pokestygian": {
+      "source": "pokecrystal",
+      "rgbds": "0.2.5",
+      "base": "forks"
+    }
+  },
+  "wrulfy": {
+    "carminered": {
+      "source": "pokered",
+      "base": "forks"
+    }
+  },
+  "Sanqui": {
+    "pokered-randomizer": {
+      "source": "pokered",
+      "base": "forks"
+    }
+  },
+  "froggestspirit": {
+    "CrystalComplete": {
+      "source": "pokecrystal",
+      "base": "forks"
+    }
+  },
+  "ChristopherOBerry": {
+    "pokeslow": {
+      "source": "pokered",
+      "rgbds": "0.5.2",
+      "base": "forks"
+    }
+  },
+  "IL01DI": {
+    "PlayAsRed": {
+      "source": "pokered",
+      "rgbds": "0.5.2",
+      "base": "forks"
+    }
+  },
+  "UnderscorePoY": {
+    "pokered-custom-starter": {
+      "source": "pokered",
+      "rgbds": "0.5.2",
+      "base": "forks"
+    }
+  },
+  "copperkiddx": {
+    "pokemonwarp": {
+      "source": "pokered",
+      "rgbds": "0.4.1",
+      "base": "forks"
+    }
+  },
+  "erosunica": {
+    "pokered-vwf": {
+      "source": "pokered",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    }
+  },
+  "j-emilsson": {
+    "pokemon-reddest": {
+      "source": "pokered",
+      "rgbds": "0.5.2",
+      "base": "forks"
+    }
+  },
+  "lucasyoungers": {
+    "pokered-remastered": {
+      "source": "pokered",
+      "rgbds": "0.6.1",
+      "base": "forks"
+    }
+  },
+  "strager": {
+    "pokered-bugfree": {
+      "source": "pokered",
+      "rgbds": "0.3.0",
+      "base": "forks"
+    }
+  },
+  "waicalibre": {
+    "pokered-eo": {
+      "source": "pokered",
+      "rgbds": "0.5.2",
+      "base": "forks"
+    }
+  },
+  "xCrystal": {
+    "pokecrystal-randofuser": {
+      "source": "pokecrystal",
+      "rgbds": "0.2.5",
+      "base": "forks"
+    },
+    "pokecrystal_challenge_cup": {
+      "source": "pokecrystal",
+      "base": "forks"
+    }
+  },
+  "BestPig": {
+    "pokered-gbc-pocket": {
+      "source": "pokered",
+      "rgbds": "0.5.2",
+      "base": "forks"
+    }
+  },
+  "KrustyKong": {
+    "pokecrystal-battletower-enhanced": {
+      "source": "pokecrystal",
+      "rgbds": "0.4.1",
+      "base": "forks"
+    }
+  },
+  "Masaru2": {
+    "pokecrystal-r": {
+      "source": "pokecrystal",
+      "rgbds": "0.6.0-rc2",
+      "base": "forks"
+    }
+  },
+  "tysonrss": {
+    "Pokemon-Red-DX": {
+      "base": "hacks"
+    }
+  },
+  "abhmul": {
+    "pokemon-silver-hardened": {
+      "base": "hacks"
+    }
+  },
+  "Aegide": {
+    "custom-fusion-sprites": {
+      "base": "extras"
+    }
+  },
+  "Color-Printer": {
+    "pkmn-route-rando": {
+      "base": "extras"
+    }
+  },
+  "theresamai": {
+    "pokemon_battle_ASM": {
+      "base": "extras"
+    }
+  },
+  "CardinalSys": {
+    "PokemonRedBlueMultiplayer": {
+      "base": "extras"
+    }
+  },
+  "MrCheeze": {
+    "pokered-self-replicator": {
+      "base": "extras"
+    }
+  },
+  "ISSOtm": {
+    "crystal-clear-ace": {
+      "base": "extras"
+    }
+  },
+  "SheerSt": {
+    "pokewilds": {
+      "base": "extras"
+    }
+  },
+  "gbdev": {
+    "rgbds": {
+      "base": "rgbds"
+    }
+  }
+}

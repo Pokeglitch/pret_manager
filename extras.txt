@@ -1,9 +1,0 @@
-https://github.com/Aegide/custom-fusion-sprites,,
-https://github.com/Color-Printer/pkmn-route-rando,,
-https://github.com/theresamai/pokemon_battle_ASM,,
-https://github.com/CardinalSys/PokemonRedBlueMultiplayer,,
-https://github.com/MrCheeze/pokered-self-replicator,,
-https://github.com/ISSOtm/crystal-clear-ace,,
-https://github.com/luckytyphlosion/CrystalClearPasswords,,
-https://github.com/luckytyphlosion/gs-ace-helper,,0.5.2
-https://github.com/SheerSt/pokewilds,,

@@ -1,7 +1,6 @@
-import subprocess, os, sys, re, glob, platform, shutil, argparse, shlex
+import subprocess, os, re, glob, platform, shutil, argparse, json
 from pathlib import Path
 
-Lists = {}
 rgbds = None
 
 # prepend wsl if platform is windows
@@ -373,10 +372,10 @@ class fork(disassembly):
             shutil.move(old_dir, self.dir)
 
 class RGBDS(repository):
-    def __init__(self, update_all_rgbds, *args):
+    def __init__(self, *args):
         super().__init__(*args)
         self.releases = {}
-        self.update(update_all_rgbds)
+        self.update()
 
     def set_dir(self):
         self.dir = self.base
@@ -428,61 +427,6 @@ class RGBDS(repository):
     def use(self, version):
         return 'PATH="' + self.releases[version] + ':$PATH"'
 
-class List:
-    def __init__(self, name, subclass=remote):
-        Lists[name] = self
-        self.repos = {}
-        self.subclass = subclass
-        self.name = name
-        self.file = name + '.txt'
-
-        if os.path.exists(self.file):
-            self.load()
-
-    def load(self):
-        print("Loading List: " + self.name)
-
-        # add any new repos from the list
-        with open(self.file,'r') as f:
-            lines = f.read().split('\n')
-            for line in lines:
-                if line:
-                    data = line.split(',')
-                    [url, source, rgbds] = data + ['']*(3-len(data)) # init missing entries with ''
-                    add_version(rgbds)
-                    self.repos[url] = self.subclass(self.name, url, source, rgbds)
-
-    def foreach(self, fn, *args):
-        for url in self.repos:
-            getattr(self.repos[url],fn)(*args)
-
-    def update(self):
-        self.foreach('update')
-
-    def move(self):
-        self.foreach('move')
-
-    def build(self,*args):
-        self.foreach('build',*args)
-
-    def try_build(self,*args):
-        self.foreach('try_build',*args)
-
-    def clean(self):
-        self.foreach('clean')
-
-    def write(self):
-        lines = []
-
-        for url in self.repos:
-            lines.append(self.repos[url].output())
-
-        # arrange alphabetically
-        lines.sort()
-        
-        with open(self.file,'w') as f:
-            f.write('\n'.join(lines))
-
 def add_target(*repos):
     for repo in repos:
         if repo not in targets:
@@ -521,16 +465,35 @@ def validate_glob():
         else:
             error('No matches for glob pattern: ' + args.glob)
 
-def init(update_all_rgbds=False):
+base_classes = {
+    "pret" : disassembly,
+    "forks": fork,
+    "hacks" : remote,
+    "extras" : remote,
+    "rgbds" : RGBDS
+}
+
+def load(filepath):
+    if not os.path.exists(filepath):
+        error(filepath + ' not found')
+
+    with open(filepath,"r") as f:
+        data = json.loads(f.read())
+
+    for author in data:
+        author_url = 'https://github.com/' + author + '/'
+        for title in data[author]:
+            url = author_url + title
+            o = data[author][title]
+            source = o["source"] if "source" in o else ""
+            rgbds = o["rgbds"] if "rgbds" in o else ""
+            base = o["base"]
+            base_classes[base](base, url, source, rgbds)
+
+def init():
     global rgbds
-
-    List("pret", disassembly)
-    List("forks", fork)
-    List("hacks")
-    List("extras")
-    List("custom")
-
-    rgbds = RGBDS(update_all_rgbds, 'rgbds', 'https://github.com/gbdev/rgbds')
+    load('data.json')
+    rgbds = repository.by_dir['rgbds']
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -586,4 +549,4 @@ if __name__ == '__main__':
         print(e)
 else:
     verbose=True
-    init(True)
+    init()
