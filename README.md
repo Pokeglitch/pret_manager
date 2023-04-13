@@ -48,14 +48,20 @@ To run, enter the repository in a shell and enter:
 
 This will select what repositories to manage.
 
-  * -dir, -d
-    * Path(s) of directories to manage
-  * -remote' -r
-    * URL(s) of remote repositories to manage
-    * Note that this will only work repositories that already exist locally
-      * To add a new remote repository, add a line to 'custom.txt'
-  * -glob, -g
-    * glob pattern of directories to manage
+  * -repos, -r
+    * Repo(s) to manage
+      * In form of <Author>/<Title>
+  * -exclude-repos, -xr
+    * Repo(s) to not manage
+      * In form of <Author>/<Title>
+  * -authors, -a
+    * Author(s) to manage
+  * -exclude-authors, -xa
+    * Author(s) to not manage
+  * -tags, -t
+    * Tag(s) to manage (will exclude all other tags)
+  * -exclude-tags, -xt
+    * Tags(s) to not manage
 
 If no repositories are provided, it will apply the commands on all repositories
 
@@ -95,8 +101,7 @@ If no commands are provided, it will first execute **update** followed by **buil
 
 In data.json:
   * Field for hack name (rather than name of the repository)
-  * Field for tags (major, minor, etc)
-    * Way to update/build by tag
+  * Add tags to all (major, minor, etc)
   * Field for specific commit/branch builds (if not using Github Releases)
   * List of known RGBDS versions that fail/build, and last commit which was tested
 
@@ -104,7 +109,7 @@ JSON config file for user preferences:
   * Default emulator
     * Specific emulator for specific repos/builds
   * Point to own rgbds directory (instead of building in this repo)
-  * Which repos to ignore/include
+  * Which repos to ignore/include, favorites
 
 ### **GUI**
   * Update all config file options visually

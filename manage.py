@@ -19,11 +19,83 @@ class PRET_Manager:
         self.All = []
         self.Authors = {}
         self.Tags = {}
+        self.Verbose = False
+        self.reset()
 
-        self.Selection = []
+    def reset(self):
+        self.clear_selection()
+        self.doUpdate = False
+        self.doBuild = None
+        self.doClean = False
 
+    def print(self, msg):
+        print('pret-manager:\t' + str(msg))
+
+    def update(self):
+        self.print('Updating repository')
+        subprocess.run(['git', 'pull'], capture_output=True)
+
+    def init(self):
         self.load('data.json')
         # todo - load 'custom.json' which has additional tags (ignore, favorite, etc)
+
+    def handle_args(self):
+        args = parser.parse_args()
+        self.Verbose = args.verbose
+
+        # assign defaults if none are submitted
+        if args.build is None and not args.update and not args.clean:
+            self.doUpdate = True
+            self.doBuild = []
+        else:
+            self.doUpdate = args.update
+            self.doBuild = args.build
+            self.doClean = args.clean
+
+        if self.doUpdate:
+            self.update()
+
+        self.init()
+
+        if not args.authors and not args.repos:
+            self.add_all()
+        
+        if args.authors:
+            self.add_authors(args.authors)
+        
+        if args.repos:
+            self.add_repos(args.repos)
+
+        if args.tags:
+            self.keep_tags(args.tags)
+
+        if args.exclude_authors:
+            self.remove_authors(args.exclude_authors)
+
+        if args.exclude_repos:
+            self.remove_repos(args.exclude_repos)
+
+        if args.exclude_tags:
+            self.remove_tags(args.exclude_tags)
+        
+        self.run()
+
+    def run(self):
+        if not self.Selection:
+            self.print('No repos to manage')
+        else:
+            for repos in self.Selection:
+                if self.doUpdate:
+                    repos.update()
+
+                if self.doBuild is not None:
+                    repos.build(*self.doBuild)
+
+                if self.doClean:
+                    repos.clean()
+
+        self.reset()
+
 
     def load(self, filepath):
         if not os.path.exists(filepath):
@@ -179,9 +251,9 @@ class repository:
 
     def print(self, msg, doPrint=None):
         if not doPrint:
-            doPrint = verbose
+            doPrint = self.manager.Verbose
         if doPrint:
-            print(self.name + ":\t" + msg)
+            print(self.name + ":\t" + str(msg))
 
     def run(self, args, capture_output, cwd, shell=None):
         if not os.path.exists(cwd):
@@ -225,7 +297,8 @@ class repository:
         return self.run(command, capture_output, cwd if cwd else self.path['repo'], shell=True)
 
     def clean(self):
-        return self.make('clean', capture_output=verbose)
+        self.print('Cleaning', True)
+        return self.make('clean', capture_output=not self.manager.Verbose)
 
     def get_build_info(self):
         commit = self.git('rev-parse','HEAD', capture_output=True)[0]
@@ -457,55 +530,9 @@ if __name__ == '__main__':
     parser.add_argument('-clean', '-c', action='store_true', help='Clean the managed repositories')
     parser.add_argument('-verbose', '-v', action='store_true', help='Display all log messages')
     
-    try:
-        args = parser.parse_args()
-        verbose = args.verbose
-
-        if args.update:
-            print('pret-manager:\tUpdating repository')
-            subprocess.run(['git', 'pull'], capture_output=True) 
-        
-        if not args.authors and not args.repos:
-            pret_manager.add_all()
-        
-        if args.authors:
-            pret_manager.add_authors(args.authors)
-        
-        if args.repos:
-            pret_manager.add_repos(args.repos)
-
-        if args.tags:
-            pret_manager.keep_tags(args.tags)
-
-        if args.exclude_authors:
-            pret_manager.remove_authors(args.exclude_authors)
-
-        if args.exclude_repos:
-            pret_manager.remove_repos(args.exclude_repos)
-
-        if args.exclude_tags:
-            pret_manager.remove_tags(args.exclude_tags)
-        
-        targets = pret_manager.Selection
-        if not targets:
-            error('pret-manager:\tNo targets to manage')
-
-        # assign defaults if none are submitted
-        if args.build is None and not args.update and not args.clean:
-            args.update = True
-            args.build = []
-
-        for target in targets:
-            if args.update:
-                target.update()
-
-            if args.build is not None:
-                target.build(*args.build)
-
-            if args.clean:
-                target.clean()
-
+    try:        
+        pret_manager.handle_args()
     except Exception as e:
         print(e)
 else:
-    verbose=True
+    pret_manager.init()
