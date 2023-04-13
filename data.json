@@ -579,7 +579,7 @@
     },
     "gs-ace-helper": {
       "rgbds": "0.5.2",
-      "tags": ["disasm","extras"]
+      "tags": ["extras"]
     }
   },
   "lvl-3-g": {

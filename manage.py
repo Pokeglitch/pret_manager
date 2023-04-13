@@ -3,14 +3,121 @@ from pathlib import Path
 
 build_extensions = ['gb','gbc','pocket','patch']
 
+def error(msg):
+    raise Exception('Error:\t' + msg)
+
+def mkdir(*dirs):
+    for dir in dirs:
+        if not os.path.exists(dir):
+            os.mkdir(dir)
+
+class PRET_Manager:
+    def __init__(self):
+        self.Directory = 'data/'
+        mkdir(self.Directory)
+        
+        self.All = []
+        self.Authors = {}
+        self.Tags = {}
+
+        self.Selection = []
+
+        self.load('data.json')
+        # todo - load 'custom.json' which has additional tags (ignore, favorite, etc)
+
+    def load(self, filepath):
+        if not os.path.exists(filepath):
+            error(filepath + ' not found')
+
+        with open(filepath,"r") as f:
+            data = json.loads(f.read())
+
+        for author in data:
+            self.Authors[author] = {}
+            mkdir(self.Directory + author)
+
+            for title in data[author]:
+                if title == "rgbds":
+                    repo = RGBDS(self, author, title, data[author][title])
+                    self.RGBDS = repo
+                else:
+                    repo = repository(self, author, title, data[author][title])
+                    self.All.append(repo)
+
+                self.Authors[author][title] = repo
+
+                for tag in repo.tags:
+                    self.add_repo_tag(repo, tag)
+
+    def add_repo_tag(self, repo, tag):
+        if tag not in self.Tags:
+            self.Tags[tag] = []
+        self.Tags[tag].append(repo)
+
+    def add_to_selection(self, repos):
+        for repo in repos:
+            if repo not in self.Selection:
+                self.Selection.append(repo)
+
+    def remove_from_selection(self, repos):
+        for repo in repos:
+            if repo in self.Selection:
+                self.Selection.pop( self.Selection.index(repo) )
+    
+    def keep_in_selection(self, repos):
+        self.remove_from_selection([repo for repo in self.Selection if repo not in repos])
+
+    def add_all(self):
+        self.add_to_selection(self.All)
+
+    def clear_selection(self):
+        self.Selection = []
+
+    def add_repos(self, repos):
+        for repo in repos:
+            [author, title] = repo.split('/')
+            self.add_to_selection([self.Authors[author][title]])
+
+    def remove_repos(self, repos):
+        for repo in repos:
+            [author, title] = repo.split('/')
+            self.remove_from_selection([self.Authors[author][title]])
+
+    def add_authors(self, authors):
+        for author in authors:
+            self.add_to_selection([self.Authors[author][title] for title in self.Authors[author]])
+
+    def remove_authors(self, authors):
+        for author in authors:
+            self.remove_from_selection([self.Authors[author][title] for title in self.Authors[author]])
+    
+    def keep_authors(self, authors):
+        repos = []
+        for author in authors:
+            repos += [self.Authors[author][title] for title in self.Authors[author]]
+        
+        self.keep_in_selection(repos)
+
+    def add_tags(self, tags):
+        for tag in tags:
+            if tag in self.Tags:
+                self.add_to_selection(self.Tags[tag])
+
+    def remove_tags(self, tags):
+        for tag in tags:
+            if tag in self.Tags:
+                 self.remove_from_selection(self.Tags[tag])
+
+    def keep_tags(self, tags):
+        for tag in tags:
+            if tag in self.Tags:
+                self.keep_in_selection(self.Tags[tag])
+
 def get_dirs(path):
     return next(os.walk(path))[1]
 
 def get_builds(path):
     return [file for file in Path(path).iterdir() if file.suffix[1:] in build_extensions]
-
-authors = {}
-tags = {}
 
 # prepend wsl if platform is windows
 def wsl(commands):
@@ -20,84 +127,49 @@ def wsl(commands):
 def legal_name(name):
     return re.sub(r'[<>:"/\|?*]', '', name)
 
-def clean_url(url):
-    match = re.match(r'^(?:(?:(?:https?|git)://)?github.com/)?([^/]+/(?:[^/]+))$', url)
-    if not match:
-        error("Not a valid github repository: " + url)
-
-    url = match.group(1)
-    if url.endswith('.git'):
-        url = url[:-4]
-    return url
-
-def clean_dir(dir):
-    dir = re.sub(r'[/\\]+','/', dir) # replace all slashes with /
-
-    # remove trailing slash
-    if dir.endswith('/'):
-        dir = dir[:-1]
-
-    return dir
-    
-# this expects dir has aleady been cleaned
-def clean_repo_dir(dir):
-    match = re.match(r'(.*/([^(]*) \([^)]*\))/([^/]+)$', dir)
-    if match and match.group(2) == match.group(3):
-        dir = match.group(1)
-    
-    return dir
-
-def error(msg):
-    raise Exception('Error:\t' + msg)
-
-def mkdir(*dirs):
-    for dir in dirs:
-        if not os.path.exists(dir):
-            os.mkdir(dir)
-
-def add_by_dir(dir, repo):
-    repository.by_dir[clean_dir(dir)] = repo
-
 class repository:
-    def __init__(self, url, rgbds=''):
-        repository.all.append(self)
-
-        self.rgbds = rgbds        
-        self.release_order = []
-
-        self.url = url
-        [self.author, self.title] = self.url.split('/')[-2:]
+    def __init__(self, manager, author, title, data):
+        self.manager = manager
+        self.author = author
+        self.title = title
         self.name = self.title + ' (' + self.author + ')'
+        self.url = 'https://github.com/' + author + '/' + title
 
-        self.dir = 'data/' + self.author + '/' + self.title + '/'
-
-        add_by_dir(self.dir, self)
-
-        self.dir_repo = self.dir + self.title
-        self.dir_releases = self.dir + 'releases/'
-        self.dir_roms = self.dir + 'roms/'
+        self.rgbds = data["rgbds"] if "rgbds" in data else ""
+        
+        if "tags" in data:
+            if isinstance(data["tags"], list):
+                self.tags = data["tags"]
+            else:
+                self.tags = [data["tags"]]
+        else:
+            self.tags = []
+        
+        dir = self.manager.Directory + self.author + '/' + self.title + '/'
+        self.path = {
+            'base' : dir,
+            'repo' : dir + self.title,
+            'releases' : dir + 'releases/',
+            'builds' : dir + 'builds/'
+        }
 
         self.parse_builds()
         self.parse_releases()
 
-        # todo - debug only
-        if self.rgbds and not self.builds:
-            self.print(self.rgbds)
-
     def parse_builds(self):
         self.builds = {}
-        if os.path.exists(self.dir_roms):
-            for dirname in get_dirs(self.dir_roms):
+        if os.path.exists(self.path['builds']):
+            for dirname in get_dirs(self.path['builds']):
                 # if the dir name matches the template, then it is a build
                 if re.match(r'^\d{4}-\d{2}-\d{2} [a-fA-F\d]{8}$',dirname):
-                    self.builds[dirname] = get_builds(self.dir_roms + dirname)
+                    self.builds[dirname] = get_builds(self.path['builds'] + dirname)
                 else:
                     self.print('Invalid build directory name: ' + dirname)
 
     def parse_releases(self):
         self.releases = {}
-        if os.path.exists(self.dir_releases):
-            for dirname in get_dirs(self.dir_releases):
+        if os.path.exists(self.path['releases']):
+            for dirname in get_dirs(self.path['releases']):
                 # if the dir name matches the template, then it is a build
                 match = re.match(r'^\d{4}-\d{2}-\d{2} - .* \((.*)\)$', dirname)
                 if match:
@@ -131,12 +203,6 @@ class repository:
 
         return process.stdout.decode('utf-8').split('\n') if capture_output else process
 
-    def get_build_info(self):
-        commit = self.git('rev-parse','HEAD', capture_output=True)[0]
-        date = self.git('--no-pager','log','-1','--format=%ai', capture_output=True)[0]
-        self.build_name = date[:10] + ' ' + commit[:8]
-        self.build_dir = self.dir_roms + self.build_name + '/'
-
     def get_url(self):
         return self.git('config','--get','remote.origin.url', capture_output=True)[0]
 
@@ -144,7 +210,7 @@ class repository:
         return self.run(['gh'] + [*args], capture_output, '.')
 
     def git(self, *args, capture_output=False):
-        return self.run(['git'] + [*args], capture_output, self.dir_repo)
+        return self.run(['git'] + [*args], capture_output, self.path['repo'])
 
     def pull(self):
         return self.git('pull')
@@ -153,135 +219,23 @@ class repository:
         command = ['make'] + [*args]
 
         if version is not None:
-            command = ['(', RGBDS.repo.use(version), '&&'] + command + [')']
+            command = ['(', self.manager.RGBDS.use(version), '&&'] + command + [')']
 
         command = ' '.join(wsl(command))
-        return self.run(command, capture_output, cwd if cwd else self.dir_repo, shell=True)
+        return self.run(command, capture_output, cwd if cwd else self.path['repo'], shell=True)
 
     def clean(self):
         return self.make('clean', capture_output=verbose)
 
-    def build(self):
-        return
-
-    def download(self, overwrite=False):
-        self.print('Checking releases', True)
-        releases = self.gh('release','list','-R', self.url)
-
-        # if any exist, then download
-        if len(releases) > 1:
-            for release in releases:
-                # ignore empty lines
-                if release:
-                    [title, isLatest, id, datetime] = release.split('\t')
-
-                    date = datetime.split('T')[0]
-                    name = legal_name(date + ' - ' + title + ' (' + id + ')')
-                    path = self.dir_releases + name
-
-                    if not os.path.exists(path) or overwrite:
-                        self.print('Downloading ' + title, True)
-                        self.gh('release','download', id, '-R', self.url, '-D', path, '-p', '*', '--clobber')
-                        self.gh('release','download', id, '-R', self.url, '-D', path, '-A','zip','--clobber')
-                        self.releases[id] = name
-
-                    else:
-                        self.print('Skipping ' + path)
-        else:
-            self.print('No releases found')
-         
-    def update(self):
-        mkdir(self.dir)
-
-        self.print("Updating local repository", True)
-        if not os.path.exists(self.dir_repo):
-            self.git('clone', self.url, self.dir_repo)
-        else:
-            self.print(self.dir_repo + ' already exists')
-
-            url = self.get_url()
-            if url != self.url:
-                self.print("Local repo origin path is \"" + url + "\" \"" + self.url + "\"", True)
-
-            self.pull()
-    
-        # check the shortcut
-        shortcut = self.dir + self.name + ' Repository.url'
-        if not os.path.exists(shortcut):
-            with open(shortcut,'w') as f:
-                f.write('[InternetShortcut]\nURL=' + self.url + '\n')
-
-        self.download()
-        self.submodules()
-
-    def submodules(self):
-        submodules = {}
-
-        if os.path.exists(self.dir_repo + '/.gitmodules'):
-            self.print('Checking submodules')
-            with open(self.dir_repo + '/.gitmodules', 'r') as f:
-                content = f.read()
-            
-            # replace all 'git://github.com' with 'https://github.com'
-            for match in re.finditer(r"\W*\[\W*submodule\W+[\"']([^\"]+)[\"']\W*][^[]+url\W*=\W*(.*)", content):
-                name = match.group(1)
-                url = match.group(2).replace('git://github.com', 'https://github.com')
-
-                # update the 'extras' repo
-                if name == 'extras':
-                    url = url.replace('/kanzure/pokemon-reverse-engineering-tools.git','/pret/pokemon-reverse-engineering-tools.git')
-
-                self.git('submodule','set-url', name, url)
-
-                submodules[name] = url
-
-            self.git('submodule','update','--init')
-
-        for name in submodules:
-            dir = self.dir_repo + '/' + name
-            # if it exists, and is empty, then remove
-            if os.path.exists(dir) and not os.listdir(dir):
-                os.rmdir(dir)
-
-            if not os.path.exists(dir):
-                self.git('submodule','add','-f', submodules[name], name)
-
-repository.all = []
-repository.by_dir = {}
-
-class disassembly(repository):
-    def update(self):
-        super().update()
-        
-        # todo - this is only necessary when adding a brand new repo
-        if os.path.exists(self.dir_repo + '/.rgbds-version'):
-            with open(self.dir_repo + '/.rgbds-version', 'r') as f:
-                self.rgbds = f.read().split("\n")[0]
-
-    def build_rgbds(self, version):
-        # if new, successful build, copy any roms to build dir
-        if self.make(version=version).returncode:
-            self.print('Build failed for: ' + self.build_name)
-            return False
-        else:
-            mkdir(self.dir_roms, self.build_dir)
-            roms = get_builds(self.dir_repo)
-            if roms:
-                names = [rom.name for rom in roms]
-                for rom, name in zip(roms, names):
-                    shutil.copyfile(rom, self.build_dir + name)
-
-                self.print('Placed rom(s) in ' + self.build_name + ': ' + ', '.join(names), True)
-                
-                self.builds[self.build_name] = roms
-                return True
-            else:
-                self.print('No roms found after build', True)
-                return False
+    def get_build_info(self):
+        commit = self.git('rev-parse','HEAD', capture_output=True)[0]
+        date = self.git('--no-pager','log','-1','--format=%ai', capture_output=True)[0]
+        self.build_name = date[:10] + ' ' + commit[:8]
+        self.build_dir = self.path['builds'] + self.build_name + '/'
 
     def build(self, *args):
         # if the repository doesnt exist, then update
-        if not os.path.exists(self.dir_repo):
+        if not os.path.exists(self.path['repo']):
             self.update()
 
         if len(args):
@@ -300,134 +254,191 @@ class disassembly(repository):
         if len(args):
             self.git('switch','-')
 
-    def try_build(self, *args):
+    def get_releases(self, overwrite=False):
+        self.print('Checking releases', True)
+        releases = self.gh('release','list','-R', self.url)
+
+        # if any exist, then download
+        if len(releases) > 1:
+            for release in releases:
+                # ignore empty lines
+                if release:
+                    [title, isLatest, id, datetime] = release.split('\t')
+
+                    date = datetime.split('T')[0]
+                    name = legal_name(date + ' - ' + title + ' (' + id + ')')
+                    path = self.path['releases'] + name
+
+                    if not os.path.exists(path) or overwrite:
+                        self.print('Downloading ' + title, True)
+                        self.gh('release','download', id, '-R', self.url, '-D', path, '-p', '*', '--clobber')
+                        self.gh('release','download', id, '-R', self.url, '-D', path, '-A','zip','--clobber')
+                        self.releases[id] = name
+
+                    else:
+                        self.print('Skipping ' + path)
+        else:
+            self.print('No releases found')
+         
+    def update(self):
+        mkdir(self.path['base'])
+
+        self.print("Updating local repository", True)
+        if not os.path.exists(self.path['repo']):
+            self.git('clone', self.url, self.path['repo'])
+        else:
+            self.print(self.path['repo'] + ' already exists')
+
+            url = self.get_url()
+            if url != self.url:
+                self.print("Local repo origin path is \"" + url + "\" \"" + self.url + "\"", True)
+
+            self.pull()
+    
+        # check the shortcut
+        shortcut = self.path['base'] + self.name + ' Repository.url'
+        if not os.path.exists(shortcut):
+            with open(shortcut,'w') as f:
+                f.write('[InternetShortcut]\nURL=' + self.url + '\n')
+
+        self.get_releases()
+        self.get_submodules()
+
+    def get_submodules(self):
+        submodules = {}
+
+        if os.path.exists(self.path['repo'] + '/.gitmodules'):
+            self.print('Checking submodules')
+            with open(self.path['repo'] + '/.gitmodules', 'r') as f:
+                content = f.read()
+            
+            # replace all 'git://github.com' with 'https://github.com'
+            for match in re.finditer(r"\W*\[\W*submodule\W+[\"']([^\"]+)[\"']\W*][^[]+url\W*=\W*(.*)", content):
+                name = match.group(1)
+                url = match.group(2).replace('git://github.com', 'https://github.com')
+
+                # update the 'extras' repo
+                if name == 'extras':
+                    url = url.replace('/kanzure/pokemon-reverse-engineering-tools.git','/pret/pokemon-reverse-engineering-tools.git')
+
+                self.git('submodule','set-url', name, url)
+
+                submodules[name] = url
+
+            self.git('submodule','update','--init')
+
+        for name in submodules:
+            dir = self.path['repo'] + '/' + name
+            # if it exists, and is empty, then remove
+            if os.path.exists(dir) and not os.listdir(dir):
+                os.rmdir(dir)
+
+            if not os.path.exists(dir):
+                self.git('submodule','add','-f', submodules[name], name)
+
+    def build_rgbds(self, version):
+        # if new, successful build, copy any roms to build dir
+        if self.make(version=version).returncode:
+            self.print('Build failed for: ' + self.build_name)
+            return False
+        else:
+            mkdir(self.path['builds'], self.build_dir)
+            roms = get_builds(self.path['repo'])
+            if roms:
+                names = [rom.name for rom in roms]
+                for rom, name in zip(roms, names):
+                    shutil.copyfile(rom, self.build_dir + name)
+
+                self.print('Placed rom(s) in ' + self.build_name + ': ' + ', '.join(names), True)
+                
+                self.builds[self.build_name] = roms
+                return True
+            else:
+                self.print('No roms found after build', True)
+                return False
+
+    def find_build(self, *args):
         if len(args):
             self.git(*(['checkout'] +[*args]))
-        
+
         self.get_build_info()
         self.rgbds = ''
+        releases = [version[1:] for version in reversed(list(self.manager.RGBDS.releases.keys()))]
 
-        for release in reversed(list(RGBDS.repo.releases.keys())):
+        # If there is a .rgbds-version file, try that first
+        if os.path.exists(self.path['repo'] + '/.rgbds-version'):
+            with open(self.path['repo'] + '/.rgbds-version', 'r') as f:
+                id = f.read().split("\n")[0]
+                releases.pop( releases.index(id) )
+                releases = [id] + releases
+
+        for release in releases:
             self.clean()
-            if self.build_rgbds(release[1:]):
-                self.rgbds = release[1:]
+            if self.build_rgbds(release):
+                self.rgbds = release
                 break
 
         if len(args):
             self.git('switch','-')
 
 class RGBDS(repository):
-    def build_version(self, version):
-        # If the version is not in the list of releases, then update
-        if 'v'+version not in self.releases:
-            self.update()
+    def build(self, *versions):
+        # If no version provided, then build all
+        if not versions:
+            versions = [version[1:] for version in self.releases.keys()]
 
-        # If the version is still not a release, then its invalid
-        if 'v'+version not in self.releases:
-            error('Invalid RGBDS version: ' + version)
+        for version in versions:
+            # If the version is not in the list of releases, then update
+            if 'v'+version not in self.releases:
+                self.update()
 
-        name = self.releases['v' + version]
+            # If the version is still not a release, then its invalid
+            if 'v'+version not in self.releases:
+                error('Invalid RGBDS version: ' + version)
 
-        cwd = self.dir_releases + name
+            name = self.releases['v' + version]
 
-        if not len(glob.glob(cwd + '/rgbds')):
-            os.mkdir(cwd + '/rgbds')
-            for tarball in glob.glob(cwd + '/*.tar.gz'):
-                self.print('Extracting ' + name, True)
+            cwd = self.path['releases'] + name
 
-                process = subprocess.run(['tar', '-xzvf', tarball, '-C',  cwd + '/rgbds'], capture_output=True) # extract
+            # TODO - need to check it contains rgbasm...
+            if not len(glob.glob(cwd + '/rgbds')):
+                os.mkdir(cwd + '/rgbds')
+                for tarball in glob.glob(cwd + '/*.tar.gz'):
+                    self.print('Extracting ' + name, True)
 
-                if process.returncode:
-                    self.print("Failed to extract " + tarball, True)
-                    return
+                    process = subprocess.run(['tar', '-xzvf', tarball, '-C',  cwd + '/rgbds'], capture_output=True) # extract
 
-        extraction = glob.glob(cwd + '/**/Makefile', recursive=True)
-        if not len(extraction):
-            self.print("Failed to find Makefile under " + cwd, True)
-            return
+                    if process.returncode:
+                        self.print("Failed to extract " + tarball, True)
+                        return
 
-        path = extraction[0].replace('Makefile','')
-        if not os.path.exists(path + 'rgbasm'):
-            self.print('Building ' + name, True)
-            process = self.make(cwd=path) # make
-
-            if process.returncode:
-                self.print("Failed to build " + name, True)
+            extraction = glob.glob(cwd + '/**/Makefile', recursive=True)
+            if not len(extraction):
+                self.print("Failed to find Makefile under " + cwd, True)
                 return
 
-        # get the absolute path
-        self.builds[version] = self.run(wsl(['pwd']), cwd=path, capture_output=True)[0]
+            path = extraction[0].replace('Makefile','')
+            if not os.path.exists(path + 'rgbasm'):
+                self.print('Building ' + name, True)
+                process = self.make(cwd=path) # make
+
+                if process.returncode:
+                    self.print("Failed to build " + name, True)
+                    return
+
+            # TODO - copy the built files to builds directory instead of using the extracted release directory?
+
+            # get the absolute path
+            self.builds[version] = self.run(wsl(['pwd']), cwd=path, capture_output=True)[0]
 
     def use(self, version):
         if version not in self.builds:
-            self.build_version(version)
+            self.build(version)
 
+        # TODO - add way to set python version (can set for this directory only?)
         return 'PATH="' + self.builds[version] + ':/root/.pyenv/shims:/root/.pyenv/bin:$PATH"'
 
-def add_target(*repos):
-    for repo in repos:
-        if repo not in targets:
-            targets.append(repo)
-
-def validate_glob():
-    if args.glob:
-        dirs = glob.glob(args.glob + '/')
-        if dirs:
-            for dir in dirs:
-                dir = clean_dir(dir)
-
-                # clean any pattern that matches the git repository within an instances main directory
-                dir = clean_repo_dir(dir)
-
-                # if dir is an author, add all
-                if dir in sets["authors"].keys():
-                    add_target(*sets["authors"][dir])
-                elif dir in repository.by_dir:
-                    add_target(repository.by_dir[dir])
-                else:
-                    error('Directory not a valid target: ' + dir)
-        else:
-            error('No matches for glob pattern: ' + args.glob)
-
-mkdir('data')
-
-def load(filepath):
-    if not os.path.exists(filepath):
-        error(filepath + ' not found')
-
-    with open(filepath,"r") as f:
-        data = json.loads(f.read())
-
-    for author in data:
-        author_url = 'https://github.com/' + author + '/'
-        mkdir('data/' + author)
-
-        for title in data[author]:
-            url = author_url + title
-            o = data[author][title]
-            rgbds = o["rgbds"] if "rgbds" in o else ""
-            repo_tags = o["tags"] if "tags" in o else []
-            repo_tags = repo_tags if isinstance(repo_tags, list) else [repo_tags]
-
-            if "disasm" in repo_tags:
-                repo = disassembly(url, rgbds)
-            elif title == "rgbds":
-                repo = RGBDS(url, rgbds)
-                RGBDS.repo = repo
-            else:
-                repo = repository(url, rgbds)
-
-            if author not in authors:
-                authors[author] = {}
-            authors[author][title] = repo
-
-            for tag in repo_tags:
-                if tag not in tags:
-                    tags[tag] = []
-                tags[tag].append(repo)
-
-def init():
-    load('data.json')
+pret_manager = PRET_Manager()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -435,15 +446,17 @@ if __name__ == '__main__':
         description='Manage various pret related projects'
     )
 
-    # todo - -t for tags
-    parser.add_argument('-glob', '-g', help='glob pattern of directories to manage')
-    parser.add_argument('-verbose', '-v', action='store_true', help='Display all log messages')
+    parser.add_argument('-repos', '-r', nargs='+', help='Repo(s) to manage')
+    parser.add_argument('-exclude-repos', '-xr', nargs='+', help='Repo(s) to not manage')
+    parser.add_argument('-authors', '-a', nargs='+', help='Author(s) to manage')
+    parser.add_argument('-exclude-tags', '-xt', nargs='+', help='Tags(s) to not manage')
+    parser.add_argument('-tags', '-t', nargs='+', help='Tags(s) to manage')
+    parser.add_argument('-exclude-authors', '-xa', nargs='+', help='Author(s) to not manage')
     parser.add_argument('-update', '-u', action='store_true', help='Pull the managed repositories')
     parser.add_argument('-build', '-b', nargs='*', help='Build the managed repositories')
     parser.add_argument('-clean', '-c', action='store_true', help='Clean the managed repositories')
-
-    targets = []
-
+    parser.add_argument('-verbose', '-v', action='store_true', help='Display all log messages')
+    
     try:
         args = parser.parse_args()
         verbose = args.verbose
@@ -452,34 +465,47 @@ if __name__ == '__main__':
             print('pret-manager:\tUpdating repository')
             subprocess.run(['git', 'pull'], capture_output=True) 
         
-        init()
+        if not args.authors and not args.repos:
+            pret_manager.add_all()
+        
+        if args.authors:
+            pret_manager.add_authors(args.authors)
+        
+        if args.repos:
+            pret_manager.add_repos(args.repos)
 
-        validate_glob()
+        if args.tags:
+            pret_manager.keep_tags(args.tags)
 
+        if args.exclude_authors:
+            pret_manager.remove_authors(args.exclude_authors)
+
+        if args.exclude_repos:
+            pret_manager.remove_repos(args.exclude_repos)
+
+        if args.exclude_tags:
+            pret_manager.remove_tags(args.exclude_tags)
+        
+        targets = pret_manager.Selection
         if not targets:
-            targets = repository.all
+            error('pret-manager:\tNo targets to manage')
 
         # assign defaults if none are submitted
         if args.build is None and not args.update and not args.clean:
             args.update = True
             args.build = []
 
-        if args.build is not None:
-            rgbds.build()
-
         for target in targets:
-            if target != rgbds:
-                if args.update:
-                    target.update()
+            if args.update:
+                target.update()
 
-                if args.build is not None:
-                    target.build(*args.build)
+            if args.build is not None:
+                target.build(*args.build)
 
-                if args.clean:
-                    target.clean()
+            if args.clean:
+                target.clean()
 
     except Exception as e:
         print(e)
 else:
     verbose=True
-    init()
