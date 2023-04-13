@@ -262,7 +262,7 @@
   },
   "Raguzero": {
     "Midele-Crystal-v1.4b-FINAL": {
-      "rgbds": "0.4.2",
+      "rgbds": "0.3.5",
       "tags": ["crystal", "disasm"]
     },
     "Midele-Red-v1.3h-FINAL-": {
@@ -509,7 +509,7 @@
   },
   "i0brendan0": {
     "pokecrystal2": {
-      "rgbds": "0.4.2",
+      "rgbds": "0.3.5",
       "tags": ["crystal", "disasm"]
     },
     "pokecrystal2-new": {
@@ -579,12 +579,12 @@
     },
     "gs-ace-helper": {
       "rgbds": "0.5.2",
-      "tags": "extras"
+      "tags": ["disasm","extras"]
     }
   },
   "lvl-3-g": {
     "Gold97SGB": {
-      "rgbds": "0.3.10",
+      "rgbds": "0.4.0",
       "tags": ["gold", "disasm"]
     }
   },
@@ -649,7 +649,7 @@
       "tags": ["red", "disasm"]
     },
     "proto_crystal": {
-      "rgbds": "0.3.10",
+      "rgbds": "0.3.5",
       "tags": ["crystal", "disasm"]
     },
     "Pokemon-Roaming-Red-Tajiri": {

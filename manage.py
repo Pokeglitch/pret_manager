@@ -3,25 +3,14 @@ from pathlib import Path
 
 build_extensions = ['gb','gbc','pocket','patch']
 
-rgbds = None
-
 def get_dirs(path):
     return next(os.walk(path))[1]
 
 def get_builds(path):
     return [file for file in Path(path).iterdir() if file.suffix[1:] in build_extensions]
 
-sets = {}
-
-def add_to_set(name, key, repo):
-    if name not in sets:
-        sets[name] = {}
-
-    if key in sets[name]:
-        if repo not in sets[name][key]:
-            sets[name][key].append(repo)
-    else:
-        sets[name][key] = [repo]
+authors = {}
+tags = {}
 
 # prepend wsl if platform is windows
 def wsl(commands):
@@ -82,8 +71,6 @@ class repository:
 
         self.dir = 'data/' + self.author + '/' + self.title + '/'
 
-        # todo - only when building
-        mkdir(self.dir)
         add_by_dir(self.dir, self)
 
         self.dir_repo = self.dir + self.title
@@ -166,7 +153,7 @@ class repository:
         command = ['make'] + [*args]
 
         if version is not None:
-            command = ['(', rgbds.use(version), '&&'] + command + [')']
+            command = ['(', RGBDS.repo.use(version), '&&'] + command + [')']
 
         command = ' '.join(wsl(command))
         return self.run(command, capture_output, cwd if cwd else self.dir_repo, shell=True)
@@ -181,8 +168,6 @@ class repository:
         self.print('Checking releases', True)
         releases = self.gh('release','list','-R', self.url)
 
-        self.release_order = []
-
         # if any exist, then download
         if len(releases) > 1:
             for release in releases:
@@ -193,7 +178,6 @@ class repository:
                     date = datetime.split('T')[0]
                     name = legal_name(date + ' - ' + title + ' (' + id + ')')
                     path = self.dir_releases + name
-                    self.release_order.append(id)
 
                     if not os.path.exists(path) or overwrite:
                         self.print('Downloading ' + title, True)
@@ -207,6 +191,8 @@ class repository:
             self.print('No releases found')
          
     def update(self):
+        mkdir(self.dir)
+
         self.print("Updating local repository", True)
         if not os.path.exists(self.dir_repo):
             self.git('clone', self.url, self.dir_repo)
@@ -294,6 +280,10 @@ class disassembly(repository):
                 return False
 
     def build(self, *args):
+        # if the repository doesnt exist, then update
+        if not os.path.exists(self.dir_repo):
+            self.update()
+
         if len(args):
             self.git(*(['checkout'] + [*args]))
         
@@ -301,7 +291,7 @@ class disassembly(repository):
 
         # only build if commit not already built
         if os.path.exists(self.build_dir):
-            self.print('Commit has already been built (' + self.build_name + ')', True)
+            self.print('Commit has already been built: ' + self.build_name, True)
         # if rgbds version is known, switch to and make:
         elif self.rgbds:
             self.print('Building', True)
@@ -317,7 +307,7 @@ class disassembly(repository):
         self.get_build_info()
         self.rgbds = ''
 
-        for release in rgbds.release_order:
+        for release in reversed(list(RGBDS.repo.releases.keys())):
             self.clean()
             if self.build_rgbds(release[1:]):
                 self.rgbds = release[1:]
@@ -372,7 +362,7 @@ class RGBDS(repository):
         if version not in self.builds:
             self.build_version(version)
 
-        return 'PATH="' + self.builds[version] + ':$PATH"'
+        return 'PATH="' + self.builds[version] + ':/root/.pyenv/shims:/root/.pyenv/bin:$PATH"'
 
 def add_target(*repos):
     for repo in repos:
@@ -416,27 +406,28 @@ def load(filepath):
             url = author_url + title
             o = data[author][title]
             rgbds = o["rgbds"] if "rgbds" in o else ""
-            tags = o["tags"] if "tags" in o else []
-            tags = tags if isinstance(tags, list) else [tags]
+            repo_tags = o["tags"] if "tags" in o else []
+            repo_tags = repo_tags if isinstance(repo_tags, list) else [repo_tags]
 
-            if "disasm" in tags:
-                subclass = disassembly
+            if "disasm" in repo_tags:
+                repo = disassembly(url, rgbds)
             elif title == "rgbds":
-                subclass = RGBDS
+                repo = RGBDS(url, rgbds)
+                RGBDS.repo = repo
             else:
-                subclass = repository
+                repo = repository(url, rgbds)
 
-            repo = subclass(url, rgbds)
+            if author not in authors:
+                authors[author] = {}
+            authors[author][title] = repo
 
-            add_to_set("authors", author, repo)
-
-            for tag in tags:
-                add_to_set("tags", tag, repo)
+            for tag in repo_tags:
+                if tag not in tags:
+                    tags[tag] = []
+                tags[tag].append(repo)
 
 def init():
-    global rgbds
     load('data.json')
-    rgbds = repository.by_dir['data/gbdev/rgbds']
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
