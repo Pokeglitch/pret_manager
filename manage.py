@@ -1,7 +1,15 @@
 import subprocess, os, re, glob, platform, shutil, argparse, json
 from pathlib import Path
 
+build_extensions = ['gb','gbc','pocket','patch']
+
 rgbds = None
+
+def get_dirs(path):
+    return next(os.walk(path))[1]
+
+def get_builds(path):
+    return [file for file in Path(path).iterdir() if file.suffix[1:] in build_extensions]
 
 sets = {}
 
@@ -58,21 +66,14 @@ def mkdir(*dirs):
         if not os.path.exists(dir):
             os.mkdir(dir)
 
-def add_version(version):
-    if version and version not in repository.versions:
-        repository.versions.append(version)
-
 def add_by_dir(dir, repo):
     repository.by_dir[clean_dir(dir)] = repo
 
-# TODO - identiy any prior builds
 class repository:
     def __init__(self, url, rgbds=''):
         repository.all.append(self)
 
-        self.rgbds = rgbds
-        add_version(rgbds)
-        
+        self.rgbds = rgbds        
         self.release_order = []
 
         self.url = url
@@ -81,12 +82,41 @@ class repository:
 
         self.dir = 'data/' + self.author + '/' + self.title + '/'
 
+        # todo - only when building
         mkdir(self.dir)
         add_by_dir(self.dir, self)
 
         self.dir_repo = self.dir + self.title
         self.dir_releases = self.dir + 'releases/'
         self.dir_roms = self.dir + 'roms/'
+
+        self.parse_builds()
+        self.parse_releases()
+
+        # todo - debug only
+        if self.rgbds and not self.builds:
+            self.print(self.rgbds)
+
+    def parse_builds(self):
+        self.builds = {}
+        if os.path.exists(self.dir_roms):
+            for dirname in get_dirs(self.dir_roms):
+                # if the dir name matches the template, then it is a build
+                if re.match(r'^\d{4}-\d{2}-\d{2} [a-fA-F\d]{8}$',dirname):
+                    self.builds[dirname] = get_builds(self.dir_roms + dirname)
+                else:
+                    self.print('Invalid build directory name: ' + dirname)
+
+    def parse_releases(self):
+        self.releases = {}
+        if os.path.exists(self.dir_releases):
+            for dirname in get_dirs(self.dir_releases):
+                # if the dir name matches the template, then it is a build
+                match = re.match(r'^\d{4}-\d{2}-\d{2} - .* \((.*)\)$', dirname)
+                if match:
+                    self.releases[match.group(1)] = dirname
+                else:
+                    self.print('Invalid release directory name: ' + dirname)
 
     def print(self, msg, doPrint=None):
         if not doPrint:
@@ -114,10 +144,11 @@ class repository:
 
         return process.stdout.decode('utf-8').split('\n') if capture_output else process
 
-    def get_commit_data(self):
+    def get_build_info(self):
         commit = self.git('rev-parse','HEAD', capture_output=True)[0]
         date = self.git('--no-pager','log','-1','--format=%ai', capture_output=True)[0]
-        return commit, date
+        self.build_name = date[:10] + ' ' + commit[:8]
+        self.build_dir = self.dir_roms + self.build_name + '/'
 
     def get_url(self):
         return self.git('config','--get','remote.origin.url', capture_output=True)[0]
@@ -160,13 +191,15 @@ class repository:
                     [title, isLatest, id, datetime] = release.split('\t')
 
                     date = datetime.split('T')[0]
-                    path = self.dir_releases + date + ' - ' + legal_name(title) + ' (' + legal_name(id) + ')'
+                    name = legal_name(date + ' - ' + title + ' (' + id + ')')
+                    path = self.dir_releases + name
                     self.release_order.append(id)
 
                     if not os.path.exists(path) or overwrite:
                         self.print('Downloading ' + title, True)
                         self.gh('release','download', id, '-R', self.url, '-D', path, '-p', '*', '--clobber')
                         self.gh('release','download', id, '-R', self.url, '-D', path, '-A','zip','--clobber')
+                        self.releases[id] = name
 
                     else:
                         self.print('Skipping ' + path)
@@ -228,15 +261,15 @@ class repository:
                 self.git('submodule','add','-f', submodules[name], name)
 
 repository.all = []
-repository.versions = []
 repository.by_dir = {}
 
 class disassembly(repository):
     def update(self):
         super().update()
+        
+        # todo - this is only necessary when adding a brand new repo
         if os.path.exists(self.dir_repo + '/.rgbds-version'):
             with open(self.dir_repo + '/.rgbds-version', 'r') as f:
-                # todo - this is only necessary when adding a brand new repo
                 self.rgbds = f.read().split("\n")[0]
 
     def build_rgbds(self, version):
@@ -245,29 +278,26 @@ class disassembly(repository):
             self.print('Build failed for: ' + self.build_name)
             return False
         else:
-            return self.move_roms()
+            mkdir(self.dir_roms, self.build_dir)
+            roms = get_builds(self.dir_repo)
+            if roms:
+                names = [rom.name for rom in roms]
+                for rom, name in zip(roms, names):
+                    shutil.copyfile(rom, self.build_dir + name)
 
-    def move_roms(self):
-        mkdir(self.dir_roms, self.build_dir)
-        roms = [file for file in Path(self.dir_repo).iterdir() if file.suffix in ['.gb','.gbc','.pocket']]
-        if roms:
-            names = [rom.name for rom in roms]
-            for rom, name in zip(roms, names):
-                shutil.copyfile(rom, self.build_dir + name)
-
-            self.print('Placed rom(s) in ' + self.build_name + ': ' + ', '.join(names), True)
-            return True
-        else:
-            self.print('No roms found after build', True)
-            return False
+                self.print('Placed rom(s) in ' + self.build_name + ': ' + ', '.join(names), True)
+                
+                self.builds[self.build_name] = roms
+                return True
+            else:
+                self.print('No roms found after build', True)
+                return False
 
     def build(self, *args):
         if len(args):
             self.git(*(['checkout'] + [*args]))
         
-        commit, date = self.get_commit_data()
-        self.build_name = date[:10] + ' ' + commit[:8]
-        self.build_dir = self.dir_roms + self.build_name + '/'
+        self.get_build_info()
 
         # only build if commit not already built
         if os.path.exists(self.build_dir):
@@ -284,9 +314,7 @@ class disassembly(repository):
         if len(args):
             self.git(*(['checkout'] +[*args]))
         
-        commit, date = self.get_commit_data()
-        self.build_name = date[:10] + ' ' + commit[:8]
-        self.build_dir = self.dir_roms + self.build_name + '/'
+        self.get_build_info()
         self.rgbds = ''
 
         for release in rgbds.release_order:
@@ -299,24 +327,17 @@ class disassembly(repository):
             self.git('switch','-')
 
 class RGBDS(repository):
-    def __init__(self, *args):
-        super().__init__(*args)
-        self.releases = {}
-        self.update()
+    def build_version(self, version):
+        # If the version is not in the list of releases, then update
+        if 'v'+version not in self.releases:
+            self.update()
 
-    def build(self, update_all=False):
-        for release in next(os.walk(self.dir_releases))[1]:
-            match = re.search('^.* \\(v([^)]+)\\)$', release)
-            if not match:
-                self.print("Failed to extract version from " + release, True)
-            else:
-                version = match.group(1)
+        # If the version is still not a release, then its invalid
+        if 'v'+version not in self.releases:
+            error('Invalid RGBDS version: ' + version)
 
-                # only build required releases
-                if version in repository.versions or update_all:
-                    self.build_version(release, version)
+        name = self.releases['v' + version]
 
-    def build_version(self, name, version):
         cwd = self.dir_releases + name
 
         if not len(glob.glob(cwd + '/rgbds')):
@@ -344,10 +365,14 @@ class RGBDS(repository):
                 self.print("Failed to build " + name, True)
                 return
 
-        self.releases[version] = self.run(wsl(['pwd']), cwd=path, capture_output=True)[0]
+        # get the absolute path
+        self.builds[version] = self.run(wsl(['pwd']), cwd=path, capture_output=True)[0]
 
     def use(self, version):
-        return 'PATH="' + self.releases[version] + ':$PATH"'
+        if version not in self.builds:
+            self.build_version(version)
+
+        return 'PATH="' + self.builds[version] + ':$PATH"'
 
 def add_target(*repos):
     for repo in repos:
