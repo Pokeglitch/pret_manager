@@ -62,63 +62,37 @@ def add_version(version):
     if version and version not in repository.versions:
         repository.versions.append(version)
 
-def add_to_group(group, repo):
-    group = clean_dir(group)
-
-    if group not in repository.groups:
-        repository.groups[group] = []
-
-    repository.groups[group].append(repo)
-
-def add_by_url(url, repo):
-    repository.by_url[clean_url(url)] = repo
-
 def add_by_dir(dir, repo):
     repository.by_dir[clean_dir(dir)] = repo
-    
-def del_by_dir(dir):
-    del repository.by_dir[clean_dir(dir)]
 
+# TODO - identiy any prior builds
 class repository:
-    def __init__(self, base, url, source='', rgbds=''):
-        self.base = ''
-
+    def __init__(self, url, rgbds=''):
         repository.all.append(self)
-        self.append_to_base(base)
 
-        self.source = source
         self.rgbds = rgbds
+        add_version(rgbds)
         
-        self.first_commit = ''
-        self.last_commit = ''
-        self.last_commit_date = ''
-        self.dir = ''
         self.release_order = []
 
         self.url = url
-        add_by_url(url, self)
         [self.author, self.title] = self.url.split('/')[-2:]
         self.name = self.title + ' (' + self.author + ')'
 
-        # if a source exists, include it in the base
-        if self.source:
-            self.append_to_base(self.source)
+        self.dir = 'data/' + self.author + '/' + self.title + '/'
 
-        self.set_dirs()
+        mkdir(self.dir)
+        add_by_dir(self.dir, self)
 
-    def append_to_base(self, addition):
-        self.base += addition + '/'
-        add_to_group(self.base, self)
-        mkdir(self.base)
+        self.dir_repo = self.dir + self.title
+        self.dir_releases = self.dir + 'releases/'
+        self.dir_roms = self.dir + 'roms/'
 
     def print(self, msg, doPrint=None):
         if not doPrint:
             doPrint = verbose
         if doPrint:
             print(self.name + ":\t" + msg)
-
-    def output(self):
-        return ','.join([self.url, self.source, self.rgbds])
 
     def run(self, args, capture_output, cwd, shell=None):
         if not os.path.exists(cwd):
@@ -144,13 +118,6 @@ class repository:
         commit = self.git('rev-parse','HEAD', capture_output=True)[0]
         date = self.git('--no-pager','log','-1','--format=%ai', capture_output=True)[0]
         return commit, date
-
-    def get_commits(self):
-        self.first_commit = self.git('rev-list','--max-parents=0','HEAD', capture_output=True)[0]
-        self.last_commit, self.last_commit_date = self.get_commit_data()
-
-    def set_dir(self):
-        self.dir = self.base + self.name + '/'
 
     def get_url(self):
         return self.git('config','--get','remote.origin.url', capture_output=True)[0]
@@ -205,18 +172,6 @@ class repository:
                         self.print('Skipping ' + path)
         else:
             self.print('No releases found')
-
-    def set_dirs(self):
-        if self.dir:
-            del_by_dir(self.dir)
-
-        self.set_dir()
-        mkdir(self.dir)
-        add_by_dir(self.dir, self)
-
-        self.dir_repo = self.dir + self.title
-        self.dir_releases = self.dir + 'releases/'
-        self.dir_roms = self.dir + 'roms/'
          
     def update(self):
         self.print("Updating local repository", True)
@@ -238,23 +193,8 @@ class repository:
                 f.write('[InternetShortcut]\nURL=' + self.url + '\n')
 
         self.download()
-        return self
-
-repository.all = []
-repository.versions = []
-repository.by_dir = {}
-repository.by_url = {}
-repository.groups = {}
-
-class remote(repository):
-    def update(self):
-        super().update()
         self.submodules()
-        if os.path.exists(self.dir_repo + '/.rgbds-version'):
-            with open(self.dir_repo + '/.rgbds-version', 'r') as f:
-                self.rgbds = f.read()
-        return self
-        
+
     def submodules(self):
         submodules = {}
 
@@ -287,7 +227,18 @@ class remote(repository):
             if not os.path.exists(dir):
                 self.git('submodule','add','-f', submodules[name], name)
 
-class disassembly(remote):
+repository.all = []
+repository.versions = []
+repository.by_dir = {}
+
+class disassembly(repository):
+    def update(self):
+        super().update()
+        if os.path.exists(self.dir_repo + '/.rgbds-version'):
+            with open(self.dir_repo + '/.rgbds-version', 'r') as f:
+                # todo - this is only necessary when adding a brand new repo
+                self.rgbds = f.read().split("\n")[0]
+
     def build_rgbds(self, version):
         # if new, successful build, copy any roms to build dir
         if self.make(version=version).returncode:
@@ -347,54 +298,13 @@ class disassembly(remote):
         if len(args):
             self.git('switch','-')
 
-# TODO - see if the name contains pokered/pokeyellow/pokecrystal/pokegold
-class fork(disassembly):
-    def move(self):
-        # dont move if already in correct location
-        if self.source:
-            if self.base.endswith(self.source + '/'):
-                return
-        else:
-            if not self.first_commit:
-                self.get_commits()
-
-            # if a source does not exist, check the hashes
-            if not self.source:
-                for repo in repository.groups["pret"]:
-                    if not repo.first_commit:
-                        repo.get_commits()
-                    if repo.first_commit == self.first_commit:
-                        self.source = repo.title
-                        break
-
-            # if a source still doesnt exist, see if it is a fork of any other repo that exists
-            if not self.source:
-                for repo in repository.groups["forks"]:
-                    if not repo.first_commit:
-                        repo.get_commits()
-                    if repo != self and repo.first_commit == self.first_commit:
-                        self.source = repo.source
-                        break
-        
-        if self.source:
-            old_dir = self.dir
-            self.append_to_base(self.source)
-            self.set_dirs() # update the directory members
-            self.print("Moving to: " + self.dir)
-            shutil.move(old_dir, self.dir)
-
 class RGBDS(repository):
     def __init__(self, *args):
         super().__init__(*args)
         self.releases = {}
         self.update()
 
-    def set_dir(self):
-        self.dir = self.base
-
-    def update(self, update_all=False):
-        super().update()
-
+    def build(self, update_all=False):
         for release in next(os.walk(self.dir_releases))[1]:
             match = re.search('^.* \\(v([^)]+)\\)$', release)
             if not match:
@@ -404,13 +314,13 @@ class RGBDS(repository):
 
                 # only build required releases
                 if version in repository.versions or update_all:
-                    self.build(release, version)
+                    self.build_version(release, version)
 
-    def build(self, name, version):
+    def build_version(self, name, version):
         cwd = self.dir_releases + name
 
-        if not len(glob.glob(cwd + '/rgbds/')):
-            os.mkdir(cwd + '/rgbds/')
+        if not len(glob.glob(cwd + '/rgbds')):
+            os.mkdir(cwd + '/rgbds')
             for tarball in glob.glob(cwd + '/*.tar.gz'):
                 self.print('Extracting ' + name, True)
 
@@ -444,46 +354,27 @@ def add_target(*repos):
         if repo not in targets:
             targets.append(repo)
 
-def validate_dirs(dirs):
-    if dirs:
-        for dir in dirs:
-            dir = clean_dir(dir)
-
-            # clean any pattern that matches the git repository within an instances main directory
-            dir = clean_repo_dir(dir)
-
-            # if dir is a group, add the entire group
-            if dir in repository.groups.keys():
-                add_target(*repository.groups[dir])
-            elif dir in repository.by_dir:
-                add_target(repository.by_dir[dir])
-            else:
-                error('Directory not a valid target: ' + dir)
-
-def validate_remote():
-    if args.remote:
-        for url in args.remote:
-            cleaned_url = clean_url(url)
-            if cleaned_url in repository.by_url:
-                add_target(repository.by_url[cleaned_url])
-            else:
-                error('Invalid URL: ' + url)
-
 def validate_glob():
     if args.glob:
         dirs = glob.glob(args.glob + '/')
         if dirs:
-            validate_dirs(dirs)
+            for dir in dirs:
+                dir = clean_dir(dir)
+
+                # clean any pattern that matches the git repository within an instances main directory
+                dir = clean_repo_dir(dir)
+
+                # if dir is an author, add all
+                if dir in sets["authors"].keys():
+                    add_target(*sets["authors"][dir])
+                elif dir in repository.by_dir:
+                    add_target(repository.by_dir[dir])
+                else:
+                    error('Directory not a valid target: ' + dir)
         else:
             error('No matches for glob pattern: ' + args.glob)
 
-group_classes = {
-    "pret" : disassembly,
-    "forks": fork,
-    "hacks" : remote,
-    "extras" : remote,
-    "rgbds" : RGBDS
-}
+mkdir('data')
 
 def load(filepath):
     if not os.path.exists(filepath):
@@ -494,28 +385,33 @@ def load(filepath):
 
     for author in data:
         author_url = 'https://github.com/' + author + '/'
+        mkdir('data/' + author)
+
         for title in data[author]:
             url = author_url + title
             o = data[author][title]
-            source = ("poke" + o["source"]) if "source" in o else ""
             rgbds = o["rgbds"] if "rgbds" in o else ""
-            group = o["group"]
-            repo = group_classes[group](group, url, source, rgbds)
+            tags = o["tags"] if "tags" in o else []
+            tags = tags if isinstance(tags, list) else [tags]
 
-            if "source" in o:
-                add_to_set("sources", o["source"], repo)
+            if "disasm" in tags:
+                subclass = disassembly
+            elif title == "rgbds":
+                subclass = RGBDS
+            else:
+                subclass = repository
+
+            repo = subclass(url, rgbds)
+
             add_to_set("authors", author, repo)
-            add_to_set("groups", group, repo)
 
-            if "tags" in o:
-                tags = o["tags"] if isinstance(o["tags"], list) else [o["tags"]]
-                for tag in tags:
-                    add_to_set("tags", tag, repo)
+            for tag in tags:
+                add_to_set("tags", tag, repo)
 
 def init():
     global rgbds
     load('data.json')
-    rgbds = repository.by_dir['rgbds']
+    rgbds = repository.by_dir['data/gbdev/rgbds']
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -523,8 +419,7 @@ if __name__ == '__main__':
         description='Manage various pret related projects'
     )
 
-    parser.add_argument('-dir', '-d', nargs='+', help='Path of directories to manage')
-    parser.add_argument('-remote', '-r', nargs='+', help='URL of remote repositories to manage')
+    # todo - -t for tags
     parser.add_argument('-glob', '-g', help='glob pattern of directories to manage')
     parser.add_argument('-verbose', '-v', action='store_true', help='Display all log messages')
     parser.add_argument('-update', '-u', action='store_true', help='Pull the managed repositories')
@@ -543,10 +438,7 @@ if __name__ == '__main__':
         
         init()
 
-        validate_dirs(args.dir)
-        validate_remote()
         validate_glob()
-
 
         if not targets:
             targets = repository.all
@@ -555,6 +447,9 @@ if __name__ == '__main__':
         if args.build is None and not args.update and not args.clean:
             args.update = True
             args.build = []
+
+        if args.build is not None:
+            rgbds.build()
 
         for target in targets:
             if target != rgbds:

@@ -2,982 +2,825 @@
   "pret": {
     "pokered": {
       "rgbds": "0.6.1",
-      "group": "pret",
-      "tags": ["official","red","blue","debug","patch"]
+      "tags": ["official","disasm","red","blue","debug","patch"]
     },
     "pokeyellow": {
       "rgbds": "0.6.1",
-      "group": "pret",
-      "tags": ["official","yellow","debug","patch"]
+      "tags": ["official","disasm","yellow","debug","patch"]
     },
     "pokegold": {
       "rgbds": "0.6.1",
-      "group": "pret",
-      "tags": ["official","gold","silver","debug","patch"]
+      "tags": ["official","disasm","gold","silver","debug","patch"]
     },
     "pokecrystal": {
       "rgbds": "0.6.1",
-      "group": "pret",
-      "tags": ["official","crystal","debug","patch"]
+      "tags": ["official","disasm","crystal","debug","patch"]
     },
     "poketcg": {
       "rgbds": "0.6.1",
-      "group": "pret",
-      "tags": ["official","tcg"]
+      "tags": ["official","disasm","tcg"]
     },
     "poketcg2": {
-      "group": "pret",
-      "tags": ["official","tcg2"]
+      "tags": ["official","disasm","tcg2"]
     },
     "pokegold-spaceworld": {
-      "group": "pret",
-      "tags": ["official","gold","debug","spaceworld"]
+      "tags": ["official","disasm","gold","debug","spaceworld"]
     }
   },
   "8bitZeta": {
     "modern-ancient-engine": {
-      "source": "crystal",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "AGiLE-EaGLE1994": {
     "pokebetared": {
-      "source": "red",
       "rgbds": "0.5.2",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "AmateurPanda92": {
     "pokemon-rby-dx": {
-      "source": "yellow",
       "rgbds": "0.4.1",
-      "group": "forks"
+      "tags": ["yellow", "disasm"]
     }
   },
   "AndrewC101": {
     "PokemonTrueRed": {
-      "source": "red",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "AtmaBuster": {
     "crystalleaf": {
-      "source": "crystal",
       "rgbds": "0.6.0-rc2",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     },
     "pokeplat-gen2": {
-      "source": "crystal",
       "rgbds": "0.4.1",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     },
     "pokeplat-gen2-old": {
-      "source": "crystal",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "Ax461": {
     "pokeblack": {
-      "source": "red",
       "rgbds": "0.5.2",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "AzureKeys": {
     "BW3G": {
-      "source": "crystal",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "BloodlessNS": {
     "ancientruby": {
-      "source": "crystal",
       "rgbds": "0.3.10",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "CameruptQDX": {
     "PF-Roaming-Red": {
-      "source": "red",
       "rgbds": "0.4.1",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "CrossVR": {
     "pokecrystal-restored": {
-      "source": "crystal",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "Dabomstew": {
     "pokecrystal-speedchoice": {
-      "source": "crystal",
       "rgbds": "0.6.0-rc2",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     },
     "pokered-speedchoice": {
-      "source": "red",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "pokecrystal-speedchoice-legacy": {
-      "source": "crystal",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "DarkSideHunterX": {
     "pokepink": {
-      "source": "yellow",
       "rgbds": "0.4.1",
-      "group": "forks"
+      "tags": ["yellow", "disasm"]
     }
   },
   "Dracrius": {
     "pocketrgb-en": {
-      "source": "red",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "Eshasunrise": {
     "Retyped-Red": {
-      "source": "red",
       "rgbds": "0.5.2",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "Fotomac": {
     "Pokemon-Tri-Color-Nostalgia-Series": {
-      "source": "red",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "pokered-e": {
-      "source": "crystal",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     },
     "nostalgia-red": {
-      "source": "red",
       "rgbds": "0.3.1",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "nostalgia-red-gbc": {
-      "source": "red",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "nostalgia-yellow": {
-      "source": "yellow",
       "rgbds": "0.3.0",
-      "group": "forks"
+      "tags": ["yellow", "disasm"]
     }
   },
   "FrenchOrange": {
     "pokezelda": {
-      "source": "crystal",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "Idain": {
     "Another-PKMN-Crystal-Remaster": {
-      "source": "crystal",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "JustRegularLuna": {
     "RedPlusPlus": {
-      "source": "red",
       "rgbds": "0.5.2",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "pokecopper": {
-      "source": "gold",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["gold", "disasm"]
     },
     "rpp-backup": {
-      "source": "red",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "KDLPro": {
     "Redv2.0": {
-      "source": "crystal",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "Kamy41": {
     "Pokered-Pro": {
-      "source": "red",
       "rgbds": "0.5.2",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "LIJI32": {
     "pokeadom": {
-      "source": "red",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "MajorAgnostic": {
     "Pokemon-Crystal-Ultimate": {
-      "source": "crystal",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "MineRobber9000": {
     "pokered-nuzlocke": {
-      "source": "red",
       "rgbds": "0.4.1",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "pokereddebug": {
-      "source": "red",
       "rgbds": "0.4.1",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "Monkiikong": {
     "Pokemon-Crystal-Plus": {
-      "source": "crystal",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "MoriyaFaith": {
     "neocrystal": {
-      "source": "crystal",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     },
     "neocrystalDX": {
-      "source": "crystal",
       "rgbds": "0.6.0-rc2",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     },
     "pokejp": {
-      "source": "red",
       "rgbds": "0.4.1",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "NekrobaDA": {
     "Pokemon_Crystal_Cross": {
-      "source": "crystal",
       "rgbds": "0.4.2",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "PeteyMcFly": {
     "Pokemon_Super_Crystal": {
-      "source": "crystal",
       "rgbds": "0.4.1",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "PiaCarrot": {
     "ancient-engine": {
-      "source": "crystal",
       "rgbds": "0.5.2",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     },
     "ancientplatinum": {
-      "source": "crystal",
       "rgbds": "0.5.2",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     },
     "pokeorange": {
-      "source": "crystal",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "PlagueVonKarma": {
     "kep-hack": {
-      "source": "red",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "PlaguedHikikomori": {
     "Plaguemon": {
-      "source": "red",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "Pokeglitch": {
     "poketre2": {
-      "source": "red",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "Raguzero": {
     "Midele-Crystal-v1.4b-FINAL": {
-      "source": "crystal",
       "rgbds": "0.4.2",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     },
     "Midele-Red-v1.3h-FINAL-": {
-      "source": "red",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "Rangi42": {
     "polishedcrystal": {
-      "source": "crystal",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     },
     "redstarbluestar": {
-      "source": "red",
       "rgbds": "0.5.2",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "bronze2": {
-      "source": "crystal",
       "rgbds": "0.2.5",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "Reminiscon": {
     "Pokemon-Ruthless-Red": {
-      "source": "red",
       "rgbds": "0.5.2",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "RenaKunisaki": {
     "pokered": {
-      "source": "red",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "Salsbar": {
     "unovared": {
-      "source": "red",
       "rgbds": "0.3.10",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "SeasickShore": {
     "capumon": {
-      "source": "red",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "protogs": {
-      "source": "gold",
-      "group": "forks"
+      "tags": ["gold", "disasm"]
     }
   },
   "SnydOfficial": {
     "pokeedm": {
-      "source": "red",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "Sotomura": {
     "pokecrystalred": {
-      "source": "crystal",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "SoupPotato": {
     "Sourcrystal": {
-      "source": "crystal",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     },
     "pokecrystal_SpriteBase": {
-      "source": "crystal",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     },
     "gold97": {
-      "source": "crystal",
       "rgbds": "0.5.2",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "Soviet5lo": {
     "proto_crystal_custom": {
-      "source": "crystal",
       "rgbds": "0.3.10",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "SteppoBlazer": {
     "pokesparkyellow": {
-      "source": "yellow",
-      "group": "forks"
+      "tags": ["yellow", "disasm"]
     }
   },
   "Superegz": {
     "Pokemon-Perfect-Crystal": {
-      "source": "crystal",
       "rgbds": "0.2.5",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "TAz00": {
     "pokered-magikarp-edition": {
-      "source": "red",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "TheScarletSword": {
     "pokereddeluxe": {
-      "source": "red",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "TheSeaTree": {
     "pokeperidot": {
-      "source": "crystal",
       "rgbds": "0.4.1",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "TomJinW": {
     "PKMN_GSCHS": {
-      "source": "gold",
-      "group": "forks"
+      "tags": ["gold", "disasm"]
     }
   },
   "TrainerTaiga": {
     "PokemonDarkVoid": {
-      "source": "crystal",
       "rgbds": "0.4.1",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "TwitchPlaysPokemon": {
     "chattycrystal": {
-      "source": "crystal",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     },
     "pokechattyyellow": {
-      "source": "yellow",
-      "group": "forks"
+      "tags": ["yellow", "disasm"]
     },
     "pokerbg": {
-      "source": "red",
       "rgbds": "0.5.2",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "pokergb-authentic": {
-      "source": "red",
       "rgbds": "0.5.2",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "chattycrystal-randomized": {
-      "source": "crystal",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     },
     "pokecrystal-randofused": {
-      "source": "crystal",
       "rgbds": "0.4.2",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     },
     "pokedualredblue": {
-      "source": "red",
       "rgbds": "0.4.1",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "pokemonAnniversaryRed": {
-      "source": "red",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "tpp_burning_red": {
-      "source": "crystal",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "tppcrystal251pub": {
-      "source": "crystal",
       "rgbds": "0.2.5",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "Vortyne": {
     "pureRGB": {
-      "source": "red",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "ZoomTen": {
     "pokelostsilver": {
-      "source": "gold",
       "rgbds": "0.6.0-rc2",
-      "group": "forks"
+      "tags": ["gold", "disasm"]
     }
   },
   "aaaaaa123456789": {
     "pokecrystal16": {
-      "source": "crystal",
       "rgbds": "0.5.2",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "aforward9600": {
     "JohtoLegends": {
-      "source": "crystal",
       "rgbds": "0.5.2",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "athendrix": {
     "pokecrystalplus": {
-      "source": "crystal",
       "rgbds": "0.6.0-rc2",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "averykatko": {
     "poccathyrsas": {
-      "source": "red",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "danielah05": {
     "buried-pokered": {
-      "source": "red",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "dannye": {
     "pokered-crysaudio": {
-      "source": "red",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "pokered-gbc": {
-      "source": "red",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "pokered-gen-II": {
-      "source": "red",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "pokered-prototype": {
-      "source": "red",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "pokeyellow-crysaudio": {
-      "source": "yellow",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["yellow", "disasm"]
     },
     "CrystalComplete": {
-      "source": "crystal",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     },
     "pokeyellow-gen-II": {
-      "source": "red",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "gofastlily": {
     "gen-1-minimum-battles": {
-      "source": "yellow",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["yellow", "disasm"]
     }
   },
   "huderlem": {
     "maize": {
-      "source": "red",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "pokered_battle_factory": {
-      "source": "red",
       "rgbds": "0.3.10",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "hyperdriveguy": {
     "deseret-crystal": {
-      "source": "crystal",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "i0brendan0": {
     "pokecrystal2": {
-      "source": "crystal",
       "rgbds": "0.4.2",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     },
     "pokecrystal2-new": {
-      "source": "crystal",
       "rgbds": "0.3.10",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     },
     "pokeyellow-clefairy": {
-      "source": "yellow",
       "rgbds": "0.4.1",
-      "group": "forks"
+      "tags": ["yellow", "disasm"]
     }
   },
   "jojobear13": {
     "shinpokered": {
-      "source": "red",
       "rgbds": "0.5.2",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "kennethblite": {
     "nuzlocke_PokeRed": {
-      "source": "red",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "longlostsoul": {
     "EvoYellow": {
-      "source": "yellow",
       "rgbds": "0.2.5",
-      "group": "forks"
+      "tags": ["yellow", "disasm"]
     }
   },
   "luckytyphlosion": {
     "pokered-chaos": {
-      "source": "red",
       "rgbds": "0.3.0",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "pokered_fastmenu": {
-      "source": "red",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "pokecathode": {
-      "source": "crystal",
       "rgbds": "0.3.10",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     },
     "pokered-256kb": {
-      "source": "red",
       "rgbds": "0.3.0",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "pokered-animorphs": {
-      "source": "red",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "pokered-challenge": {
-      "source": "red",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "pokered-hombone": {
-      "source": "red",
       "rgbds": "0.3.0",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "pokered-jp": {
-      "source": "red",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "pokered-troll": {
-      "source": "red",
       "rgbds": "0.4.1",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "pokered_fastBGupdate": {
-      "source": "red",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "CrystalClearPasswords": {
-      "group": "extras"
+      "tags": "extras"
     },
     "gs-ace-helper": {
       "rgbds": "0.5.2",
-      "group": "extras"
+      "tags": "extras"
     }
   },
   "lvl-3-g": {
     "Gold97SGB": {
-      "source": "gold",
       "rgbds": "0.3.10",
-      "group": "forks"
+      "tags": ["gold", "disasm"]
     }
   },
   "mahoushoujorose": {
     "pkmnplusgreen": {
-      "source": "red",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "nmhermalin": {
     "crystalprime": {
-      "source": "crystal",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "oatspear": {
     "crystal50": {
-      "source": "crystal",
       "rgbds": "0.6.0-rc2",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "opiter09": {
     "ASM-Machina": {
-      "source": "red",
       "rgbds": "0.5.2",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "piclarv": {
     "pokelavender": {
-      "source": "red",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "pkmncoraldev": {
     "polishedcoral": {
-      "source": "crystal",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     },
     "pokecoral": {
-      "source": "crystal",
       "rgbds": "0.2.5",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "pokeachromicdevs": {
     "pokeoctober": {
-      "source": "crystal",
       "rgbds": "0.4.1",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "surskitty": {
     "crystalis": {
-      "source": "crystal",
       "rgbds": "0.4.2",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "susieqt": {
     "pokesus": {
-      "source": "gold",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["gold", "disasm"]
     }
   },
   "tshadowknight": {
     "Pokemon-Roaming-Red": {
-      "source": "red",
       "rgbds": "0.4.1",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     },
     "proto_crystal": {
-      "source": "crystal",
       "rgbds": "0.3.10",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     },
     "Pokemon-Roaming-Red-Tajiri": {
-      "source": "red",
       "rgbds": "0.4.1",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "vulcandth": {
     "pokedarkgs": {
-      "source": "crystal",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "wisejustin": {
     "Red-Blue-Remastered": {
-      "source": "crystal",
       "rgbds": "0.2.5",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "wolfboyft": {
     "pokehalls": {
-      "source": "crystal",
       "rgbds": "0.2.5",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     },
     "pokestygian": {
-      "source": "crystal",
       "rgbds": "0.2.5",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "wrulfy": {
     "carminered": {
-      "source": "red",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "Sanqui": {
     "pokered-randomizer": {
-      "source": "red",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "froggestspirit": {
     "CrystalComplete": {
-      "source": "crystal",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "ChristopherOBerry": {
     "pokeslow": {
-      "source": "red",
       "rgbds": "0.5.2",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "IL01DI": {
     "PlayAsRed": {
-      "source": "red",
       "rgbds": "0.5.2",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "UnderscorePoY": {
     "pokered-custom-starter": {
-      "source": "red",
       "rgbds": "0.5.2",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "copperkiddx": {
     "pokemonwarp": {
-      "source": "red",
       "rgbds": "0.4.1",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "erosunica": {
     "pokered-vwf": {
-      "source": "red",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "j-emilsson": {
     "pokemon-reddest": {
-      "source": "red",
       "rgbds": "0.5.2",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "lucasyoungers": {
     "pokered-remastered": {
-      "source": "red",
       "rgbds": "0.6.1",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "strager": {
     "pokered-bugfree": {
-      "source": "red",
       "rgbds": "0.3.0",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "waicalibre": {
     "pokered-eo": {
-      "source": "red",
       "rgbds": "0.5.2",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "xCrystal": {
     "pokecrystal-randofuser": {
-      "source": "crystal",
       "rgbds": "0.2.5",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     },
     "pokecrystal_challenge_cup": {
-      "source": "crystal",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "BestPig": {
     "pokered-gbc-pocket": {
-      "source": "red",
       "rgbds": "0.5.2",
-      "group": "forks"
+      "tags": ["red", "disasm"]
     }
   },
   "KrustyKong": {
     "pokecrystal-battletower-enhanced": {
-      "source": "crystal",
       "rgbds": "0.4.1",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "Masaru2": {
     "pokecrystal-r": {
-      "source": "crystal",
       "rgbds": "0.6.0-rc2",
-      "group": "forks"
+      "tags": ["crystal", "disasm"]
     }
   },
   "tysonrss": {
     "Pokemon-Red-DX": {
-      "group": "hacks"
+      "tags": "binary"
     }
   },
   "abhmul": {
     "pokemon-silver-hardened": {
-      "group": "hacks"
+      "tags": "binary"
     }
   },
   "Aegide": {
     "custom-fusion-sprites": {
-      "group": "extras"
+      "tags": "extras"
     }
   },
   "Color-Printer": {
     "pkmn-route-rando": {
-      "group": "extras"
+      "tags": "extras"
     }
   },
   "theresamai": {
     "pokemon_battle_ASM": {
-      "group": "extras"
+      "tags": "extras"
     }
   },
   "CardinalSys": {
     "PokemonRedBlueMultiplayer": {
-      "group": "extras"
+      "tags": "extras"
     }
   },
   "MrCheeze": {
     "pokered-self-replicator": {
-      "group": "extras"
+      "tags": "extras"
     }
   },
   "ISSOtm": {
     "crystal-clear-ace": {
-      "group": "extras"
+      "tags": "extras"
     }
   },
   "SheerSt": {
     "pokewilds": {
-      "group": "extras"
+      "tags": "extras"
     }
   },
   "gbdev": {
-    "rgbds": {
-      "group": "rgbds"
-    }
+    "rgbds": {}
   }
 }
