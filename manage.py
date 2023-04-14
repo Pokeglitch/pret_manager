@@ -1,5 +1,6 @@
-import subprocess, os, re, glob, platform, shutil, argparse, json
+import subprocess, os, re, glob, platform, shutil, argparse, json, sys
 from pathlib import Path
+import gui
 
 build_extensions = ['gb','gbc','pocket','patch']
 
@@ -20,6 +21,9 @@ class PRET_Manager:
         self.Authors = {}
         self.Tags = {}
         self.Verbose = False
+        self.GUI = None
+        self.App = None
+
         self.reset()
 
     def reset(self):
@@ -27,6 +31,10 @@ class PRET_Manager:
         self.doUpdate = False
         self.doBuild = None
         self.doClean = False
+
+    def build_GUI(self):
+        self.init()
+        self.App, self.GUI = gui.init(self)
 
     def print(self, msg):
         print('pret-manager:\t' + str(msg))
@@ -40,7 +48,12 @@ class PRET_Manager:
         # todo - load 'custom.json' which has additional tags (ignore, favorite, etc)
 
     def handle_args(self):
+        # if no args at all, launch the gui
+        if len(sys.argv) == 1:
+            return self.build_GUI()
+
         args = parser.parse_args()
+
         self.Verbose = args.verbose
 
         # assign defaults if none are submitted
@@ -95,7 +108,6 @@ class PRET_Manager:
                     repos.clean()
 
         self.reset()
-
 
     def load(self, filepath):
         if not os.path.exists(filepath):
@@ -514,17 +526,13 @@ class RGBDS(repository):
 pret_manager = PRET_Manager()
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        prog='pret_manager',
-        description='Manage various pret related projects'
-    )
-
+    parser = argparse.ArgumentParser(prog='pret_manager', description='Manage various pret related projects')
     parser.add_argument('-repos', '-r', nargs='+', help='Repo(s) to manage')
     parser.add_argument('-exclude-repos', '-xr', nargs='+', help='Repo(s) to not manage')
     parser.add_argument('-authors', '-a', nargs='+', help='Author(s) to manage')
-    parser.add_argument('-exclude-tags', '-xt', nargs='+', help='Tags(s) to not manage')
-    parser.add_argument('-tags', '-t', nargs='+', help='Tags(s) to manage')
     parser.add_argument('-exclude-authors', '-xa', nargs='+', help='Author(s) to not manage')
+    parser.add_argument('-tags', '-t', nargs='+', help='Tags(s) to manage')
+    parser.add_argument('-exclude-tags', '-xt', nargs='+', help='Tags(s) to not manage')
     parser.add_argument('-update', '-u', action='store_true', help='Pull the managed repositories')
     parser.add_argument('-build', '-b', nargs='*', help='Build the managed repositories')
     parser.add_argument('-clean', '-c', action='store_true', help='Clean the managed repositories')
@@ -532,6 +540,8 @@ if __name__ == '__main__':
     
     try:        
         pret_manager.handle_args()
+        if pret_manager.App:
+            pret_manager.App.exec()
     except Exception as e:
         print(e)
 else:
