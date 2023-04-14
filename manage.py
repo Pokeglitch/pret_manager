@@ -101,6 +101,9 @@ class PRET_Manager:
                 if self.doUpdate:
                     repos.update()
 
+                if self.doClean:
+                    repos.clean()
+
                 if self.doBuild is not None:
                     repos.build(*self.doBuild)
 
