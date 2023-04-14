@@ -216,6 +216,7 @@ class repository:
         self.manager = manager
         self.author = author
         self.title = title
+        self.GUI = None
         self.name = self.title + ' (' + self.author + ')'
         self.url = 'https://github.com/' + author + '/' + title
 
