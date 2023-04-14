@@ -19,15 +19,18 @@ class PRET_Manager:
         
         self.All = []
         self.Authors = {}
+        self.Lists = {
+            "Favorites" : [],
+            "Exclude" : [],
+            "Missing" : [],
+            "Outdated" : []
+        }
         self.Tags = {}
         self.Verbose = False
         self.GUI = None
         self.App = None
 
-        self.reset()
-
-    def reset(self):
-        self.clear_selection()
+        self.Selection = []
         self.doUpdate = False
         self.doBuild = None
         self.doClean = False
@@ -37,7 +40,11 @@ class PRET_Manager:
         self.App, self.GUI = gui.init(self)
 
     def print(self, msg):
-        print('pret-manager:\t' + str(msg))
+        msg = 'pret-manager:\t' + str(msg)
+        print(msg)
+
+        if self.GUI:
+            self.GUI.addStatus(msg)
 
     def update(self):
         self.print('Updating repository')
@@ -95,22 +102,28 @@ class PRET_Manager:
 
     def run(self):
         if not self.Selection:
-            self.print('No repos to manage')
-        else:
-            for repos in self.Selection:
+            self.print('Queue is empty')
+        elif self.doUpdate or self.doClean or self.doBuild:
+            for repo in self.Selection:
+                self.print('Processing ' + repo.name)
+
                 if self.doUpdate:
-                    repos.update()
+                    repo.update()
 
                 if self.doClean:
-                    repos.clean()
+                    repo.clean()
 
                 if self.doBuild is not None:
-                    repos.build(*self.doBuild)
+                    repo.build(*self.doBuild)
 
-                if self.doClean:
-                    repos.clean()
+                    if self.doClean:
+                        repo.clean()
 
-        self.reset()
+                self.print('Finished Processing ' + repo.name)
+        else:
+            self.print('No actions to process')
+
+        self.clear_selection()
 
     def load(self, filepath):
         if not os.path.exists(filepath):
@@ -266,10 +279,17 @@ class repository:
                     self.print('Invalid release directory name: ' + dirname)
 
     def print(self, msg, doPrint=None):
+        doGUIStatus = self.GUI and doPrint
+
         if not doPrint:
             doPrint = self.manager.Verbose
+
         if doPrint:
-            print(self.name + ":\t" + str(msg))
+            msg = self.name + ":\t" + str(msg)
+            print(msg)
+
+        if doGUIStatus:
+            self.manager.GUI.addStatus(msg)
 
     def run(self, args, capture_output, cwd, shell=None):
         if not os.path.exists(cwd):
