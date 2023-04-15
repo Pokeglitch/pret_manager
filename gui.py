@@ -5,9 +5,7 @@ TODO:
 - each list item and tile can have icons for quick add/remove to queue
     - highlight whichever is active
 
-- Status message should be the self.print('', True) messages
-
-- Each game wodget should indicate if it is downloaded or not
+- Each game widget should indicate if it is downloaded or not
 
 - Show when game is being processed
 
@@ -23,10 +21,13 @@ For settings:
 - default list
 
 Add search filter (use glob on authors tree?)
+
+Groups of Tags
 '''
 
 from PyQt5.QtCore import Qt, QThreadPool, QRunnable, QMargins, QPoint, QRect, QSize
-from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
+from PyQt5.QtWidgets import QApplication, QStyleOption, QStyle, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
+from PyQt5.QtGui import QIcon, QPainter
 
 threadpool = QThreadPool()
 
@@ -127,6 +128,19 @@ class Widget(QWidget):
         self.GUI = GUI
         self.Layout = layout()
         self.setLayout(self.Layout)
+        
+        self.Layout.setContentsMargins(0,0,0,0)
+        self.Layout.setSpacing(0)
+
+    def paintEvent(self, event):
+        opt= QStyleOption()
+        painter = QPainter(self)
+        opt.initFrom(self)
+        self.style().drawPrimitive(QStyle.PE_Widget, opt, painter, self)
+        painter.end()
+
+    def updateStyle(self):
+        self.style().polish(self)
 
     def add(self, widget, *args):
         self.Layout.addWidget(widget, *args)
@@ -187,6 +201,10 @@ class ListElement(HBox):
         self.Label = self.label(Name)
         self.Data = self.Source[Name]
         self.addTo(parent)
+
+    def setActive(self, value):
+        self.setProperty("active",value)
+        self.updateStyle()
 
     def mousePressEvent(self, event):
         self.GUI.Tiles.setActive(self)
@@ -333,6 +351,18 @@ class Game:
         self.Tile = GameTile(self)
         self.Panel = GamePanel(self)
 
+    def setActive(self, value):
+        self.Queue.setProperty("active",value)
+        self.Tile.setProperty("active",value)
+        self.Queue.updateStyle()
+        self.Tile.updateStyle()
+
+    def setProcessing(self, value):
+        self.Queue.setProperty("processing",value)
+        self.Tile.setProperty("processing",value)
+        self.Queue.updateStyle()
+        self.Tile.updateStyle()
+
     def update(self):
         self.Queue.update()
         self.Tile.update()
@@ -449,11 +479,15 @@ class Tiles(VBox):
     def setActive(self, instance):
         [game.GUI.Tile.setVisible(False) for game in self.List]
 
+        if self.Active:
+            self.Active.setActive(False)
+
         self.Active = None if instance == self.Active else instance
 
         if self.Active:
             self.Header.setText(self.Active.Parent.ID + ' | ' + self.Active.Name)
             self.List = self.Active.getData()
+            self.Active.setActive(True)
         else:
             self.Header.setText('All Games')
             self.List = [game.Game for game in self.GUI.Games.All]
@@ -478,9 +512,21 @@ class Tiles(VBox):
 class Button(QLabel):
     def __init__(self, parent, text, click):
         super().__init__(text)
-
+        self.setAlignment(Qt.AlignCenter)
         self.mousePressEvent = click
         parent.add(self)
+
+class ToggleButton(HBox):
+    def __init__(self, parent, text, click):
+        super().__init__(None)
+        self.Label = self.label(text)
+        self.Label.setAlignment(Qt.AlignCenter)
+        self.mousePressEvent = click
+        parent.add(self)
+
+    def setActive(self, value):
+        self.setProperty("active",value)
+        self.updateStyle()
 
 class PanelHeader(HBox):
     def __init__(self, parent):
@@ -523,9 +569,13 @@ class Panel(VBox):
 
     def setActive(self, game):
         if self.Active:
+            self.Active.setActive(False)
             self.Active.Panel.setVisible(False)
+
         self.Active = None if game == self.Active else game
+
         if self.Active:
+            self.Active.setActive(True)
             self.Active.Panel.setVisible(True)
             self.Header.setText(self.Active.Game.name)
         else:
@@ -568,11 +618,18 @@ class Process(QRunnable):
 class Status(VBox):
     def __init__(self, GUI):
         super().__init__(GUI)
+
         self.Header = HBox(GUI)
-        self.Header.label("Process:")
-        self.ToggleUpdate = Button(self.Header, 'Update - False', self.toggleUpdate)
-        self.ToggleBuild = Button(self.Header, 'Build - False', self.toggleBuild)
-        self.ToggleClean = Button(self.Header, 'Clean - False', self.toggleClean)
+        self.HeaderLabel = self.Header.label("Process")
+        self.HeaderLabel.setAlignment(Qt.AlignCenter)
+
+        self.ToggleUpdate = ToggleButton(self.Header, 'Update', self.toggleUpdate)
+        self.ToggleBuild = ToggleButton(self.Header, 'Build', self.toggleBuild)
+        self.ToggleClean = ToggleButton(self.Header, 'Clean', self.toggleClean)
+        self.ToggleUpdate.setActive(False)
+        self.ToggleBuild.setActive(False)
+        self.ToggleClean.setActive(False)
+
         self.Header.addTo(self, 10)
 
         self.ContentContainer = VScroll(GUI)
@@ -585,29 +642,31 @@ class Status(VBox):
         self.AtMax = True
         self.ContentContainer.Scroll.verticalScrollBar().valueChanged.connect(self.checkAtMax)
 
+        self.ContentContainer.setObjectName("status")
+        self.Header.setObjectName("status-header")
+
         self.addTo(GUI.RightCol, 35)
 
     def toggleUpdate(self, event):
         self.GUI.Manager.doUpdate = not self.GUI.Manager.doUpdate
-        self.ToggleUpdate.setText('Update - ' + str(self.GUI.Manager.doUpdate))
+        self.ToggleUpdate.setActive(self.GUI.Manager.doUpdate)
 
     def toggleBuild(self, event):
         if self.GUI.Manager.doBuild == None:
             self.GUI.Manager.doBuild = []
-            self.ToggleBuild.setText('Build - True')
         else:
             self.GUI.Manager.doBuild = None
-            self.ToggleBuild.setText('Build - False')
+        self.ToggleBuild.setActive(self.GUI.Manager.doBuild != None)
 
     def toggleClean(self, event):
         self.GUI.Manager.doClean = not self.GUI.Manager.doClean
-        self.ToggleClean.setText('Clean - ' + str(self.GUI.Manager.doClean))
+        self.ToggleClean.setActive(self.GUI.Manager.doClean)
 
     def checkAtMax(self, event):
         self.AtMax = self.ContentContainer.Scroll.verticalScrollBar().value() == self.ContentContainer.Scroll.verticalScrollBar().maximum()
 
     def addStatus(self, msg):
-        self.Content.Label.setText(self.Content.Label.text() + '\n' + msg)
+        self.Content.Label.setText(self.Content.Label.text() + msg + '\n')
         if self.AtMax:
             self.ContentContainer.Scroll.verticalScrollBar().setValue(self.ContentContainer.Scroll.verticalScrollBar().maximum())
 
@@ -663,10 +722,15 @@ class PRET_Manager_GUI(QMainWindow):
         self.Process = None
         self.Manager = manager
         self.setWindowTitle("pret manager")
+        #self.setWindowIcon(QIcon('./assets/icon.png'))
         self.Widget = VBox(self)
         self.Header = MainHeader(self)
         self.Content = MainContents(self)
         self.setCentralWidget(self.Widget)
+        
+        with open('./assets/style.qss') as f:
+            self.setStyleSheet(f.read())
+
         self.show()
 
     def addStatus(self, msg):

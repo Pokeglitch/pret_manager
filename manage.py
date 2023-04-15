@@ -105,6 +105,8 @@ class PRET_Manager:
             self.print('Queue is empty')
         elif self.doUpdate or self.doClean or self.doBuild:
             for repo in self.Selection:
+                if repo.GUI:
+                    repo.GUI.setProcessing(True)
                 self.print('Processing ' + repo.name)
 
                 if self.doUpdate:
@@ -120,6 +122,8 @@ class PRET_Manager:
                         repo.clean()
 
                 self.print('Finished Processing ' + repo.name)
+                if repo.GUI:
+                    repo.GUI.setProcessing(False)
         else:
             self.print('No actions to process')
 
