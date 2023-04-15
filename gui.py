@@ -4,7 +4,7 @@ import sys, webbrowser
 TODO:
 Fix Functionality:
 
-- Instead of click/right click
+- Instead of click/right click:
 -- Have there be different click modes (like highighting in GIMP )
 --- Replace, OR, AND, NOT
 --- right click to immediately add to queue
@@ -12,8 +12,8 @@ Fix Functionality:
 - When no filters, show All
 - Fix color not changing when right click on List item first time
 
-- Show when game is being process in Panel
-- Show when game is in Queue (for Panel, Tile)
+For Panel:
+- Show when game is in queue, being processed
 
 ---------
 Finish functionality:
@@ -23,11 +23,22 @@ Finish functionality:
 -- Show in Panel, Tile
 
 - Finish Favorite/Exclude, & way to export
-- Finish Saving Filter, Queue (& load upon opening)
+-- show in Tile
 
+- Finish Saving Filter, Queue (& load upon opening)
+---------
+Finish Game Panel
+- make tags individual widgets
+-- click to display in Tiles panel
+--- Way to add extra tags?
+
+Show files within each build directory (collapsible?)
+-- double click to launch in emulator...
+
+Finish fields/dropdowns for branch/commit/make/rgbds
 ---------
 Extra functionality:
-
+- And invert filter (for all tiles, for easy 'excluding')
 - Add Search Filter (can use glob patterns?)
 
 Way to create/handle Groups of Tags (i.e. Gen1, Gen2, TCG)
@@ -43,6 +54,8 @@ New column:
     - default process actions
     - different path for rgbds builds
     - default List to display
+
+IPS classes and applying
 '''
 
 from PyQt5.QtCore import Qt, QThreadPool, QRunnable, QMargins, QPoint, QRect, QSize
@@ -395,6 +408,12 @@ class Game:
         self.Tile = GameTile(self)
         self.Panel = GamePanel(self)
 
+        self.setQueued(False)
+
+    def setQueued(self, queued):
+        self.Tile.setProperty('queued', queued)
+        self.Tile.updateStyle()
+
     def setActive(self, value):
         self.Queue.setProperty("active",value)
         self.Tile.setProperty("active",value)
@@ -448,6 +467,7 @@ class Queue(VBox):
     def addGame(self, gameGUI):
         if gameGUI not in self.List:
             self.List.append(gameGUI)
+            gameGUI.setQueued(True)
             gameGUI.Queue.addTo(self.ListGUI)
 
     def addGames(self, games):
@@ -456,6 +476,7 @@ class Queue(VBox):
     def removeGame(self, gameGUI):
         if gameGUI in self.List:
             self.List.pop( self.List.index(gameGUI) )
+            gameGUI.setQueued(False)
             gameGUI.Queue.setParent(None)
 
     def removeGames(self, games):
@@ -549,7 +570,7 @@ class Tiles(VBox):
                     self.All_Games.append(game)
                     game.GUI.Tile.addTo(self.Content)
 
-    def save(self):
+    def save(self, event):
         pass
 
     def removeList(self, list, type):
