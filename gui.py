@@ -230,7 +230,9 @@ class List(VBox):
         self.ID = ID[:-1]
         self.List = {}
 
-        self.label(ID, 5)
+        self.Label = self.label(ID, 5)
+        self.Label.setAlignment(Qt.AlignCenter)
+        self.Label.setObjectName("list-header")
 
         self.ScrollBox = VScroll(parent.GUI)
         self.ScrollBox.addTo(self, 95)
@@ -280,7 +282,7 @@ class GameQueue(HBox):
         self.GUI.Panel.setActive(self.GameGUI)
 
     def update(self):
-        self.setVisible(self.GameGUI.Game in self.GUI.Queue.ListGUI.List)
+        self.setVisible(self.GameGUI.Game in self.GUI.Queue.List)
 
 class GameTile(VBox):
     def __init__(self, gameGUI):
@@ -377,17 +379,37 @@ class Games:
     def update(self):
         [game.update() for game in self.All]
 
-class QueueList(VBox):
-    def __init__(self, parent):
-        super().__init__(parent.GUI)
+class Queue(VBox):
+    def __init__(self, GUI):
+        super().__init__(GUI)
         self.List = []
-        self.addTo(parent.ListContainer)
+
+        self.Header = HBox(GUI)
+        self.Header.setObjectName("header-frame")
+
+        self.HeaderLabel = self.Header.label('Queue')
+        self.HeaderLabel.setObjectName("header")
+        self.HeaderLabel.setAlignment(Qt.AlignCenter)
+        self.Header.addTo(self, 5)
+
+        self.Clear = Button(self.Header, 'Clear', self.clear)
+        self.Process = Button(self.Header, 'Process', self.process)
+        self.Save = Button(self.Header, 'Save', self.save)
+
+        self.ListContainer = VScroll(GUI)
+        self.ListContainer.addTo(self, 95)
+
+        self.ListGUI = VBox(GUI)
+        self.ListGUI.addTo(self.ListContainer)
+        self.ListContainer.addStretch()
+        
+        self.addTo(GUI.RightCol, 65)
 
     def addGame(self, gameGUI):
         if gameGUI not in self.List:
             self.List.append(gameGUI)
             # add again so it appears at bottom of queue
-            gameGUI.Queue.addTo(self)
+            gameGUI.Queue.addTo(self.ListGUI)
             gameGUI.Queue.setVisible(True)
 
     def addGames(self, games):
@@ -409,62 +431,31 @@ class QueueList(VBox):
 
     def save(self, event):
         pass
-    
-    def invert(self, event):
-        pass
-
-class QueueHeader(HBox):
-    def __init__(self, parent):
-        super().__init__(parent.GUI)
-        self.addTo(parent, 5)
-        self.label('Queue')
-
-class QueueFooter(VBox):
-    def __init__(self, parent):
-        super().__init__(parent.GUI)
-        self.Clear = Button(self, 'Clear', parent.ListGUI.clear)
-        self.Process = Button(self, 'Process', parent.ListGUI.process)
-        self.Invert = Button(self, 'Invert', parent.ListGUI.invert)
-        self.Save = Button(self, 'Save', parent.ListGUI.save)
-        self.addTo(parent.Body, 25)
-
-class Queue(VBox):
-    def __init__(self, GUI):
-        super().__init__(GUI)
-        self.Header = QueueHeader(self)
-        self.Body = HBox(self)
-        self.Body.addTo(self, 95)
-
-        self.ListContainer = VScroll(GUI)
-        self.ListContainer.addTo(self.Body, 75)
-        self.ListGUI = QueueList(self)
-        self.ListContainer.addStretch()
-
-        self.Footer = QueueFooter(self)
-        self.addTo(GUI.RightCol, 65)
 
 class TileContent(Flow):
     def __init__(self, parent):
         super().__init__(parent.GUI)
-        self.addTo(parent, 80)
+        self.setObjectName('Tiles')
+        self.Scroll.setObjectName('Tiles')
+        self.Layout.setSpacing(10)
+        self.addTo(parent, 95)
 
 class TilesHeader(HBox):
     def __init__(self, parent):
         super().__init__(parent.GUI)
-        self.Label = self.label()
-        self.addTo(parent, 10)
-
-    def setText(self, text):
-        self.Label.setText(text)
-
-class TilesFooter(HBox):
-    def __init__(self, parent):
-        super().__init__(parent.GUI)
-
+        self.setObjectName("header-frame")
+        self.Type = self.label()
+        self.Type.setObjectName("header")
+        self.Name = self.label()
+        self.Name.setObjectName("header")
         self.AddToQueue = Button(self, 'Add All', parent.addToQueue)
         self.RemoveFromQueue = Button(self, 'Remove All', parent.removeFromQueue)
         self.Process = Button(self, 'Process All', parent.process)
-        self.addTo(parent, 10)
+        self.addTo(parent, 5)
+
+    def setText(self, type, name=''):
+        self.Type.setText(type)
+        self.Name.setText(name)
 
 class Tiles(VBox):
     def __init__(self, GUI):
@@ -473,7 +464,6 @@ class Tiles(VBox):
         self.List = [] # List of Games (not GameGUIs)
         self.Header = TilesHeader(self)
         self.Content = TileContent(self)
-        self.Footer = TilesFooter(self)
         self.addTo(GUI, 25)
 
     def setActive(self, instance):
@@ -485,7 +475,7 @@ class Tiles(VBox):
         self.Active = None if instance == self.Active else instance
 
         if self.Active:
-            self.Header.setText(self.Active.Parent.ID + ' | ' + self.Active.Name)
+            self.Header.setText(self.Active.Parent.ID, self.Active.Name)
             self.List = self.Active.getData()
             self.Active.setActive(True)
         else:
@@ -495,10 +485,10 @@ class Tiles(VBox):
         [game.GUI.Tile.setVisible(True) for game in self.List]
 
     def addToQueue(self, event):
-        self.GUI.Queue.ListGUI.addGames(self.List)
+        self.GUI.Queue.addGames(self.List)
 
     def removeFromQueue(self, event):
-        self.GUI.Queue.ListGUI.removeGames(self.List)
+        self.GUI.Queue.removeGames(self.List)
 
     def process(self, event):
         self.GUI.startProcess([game for game in self.List])
@@ -531,8 +521,11 @@ class ToggleButton(HBox):
 class PanelHeader(HBox):
     def __init__(self, parent):
         super().__init__(parent.GUI)
+        self.setObjectName("header-frame")
+
         self.Left = HBox(parent.GUI)
         self.Label = self.Left.label()
+        self.Label.setObjectName("header")
         self.Left.addTo(self)
 
         self.Right = HBox(parent.GUI)
@@ -586,11 +579,11 @@ class Panel(VBox):
 
     def addToQueue(self, event):
         if self.Active:
-            self.GUI.Queue.ListGUI.addGame(self.Active)
+            self.GUI.Queue.addGame(self.Active)
 
     def removeFromQueue(self, event):
         if self.Active:
-            self.GUI.Queue.ListGUI.removeGame(self.Active)
+            self.GUI.Queue.removeGame(self.Active)
 
     def process(self, event):
         if self.Active:
@@ -620,6 +613,7 @@ class Status(VBox):
         super().__init__(GUI)
 
         self.Header = HBox(GUI)
+        self.Header.setObjectName("status-header")
         self.HeaderLabel = self.Header.label("Process")
         self.HeaderLabel.setAlignment(Qt.AlignCenter)
 
@@ -643,7 +637,6 @@ class Status(VBox):
         self.ContentContainer.Scroll.verticalScrollBar().valueChanged.connect(self.checkAtMax)
 
         self.ContentContainer.setObjectName("status")
-        self.Header.setObjectName("status-header")
 
         self.addTo(GUI.RightCol, 35)
 
@@ -670,24 +663,6 @@ class Status(VBox):
         if self.AtMax:
             self.ContentContainer.Scroll.verticalScrollBar().setValue(self.ContentContainer.Scroll.verticalScrollBar().maximum())
 
-class MainHeader(HBox):
-    def __init__(self, window):
-        super().__init__(self)
-        self.Window = window
-        self.Manager = window.Manager
-
-        self.CheckForUpdates = Button(self, 'Check for Updates', self.checkForUpdates)
-        self.Settings = Button(self, 'Settings', self.accessSettings)
-        self.addStretch()
-
-        self.addTo(window.Widget, 5)
-
-    def accessSettings(self, event):
-        pass
-    
-    def checkForUpdates(self, event):
-        pass
-
 class MainContents(HBox):
     def __init__(self, window):
         super().__init__(self)
@@ -705,7 +680,7 @@ class MainContents(HBox):
 
         self.Games = Games(self)
         self.Tiles.setActive(None)
-        self.addTo(window.Widget, 95)
+        self.addTo(window.Widget)
 
     def startProcess(self, games):
         if not self.Window.Process:
@@ -724,7 +699,6 @@ class PRET_Manager_GUI(QMainWindow):
         self.setWindowTitle("pret manager")
         #self.setWindowIcon(QIcon('./assets/icon.png'))
         self.Widget = VBox(self)
-        self.Header = MainHeader(self)
         self.Content = MainContents(self)
         self.setCentralWidget(self.Widget)
         
