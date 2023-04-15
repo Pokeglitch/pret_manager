@@ -2,27 +2,47 @@ import sys, webbrowser
 
 '''
 TODO:
-- each list item and tile can have icons for quick add/remove to queue
-    - highlight whichever is active
+Fix Functionality:
 
-- Each game widget should indicate if it is downloaded or not
+- Instead of click/right click
+-- Have there be different click modes (like highighting in GIMP )
+--- Replace, OR, AND, NOT
+--- right click to immediately add to queue
+---- (same for Tiles)
+- When no filters, show All
+- Fix color not changing when right click on List item first time
 
-- Show when game is being processed
+- Show when game is being process in Panel
+- Show when game is in Queue (for Panel, Tile)
 
-- Show which games have updates
+---------
+Finish functionality:
 
-- Favorite/Exclude All
+- Detect if downloaded/missing, up to date/out of date
+-- Add to corresponding list
+-- Show in Panel, Tile
 
-For settings:
-- default emulator (or, per game or file type)
-- custom tags
-- default process actions
-- different path for rgbds builds
-- default list
+- Finish Favorite/Exclude, & way to export
+- Finish Saving Filter, Queue (& load upon opening)
 
-Add search filter (use glob on authors tree?)
+---------
+Extra functionality:
 
-Groups of Tags
+- Add Search Filter (can use glob patterns?)
+
+Way to create/handle Groups of Tags (i.e. Gen1, Gen2, TCG)
+- tag can be a list, or an object
+-- if object, the sub tags will be the exact same array at the real tag
+--- can have nested subtags
+
+New column:
+-Way to check if this program has updates/apply update
+-Way to Modify Settings:
+    - default emulator (or, per game or file type)
+    - custom tags
+    - default process actions
+    - different path for rgbds builds
+    - default List to display
 '''
 
 from PyQt5.QtCore import Qt, QThreadPool, QRunnable, QMargins, QPoint, QRect, QSize
@@ -193,6 +213,15 @@ class VScroll(VBox):
         self.Parent = parent
         parent.add(self.Scroll, *args)
 
+'''
+Mode:
+- OR Mode
+-- Active, will be added to content
+-- Inactive, relevance is ignored
+- AND Mode
+-- Inactive, will remove elements from content that arent in this list
+-- Active - will be removed from list
+'''
 class ListElement(HBox):
     def __init__(self, parent, Name):
         super().__init__(parent.GUI)
@@ -200,14 +229,37 @@ class ListElement(HBox):
         self.Source = parent.Source
         self.Label = self.label(Name)
         self.Data = self.Source[Name]
+        self.Active = False
+        self.AndMode = False
         self.addTo(parent)
 
-    def setActive(self, value):
-        self.setProperty("active",value)
-        self.updateStyle()
+    def toggleActive(self):
+        self.Active = not self.Active
+        self.setProperty("active",self.Active)
+
+    def toggleAndMode(self):
+        self.AndMode = not self.AndMode
+        self.setProperty("andMode",self.AndMode)
+
+    def handleClick(self):
+        if self.Active:
+            if self.AndMode:
+                self.GUI.Tiles.addNOT(self)
+            else:
+                self.GUI.Tiles.addOR(self)
+        elif self.AndMode:
+            self.GUI.Tiles.addAND(self)
+        else:
+            self.GUI.Tiles.remove(self)
 
     def mousePressEvent(self, event):
-        self.GUI.Tiles.setActive(self)
+        if event.button() == Qt.LeftButton:
+            self.toggleActive()
+        elif event.button() == Qt.RightButton:
+            self.toggleAndMode()
+
+        self.updateStyle()
+        self.handleClick()
 
 class DictList(ListElement):
     def __init__(self, *args):
@@ -235,6 +287,8 @@ class List(VBox):
         self.Label.setObjectName("list-header")
 
         self.ScrollBox = VScroll(parent.GUI)
+        self.ScrollBox.setObjectName("list")
+        self.ScrollBox.Scroll.setObjectName("list")
         self.ScrollBox.addTo(self, 95)
 
         self.Class = Class
@@ -269,36 +323,29 @@ class Groups(HBox):
         self.Lists = Lists(self)
         self.Authors = Authors(self)
         self.Tags = Tags(self)
-        self.addTo(GUI, 15)
+        self.addTo(GUI, 20)
 
 class GameQueue(HBox):
     def __init__(self, gameGUI):
         super().__init__(gameGUI.GUI)
         self.GameGUI = gameGUI
         self.label(gameGUI.Game.name)
-        self.addTo(self.GUI.Queue.ListGUI)
 
     def mousePressEvent(self, event):
         self.GUI.Panel.setActive(self.GameGUI)
 
-    def update(self):
-        self.setVisible(self.GameGUI.Game in self.GUI.Queue.List)
-
 class GameTile(VBox):
     def __init__(self, gameGUI):
         super().__init__(gameGUI.GUI)
+        self.setObjectName("Tile")
         self.GameGUI = gameGUI
         self.Name = self.label(gameGUI.Game.name)
         self.Artwork = self.label('<Artwork>')
         self.Title = self.label(gameGUI.Game.title)
         self.Author = self.label(gameGUI.Game.author)
-        self.addTo(self.GUI.Tiles.Content)
 
     def mousePressEvent(self, event):
         self.GUI.Panel.setActive(self.GameGUI)
-
-    def update(self):
-        self.setVisible( self.GUI.Tiles.contains(self.GameGUI.Game) )
 
 class Field(HBox):
     def __init__(self, parent, left, right):
@@ -316,7 +363,7 @@ class GamePanel(VBox):
         self.Author = Field(self, 'Author', gameGUI.Game.author)
         if gameGUI.Game.url:
             self.Website = Field(self, 'Website', 'Github')
-            self.Website.Right.mousePressEvent = self.openURL
+            self.Website.Right.mouseDoubleClickEvent = self.openURL
         self.Tags = Field(self, 'Tags', ','.join(gameGUI.Game.tags))
         self.Builds = Field(self, 'Builds', '\n'.join(gameGUI.Game.builds.keys()))
         # TODO - each specific ROM within each build (expand.collapse)
@@ -331,13 +378,8 @@ class GamePanel(VBox):
         # if IPS
         self.BaseROM = Field(self, 'Base', '<Select Base ROM>')
 
-        self.addTo(self.GUI.Panel.Display, 0, 0)
-
     def openURL(self, event):
         webbrowser.open(self.GameGUI.Game.url)
-
-    def update(self):
-        self.setVisible(self.GUI.Panel.Active == self)
 
 class Game:
     def __init__(self, GUI, game):
@@ -358,6 +400,10 @@ class Game:
         self.Tile.setProperty("active",value)
         self.Queue.updateStyle()
         self.Tile.updateStyle()
+        if value:
+            self.Panel.addTo(self.GUI.Panel.Display)
+        else:
+            self.Panel.setParent(None)
 
     def setProcessing(self, value):
         self.Queue.setProperty("processing",value)
@@ -365,16 +411,10 @@ class Game:
         self.Queue.updateStyle()
         self.Tile.updateStyle()
 
-    def update(self):
-        self.Queue.update()
-        self.Tile.update()
-        self.Panel.update()
-
 class Games:
     def __init__(self, GUI):
         self.GUI = GUI
         self.All = [Game(GUI, repo) for repo in GUI.Manager.All]
-        self.update()
 
     def update(self):
         [game.update() for game in self.All]
@@ -408,9 +448,7 @@ class Queue(VBox):
     def addGame(self, gameGUI):
         if gameGUI not in self.List:
             self.List.append(gameGUI)
-            # add again so it appears at bottom of queue
             gameGUI.Queue.addTo(self.ListGUI)
-            gameGUI.Queue.setVisible(True)
 
     def addGames(self, games):
         [self.addGame(game.GUI) for game in games]
@@ -418,7 +456,7 @@ class Queue(VBox):
     def removeGame(self, gameGUI):
         if gameGUI in self.List:
             self.List.pop( self.List.index(gameGUI) )
-            gameGUI.Queue.setVisible(False)
+            gameGUI.Queue.setParent(None)
 
     def removeGames(self, games):
         [self.removeGame(game.GUI) for game in games]
@@ -436,8 +474,8 @@ class TileContent(Flow):
     def __init__(self, parent):
         super().__init__(parent.GUI)
         self.setObjectName('Tiles')
-        self.Scroll.setObjectName('Tiles')
         self.Layout.setSpacing(10)
+        self.Scroll.setObjectName('Tiles')
         self.addTo(parent, 95)
 
 class TilesHeader(HBox):
@@ -448,56 +486,178 @@ class TilesHeader(HBox):
         self.Type.setObjectName("header")
         self.Name = self.label()
         self.Name.setObjectName("header")
-        self.AddToQueue = Button(self, 'Add All', parent.addToQueue)
-        self.RemoveFromQueue = Button(self, 'Remove All', parent.removeFromQueue)
-        self.Process = Button(self, 'Process All', parent.process)
+        self.Save = Button(self, 'Save', parent.save)
         self.addTo(parent, 5)
 
     def setText(self, type, name=''):
         self.Type.setText(type)
         self.Name.setText(name)
 
+class PanelFooter(HBox):
+    def __init__(self, parent):
+        super().__init__(parent.GUI)
+        self.setObjectName("footer")
+        self.AddToQueue = Button(self, 'Add', parent.addToQueue)
+        self.RemoveFromQueue = Button(self, 'Remove', parent.removeFromQueue)
+        self.Process = Button(self, 'Process', parent.process)
+        self.Favorite = Button(self, 'Favorite', parent.favorite)
+        self.Exclude = Button(self, 'Exclude', parent.exclude)
+        self.addTo(parent, 10)
+
 class Tiles(VBox):
     def __init__(self, GUI):
         super().__init__(GUI)
         self.Active = None
-        self.List = [] # List of Games (not GameGUIs)
+        self.OR_Lists = []
+        self.OR_Games = []
+        self.AND_Lists = []
+        self.AND_Games = []
+        self.NOT_Lists = []
+        self.NOT_Games = []
+        self.All_Games = []
+
         self.Header = TilesHeader(self)
         self.Content = TileContent(self)
-        self.addTo(GUI, 25)
-
-    def setActive(self, instance):
-        [game.GUI.Tile.setVisible(False) for game in self.List]
-
-        if self.Active:
-            self.Active.setActive(False)
-
-        self.Active = None if instance == self.Active else instance
-
-        if self.Active:
-            self.Header.setText(self.Active.Parent.ID, self.Active.Name)
-            self.List = self.Active.getData()
-            self.Active.setActive(True)
-        else:
-            self.Header.setText('All Games')
-            self.List = [game.Game for game in self.GUI.Games.All]
-
-        [game.GUI.Tile.setVisible(True) for game in self.List]
-
-    def addToQueue(self, event):
-        self.GUI.Queue.addGames(self.List)
-
-    def removeFromQueue(self, event):
-        self.GUI.Queue.removeGames(self.List)
-
-    def process(self, event):
-        self.GUI.startProcess([game for game in self.List])
-
-    def contains(self, game):
-        if self.Active:
-            return game in self.Active.getData()
+        self.Footer = PanelFooter(self)
+        self.addTo(GUI, 29)
+    
+    def is_game_valid(self, game):
+        if self.OR_Games:
+            if self.AND_Games:
+                return game in self.OR_Games and game in self.AND_Games and game not in self.NOT_Games
+            else:
+                return game in self.OR_Games and game not in self.NOT_Games
+        elif self.AND_Games:
+            return game in self.AND_Games and game not in self.NOT_Games
         else:
             return False
+
+    def compile(self):
+        for game in self.All_Games[:]:
+            if not self.is_game_valid(game):
+                self.All_Games.pop(self.All_Games.index(game))
+                game.GUI.Tile.setParent(None)
+
+        if self.OR_Lists:
+            for game in self.OR_Games:
+                if self.is_game_valid(game):
+                    self.All_Games.append(game)
+                    game.GUI.Tile.addTo(self.Content)
+        elif self.AND_Lists:
+            for game in self.AND_Games:
+                if self.is_game_valid(game):
+                    self.All_Games.append(game)
+                    game.GUI.Tile.addTo(self.Content)
+
+    def save(self):
+        pass
+
+    def removeList(self, list, type):
+        lists = getattr(self, type + '_Lists')
+        if list not in lists:
+            return
+
+        lists.pop(lists.index(list))
+
+        # Recompile games list
+        games = []
+        setattr(self, type + '_Games', games)
+        
+        if type == 'AND':
+            firstList = True
+            for list in lists:
+                if firstList:
+                    games += list.getData()
+                    firstList = False
+                else:
+                    data = list.getData()
+                    for game in games[:]:
+                        if game not in data:
+                            games.pop(games.index(game))
+        else:
+            for list in lists:
+                for game in list.getData():
+                    if game not in games:
+                        games.append(game)
+
+    def removeNOT(self, list):
+        self.removeList(list, 'NOT')
+
+    def removeAND(self, list):
+        self.removeList(list, 'AND')
+
+    def removeOR(self, list):
+        self.removeList(list, 'OR')
+
+    def remove(self, list):
+        self.removeList(list, 'OR')
+        self.removeList(list, 'AND')
+        self.removeList(list, 'NOT')
+        self.compile()
+
+    def addAND(self, list):
+        self.removeOR(list)
+        self.removeNOT(list)
+
+        if list in self.AND_Lists:
+            return
+
+        self.AND_Lists.append(list)
+
+        data = list.getData()
+        if len(self.AND_Lists) == 1:
+            self.AND_Games += data
+        else:
+            for game in self.AND_Games[:]:
+                if game not in data:
+                    self.AND_Games.pop(self.AND_Games.index(game))
+
+        self.compile()
+
+    def addNOT(self, list):
+        self.removeAND(list)
+        self.removeOR(list)
+
+        if list in self.NOT_Lists:
+            return
+
+        self.NOT_Lists.append(list)
+
+        for game in list.getData():
+            if game not in self.NOT_Games:
+                self.NOT_Games.append(game)
+
+        self.compile()
+
+    def addOR(self, list):
+        self.removeAND(list)
+        self.removeNOT(list)
+
+        if list in self.OR_Lists:
+            return
+
+        self.OR_Lists.append(list)
+
+        for game in list.getData():
+            if game not in self.OR_Games:
+                self.OR_Games.append(game)
+
+        self.compile()
+
+    def addToQueue(self, event):
+        self.GUI.Queue.addGames(self.All_Games)
+
+    def removeFromQueue(self, event):
+        self.GUI.Queue.removeGames(self.All_Games)
+
+    def process(self, event):
+        self.GUI.startProcess([game for game in self.All_Games])
+
+    def favorite(self, event):
+        pass
+
+    def exclude(self, event):
+        pass
 
 class Button(QLabel):
     def __init__(self, parent, text, click):
@@ -523,14 +683,10 @@ class PanelHeader(HBox):
         super().__init__(parent.GUI)
         self.setObjectName("header-frame")
 
-        self.Left = HBox(parent.GUI)
-        self.Label = self.Left.label()
+        self.Label = self.label()
         self.Label.setObjectName("header")
-        self.Left.addTo(self)
 
         self.Right = HBox(parent.GUI)
-        self.Favorite = Button(self.Right, 'Favorite', parent.favorite)
-        self.Exclude = Button(self.Right, 'Exclude', parent.exclude)
         self.Right.addTo(self)
 
         self.addTo(parent, 10)
@@ -541,9 +697,12 @@ class PanelHeader(HBox):
 class PanelFooter(HBox):
     def __init__(self, parent):
         super().__init__(parent.GUI)
+        self.setObjectName("footer")
         self.AddToQueue = Button(self, 'Add', parent.addToQueue)
         self.RemoveFromQueue = Button(self, 'Remove', parent.removeFromQueue)
         self.Process = Button(self, 'Process', parent.process)
+        self.Favorite = Button(self, 'Favorite', parent.favorite)
+        self.Exclude = Button(self, 'Exclude', parent.exclude)
         self.addTo(parent, 10)
 
 class Panel(VBox):
@@ -551,25 +710,23 @@ class Panel(VBox):
         super().__init__(GUI)
         self.Header = PanelHeader(self)
 
-        self.Display = Grid(GUI)
+        self.Display = VScroll(GUI)
         self.Display.addTo(self, 80)
         
         self.Footer = PanelFooter(self)
 
         self.Active = None
         self.setActive(None)
-        self.addTo(GUI, 25)
+        self.addTo(GUI, 20)
 
     def setActive(self, game):
         if self.Active:
             self.Active.setActive(False)
-            self.Active.Panel.setVisible(False)
 
         self.Active = None if game == self.Active else game
 
         if self.Active:
             self.Active.setActive(True)
-            self.Active.Panel.setVisible(True)
             self.Header.setText(self.Active.Game.name)
         else:
             self.Header.setText("Select a Game")
@@ -620,9 +777,9 @@ class Status(VBox):
         self.ToggleUpdate = ToggleButton(self.Header, 'Update', self.toggleUpdate)
         self.ToggleBuild = ToggleButton(self.Header, 'Build', self.toggleBuild)
         self.ToggleClean = ToggleButton(self.Header, 'Clean', self.toggleClean)
-        self.ToggleUpdate.setActive(False)
-        self.ToggleBuild.setActive(False)
-        self.ToggleClean.setActive(False)
+        self.ToggleUpdate.setActive(self.GUI.Manager.doUpdate)
+        self.ToggleBuild.setActive(self.GUI.Manager.doBuild != None)
+        self.ToggleClean.setActive(self.GUI.Manager.doClean)
 
         self.Header.addTo(self, 10)
 
@@ -679,7 +836,6 @@ class MainContents(HBox):
         self.Status = Status(self)
 
         self.Games = Games(self)
-        self.Tiles.setActive(None)
         self.addTo(window.Widget)
 
     def startProcess(self, games):

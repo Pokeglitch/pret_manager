@@ -103,7 +103,7 @@ class PRET_Manager:
     def run(self):
         if not self.Selection:
             self.print('Queue is empty')
-        elif self.doUpdate or self.doClean or self.doBuild:
+        elif self.doUpdate or self.doClean or self.doBuild != None:
             for repo in self.Selection:
                 if repo.GUI:
                     repo.GUI.setProcessing(True)
