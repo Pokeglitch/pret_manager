@@ -319,7 +319,11 @@ class GroupFooter(HBox):
         self.Not.setProperty('active',False)
         self.addTo(parent)
 
-class Catalogs(VBox):
+class CatalogsGUI(VBox):
+    # TODO - switch to this once all 4 columns are ready (since Catalogs should be first...)
+    #def __init__(self, data):
+    #    self.Data = data
+    #    GUI = data.Manager.GUI.Content
     def __init__(self, GUI):
         super().__init__(GUI)
         self.Mode = None
@@ -866,7 +870,7 @@ class MainContents(HBox):
         super().__init__(self)
         self.Window = window
         self.Manager = window.Manager
-        self.Catalogs = Catalogs(self)
+        self.Catalogs = CatalogsGUI(self)
         self.Tiles = Tiles(self)
         self.Panel = Panel(self)
 

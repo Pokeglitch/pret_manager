@@ -96,12 +96,13 @@ class ListEntry(CatalogEntry):
         pass
 
 class Catalog:
-    def __init__(self, manager, name, entryClass):
-        self.Manager = manager
+    def __init__(self, catalogs, name, entryClass):
+        self.Catalogs = catalogs
+        self.Manager = catalogs.Manager
         self.Name = name
         self.EntryClass = entryClass
         self.Entries = {}
-        self.GUI = gui.CatalogGUI(self) if manager.GUI else None
+        self.GUI = gui.CatalogGUI(self) if catalogs.GUI else None
 
     def get(self, entry):
         return self.Entries[entry] if self.has(entry) else None
@@ -113,16 +114,24 @@ class Catalog:
         return name in self.Entries
 
 class ListCatalog(Catalog):
-    def __init__(self, *args):
-        super().__init__(*args, 'Lists', ListEntry)
+    def __init__(self, catalogs):
+        super().__init__(catalogs, 'Lists', ListEntry)
 
 class AuthorCatalog(Catalog):
-    def __init__(self, *args):
-        super().__init__(*args, 'Authors', AuthorEntry)
+    def __init__(self, catalogs):
+        super().__init__(catalogs, 'Authors', AuthorEntry)
 
 class TagCatalog(Catalog):
-    def __init__(self, *args):
-        super().__init__(*args, 'Tags', TagEntry)
+    def __init__(self, catalogs):
+        super().__init__(catalogs, 'Tags', TagEntry)
+
+class Catalogs:
+    def __init__(self, manager):
+        self.Manager = manager
+        self.GUI = True if manager.GUI else None
+        self.Lists = ListCatalog(self)
+        self.Authors = AuthorCatalog(self)
+        self.Tags = TagCatalog(self)
 
 class PRET_Manager:
     def __init__(self):
@@ -141,13 +150,13 @@ class PRET_Manager:
         self.doClean = False
 
     def addList(self, name, list):
-        if self.Lists.has(name):
-            self.Lists.get(name).reset()
+        if self.Catalogs.Lists.has(name):
+            self.Catalogs.Lists.get(name).reset()
         else:
-            self.Lists.add(name)
+            self.Catalogs.Lists.add(name)
 
         for author in list:
-            [self.Authors.get(author).getGame(title).addToList(self.Lists.get(name)) for title in list[author]]
+            [self.Catalogs.Authors.get(author).getGame(title).addToList(self.Catalogs.Lists.get(name)) for title in list[author]]
 
     def init_GUI(self):
         # TODO - these should come from default parameters loaded within 'init'
@@ -170,9 +179,7 @@ class PRET_Manager:
         subprocess.run(['git', 'pull'], capture_output=True)
 
     def init(self):
-        self.Lists = ListCatalog(self)
-        self.Authors = AuthorCatalog(self)
-        self.Tags = TagCatalog(self)
+        self.Catalogs = Catalogs(self)
 
         self.load('data.json')
 
@@ -239,7 +246,7 @@ class PRET_Manager:
             self.print('Queue is empty')
         elif self.doUpdate or self.doClean or self.doBuild != None:
             for repo in self.Queue:
-                if self.Lists.get('Excluding').has(repo):
+                if self.Catalogs.Lists.get('Excluding').has(repo):
                     self.print('Excluding ' + repo.name)
                     continue
 
@@ -276,7 +283,7 @@ class PRET_Manager:
             data = json.loads(f.read())
 
         for author in data:
-            self.Authors.add(author)
+            self.Catalogs.Authors.add(author)
 
             for title in data[author]:
                 if title == "rgbds":
@@ -286,16 +293,16 @@ class PRET_Manager:
                     repo = repository(self, author, title, data[author][title])
                     self.All.append(repo)
 
-                self.Authors.get(author).addGame(repo)
+                self.Catalogs.Authors.get(author).addGame(repo)
 
                 for tag in repo.tags:
                     self.add_repo_tag(repo, tag)
 
     def add_repo_tag(self, repo, tag):
-        if not self.Tags.has(tag):
-            self.Tags.add(tag)
+        if not self.Catalogs.Tags.has(tag):
+            self.Catalogs.Tags.add(tag)
 
-        self.Tags.get(tag).addGame(repo)
+        self.Catalogs.Tags.get(tag).addGame(repo)
 
     def add_to_queue(self, repos):
         for repo in repos:
@@ -319,42 +326,42 @@ class PRET_Manager:
     def add_repos(self, repos):
         for repo in repos:
             [author, title] = repo.split('/')
-            self.add_to_queue([self.Authors.get(author).getGame(title)])
+            self.add_to_queue([self.Catalogs.Authors.get(author).getGame(title)])
 
     def remove_repos(self, repos):
         for repo in repos:
             [author, title] = repo.split('/')
-            self.remove_from_queue([self.Authors.get(author).getGame(title)])
+            self.remove_from_queue([self.Catalogs.Authors.get(author).getGame(title)])
 
     def add_authors(self, authors):
         for author in authors:
-            self.add_to_queue(self.Authors.get(author).GameList)
+            self.add_to_queue(self.Catalogs.Authors.get(author).GameList)
 
     def remove_authors(self, authors):
         for author in authors:
-            self.remove_from_queue(self.Authors.get(author).GameList)
+            self.remove_from_queue(self.Catalogs.Authors.get(author).GameList)
     
     def keep_authors(self, authors):
         repos = []
         for author in authors:
-            repos += [self.Authors.get(author).GameList]
+            repos += [self.Catalogs.Authors.get(author).GameList]
         
         self.keep_in_queue(repos)
 
     def add_tags(self, tags):
         for tag in tags:
-            if self.Tags.has(tag):
-                self.add_to_queue(self.Tags.get(tag).GameList)
+            if self.Catalogs.Tags.has(tag):
+                self.add_to_queue(self.Catalogs.Tags.get(tag).GameList)
 
     def remove_tags(self, tags):
         for tag in tags:
-            if self.Tags.has(tag):
-                 self.remove_from_queue(self.Tags.get(tag).GameList)
+            if self.Catalogs.Tags.has(tag):
+                 self.remove_from_queue(self.Catalogs.Tags.get(tag).GameList)
 
     def keep_tags(self, tags):
         for tag in tags:
-            if self.Tags.has(tag):
-                self.keep_in_queue(self.Tags.get(tag).GameList)
+            if self.Catalogs.Tags.has(tag):
+                self.keep_in_queue(self.Catalogs.Tags.get(tag).GameList)
 
 class game:
     def __init__(self, manager):
