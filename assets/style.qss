@@ -74,45 +74,45 @@ ToggleButton[active="true"]:hover {
     background-color: #68846a;
 }
 
-ListElement[mode="Not"] {
+CatalogEntryGUI[mode="Not"] {
     background-color: #e58080
 }
 
-ListElement[mode="Not"]:hover {
+CatalogEntryGUI[mode="Not"]:hover {
     background-color: #e78c8c
 }
 
-ListElement[mode="And"] {
+CatalogEntryGUI[mode="And"] {
     background-color: #E5DD80
 }
 
-ListElement[mode="And"]:hover {
+CatalogEntryGUI[mode="And"]:hover {
     background-color: #e7e08c
 }
 
-GameQueue, ListElement {
+GameQueue, CatalogEntryGUI {
     min-height: 15px;
     max-height: 15px;
     background-color: #EEEEEE
 }
 
-GameQueue:hover, ListElement:hover, GameTile:hover {
+GameQueue:hover, CatalogEntryGUI:hover, GameTile:hover {
     background-color: #FFFFFF
 }
 
-GameQueue[active="true"], ListElement[mode="New"], ListElement[mode="Or"], GameTile[active="true"] {
+GameQueue[active="true"], CatalogEntryGUI[mode="New"], CatalogEntryGUI[mode="Or"], GameTile[active="true"] {
     background-color: #9FB4D3;
 }
 
-GameQueue[active="true"]:hover, ListElement[mode="New"]:hover, ListElement[mode="Or"]:hover, GameTile[active="true"]:hover {
+GameQueue[active="true"]:hover, CatalogEntryGUI[mode="New"]:hover, CatalogEntryGUI[mode="Or"]:hover, GameTile[active="true"]:hover {
     background-color: #a8bbd7;
 }
 
-GameQueue[processing="true"], ListElement[processing="true"], GameTile[processing="true"] {
+GameQueue[processing="true"], CatalogEntryGUI[processing="true"], GameTile[processing="true"] {
     background-color: #65ba68;
 }
 
-GameQueue[processing="true"]:hover, ListElement[processing="true"]:hover, GameTile[processing="true"]:hover {
+GameQueue[processing="true"]:hover, CatalogEntryGUI[processing="true"]:hover, GameTile[processing="true"]:hover {
     background-color: #74c077;
 }
 

@@ -242,15 +242,18 @@ class VScroll(VBox):
         self.Parent = parent
         parent.add(self.Scroll, *args)
 
-class ListElement(HBox):
-    def __init__(self, parent, Name):
+class CatalogEntryGUI(HBox):
+    def __init__(self, parent, data):
         super().__init__(parent.GUI)
-        self.Name = Name
+        self.Data = data
+        self.Name = data.Name
         self.Source = parent.Source
-        self.Label = self.label(Name)
-        self.Data = self.Source[Name]
+        self.Label = self.label(data.Name)
         self.Mode = None
         self.addTo(parent)
+
+    def getData(self):
+        return self.Data.GameList
 
     def setMode(self, mode):
         self.Mode = mode
@@ -269,27 +272,20 @@ class ListElement(HBox):
         elif event.button() == Qt.RightButton:
             self.GUI.Queue.addGames(self.getData())
 
-class DictList(ListElement):
-    def __init__(self, *args):
-        super().__init__(*args)
+class AuthorGUI(CatalogEntryGUI):
+    def __init__(self, data):
+        super().__init__(data.Manager.GUI.Content.Groups.Authors, data)
 
-    def getData(self):
-        return [self.Source[self.Name][title] for title in self.Source[self.Name]]
+class TagGUI(CatalogEntryGUI):
+    def __init__(self, data):
+        super().__init__(data.Manager.GUI.Content.Groups.Tags, data)
 
-class AuthorGUI(DictList):
-    def __init__(self, author):
-        self.Author = author
-        super().__init__(author.Manager.GUI.Content.Groups.Authors, author.Name)
+class ListGUI(CatalogEntryGUI):
+    def __init__(self, data):
+        super().__init__(data.Manager.GUI.Content.Groups.Lists, data)
 
-class ArrayList(ListElement):
-    def __init__(self, *args):
-        super().__init__(*args)
-
-    def getData(self):
-        return self.Source[self.Name]
-
-class List(VBox):
-    def __init__(self, parent, ID, Class):
+class CatalogGUI(VBox):
+    def __init__(self, parent, ID):
         super().__init__(parent.GUI)
 
         self.ID = ID[:-1]
@@ -306,7 +302,6 @@ class List(VBox):
         self.ListGUI.addTo(self.ListContainer)
         self.ListContainer.addStretch()
 
-        self.Class = Class
         self.Source = getattr(parent.GUI.Manager, ID)
 
         self.addTo(parent.Body)
@@ -321,17 +316,17 @@ class List(VBox):
         else:
             super().add(widget, *args)
 
-class Authors(List):
+class Authors(CatalogGUI):
     def __init__(self, parent):
-        super().__init__(parent, "Authors", AuthorGUI)
+        super().__init__(parent, "Authors")
 
-class Tags(List):
+class Tags(CatalogGUI):
     def __init__(self, parent):
-        super().__init__(parent, "Tags", ArrayList)
+        super().__init__(parent, "Tags")
 
-class Lists(List):
+class Lists(CatalogGUI):
     def __init__(self, parent):
-        super().__init__(parent, "Lists", ArrayList)
+        super().__init__(parent, "Lists")
 
 class GroupFooter(HBox):
     def __init__(self, parent):
