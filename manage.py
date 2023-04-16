@@ -12,15 +12,15 @@ def mkdir(*dirs):
         if not os.path.exists(dir):
             os.mkdir(dir)
 
+# Ensure all necessary base directories exist
+games_dir = 'games/'
 data_dir = 'data/'
-local_dir = 'local/'
-list_dir = local_dir + 'lists/'
-mkdir(local_dir, list_dir)
+list_dir = data_dir + 'lists/'
+mkdir(games_dir, data_dir, list_dir)
 
 class PRET_Manager:
     def __init__(self):
-        self.Directory = data_dir
-        mkdir(self.Directory)
+        self.Directory = games_dir
         
         self.All = []
         self.Authors = {}
@@ -35,7 +35,7 @@ class PRET_Manager:
         self.GUI = None
         self.App = None
 
-        self.Selection = []
+        self.Queue = []
         self.doUpdate = False
         self.doBuild = None
         self.doClean = False
@@ -118,10 +118,10 @@ class PRET_Manager:
         self.run()
 
     def run(self):
-        if not self.Selection:
+        if not self.Queue:
             self.print('Queue is empty')
         elif self.doUpdate or self.doClean or self.doBuild != None:
-            for repo in self.Selection:
+            for repo in self.Queue:
                 if repo.GUI:
                     repo.GUI.setProcessing(True)
                 self.print('Processing ' + repo.name)
@@ -144,7 +144,7 @@ class PRET_Manager:
         else:
             self.print('No actions to process')
 
-        self.clear_selection()
+        self.clear_queue()
 
     def load(self, filepath):
         if not os.path.exists(filepath):
@@ -175,64 +175,64 @@ class PRET_Manager:
             self.Tags[tag] = []
         self.Tags[tag].append(repo)
 
-    def add_to_selection(self, repos):
+    def add_to_queue(self, repos):
         for repo in repos:
-            if repo not in self.Selection:
-                self.Selection.append(repo)
+            if repo not in self.Queue:
+                self.Queue.append(repo)
 
-    def remove_from_selection(self, repos):
+    def remove_from_queue(self, repos):
         for repo in repos:
-            if repo in self.Selection:
-                self.Selection.pop( self.Selection.index(repo) )
+            if repo in self.Queue:
+                self.Queue.pop( self.Queue.index(repo) )
     
-    def keep_in_selection(self, repos):
-        self.remove_from_selection([repo for repo in self.Selection if repo not in repos])
+    def keep_in_queue(self, repos):
+        self.remove_from_queue([repo for repo in self.Queue if repo not in repos])
 
     def add_all(self):
-        self.add_to_selection(self.All)
+        self.add_to_queue(self.All)
 
-    def clear_selection(self):
-        self.Selection = []
+    def clear_queue(self):
+        self.Queue = []
 
     def add_repos(self, repos):
         for repo in repos:
             [author, title] = repo.split('/')
-            self.add_to_selection([self.Authors[author][title]])
+            self.add_to_queue([self.Authors[author][title]])
 
     def remove_repos(self, repos):
         for repo in repos:
             [author, title] = repo.split('/')
-            self.remove_from_selection([self.Authors[author][title]])
+            self.remove_from_queue([self.Authors[author][title]])
 
     def add_authors(self, authors):
         for author in authors:
-            self.add_to_selection([self.Authors[author][title] for title in self.Authors[author]])
+            self.add_to_queue([self.Authors[author][title] for title in self.Authors[author]])
 
     def remove_authors(self, authors):
         for author in authors:
-            self.remove_from_selection([self.Authors[author][title] for title in self.Authors[author]])
+            self.remove_from_queue([self.Authors[author][title] for title in self.Authors[author]])
     
     def keep_authors(self, authors):
         repos = []
         for author in authors:
             repos += [self.Authors[author][title] for title in self.Authors[author]]
         
-        self.keep_in_selection(repos)
+        self.keep_in_queue(repos)
 
     def add_tags(self, tags):
         for tag in tags:
             if tag in self.Tags:
-                self.add_to_selection(self.Tags[tag])
+                self.add_to_queue(self.Tags[tag])
 
     def remove_tags(self, tags):
         for tag in tags:
             if tag in self.Tags:
-                 self.remove_from_selection(self.Tags[tag])
+                 self.remove_from_queue(self.Tags[tag])
 
     def keep_tags(self, tags):
         for tag in tags:
             if tag in self.Tags:
-                self.keep_in_selection(self.Tags[tag])
+                self.keep_in_queue(self.Tags[tag])
 
 def get_dirs(path):
     return next(os.walk(path))[1]

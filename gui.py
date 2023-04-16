@@ -947,11 +947,11 @@ class MainContents(HBox):
         data = listToDict(list)
         self.Manager.addList(name, data)
 
-        with open('local/lists/' + name + '.json', 'w') as f:
+        with open('data/lists/' + name + '.json', 'w') as f:
             f.write(json.dumps(data))
 
     def saveList(self, list):
-        fileName, ext = QFileDialog.getSaveFileName(self, 'Save List As', 'local/lists','*.json')
+        fileName, ext = QFileDialog.getSaveFileName(self, 'Save List As', 'data/lists','*.json')
         if fileName:
             data = listToDict(list)
             with open(fileName,'w') as f:
@@ -965,7 +965,7 @@ class MainContents(HBox):
 
     def startProcess(self, games):
         if not self.Window.Process:
-            self.GUI.Manager.add_to_selection(games)
+            self.GUI.Manager.add_to_queue(games)
             self.Window.Process = Process(self)
             threadpool.start(self.Window.Process)
 
