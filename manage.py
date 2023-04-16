@@ -12,6 +12,8 @@ def mkdir(*dirs):
         if not os.path.exists(dir):
             os.mkdir(dir)
 
+mkdir('local','local/lists')
+
 class PRET_Manager:
     def __init__(self):
         self.Directory = 'data/'

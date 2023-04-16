@@ -1,16 +1,11 @@
-import sys, webbrowser
+import sys, webbrowser, json
 
 '''
 TODO:
 Fix Functionality:
 
-- Instead of click/right click:
--- Have there be different click modes (like highighting in GIMP )
---- Replace, OR, AND, NOT
---- right click to immediately add to queue
----- (same for Tiles)
 - When no filters, show All
-- Fix color not changing when right click on List item first time
+- Way to save filter separately from list
 
 For Panel:
 - Show when game is in queue, being processed
@@ -67,7 +62,7 @@ IPS classes and applying
 '''
 
 from PyQt5.QtCore import Qt, QThreadPool, QRunnable, QMargins, QPoint, QRect, QSize
-from PyQt5.QtWidgets import QApplication, QStyleOption, QStyle, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
+from PyQt5.QtWidgets import QFileDialog, QApplication, QStyleOption, QStyle, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
 from PyQt5.QtGui import QIcon, QPainter
 
 threadpool = QThreadPool()
@@ -472,7 +467,8 @@ class Queue(VBox):
 
         self.Clear = Button(self.Header, 'Clear', self.clear)
         self.Process = Button(self.Header, 'Process', self.process)
-        self.Save = Button(self.Header, 'Save', self.save)
+        # todo - disable when queue is empty
+        self.SaveList = Button(self.Header, 'Save', self.saveList)
 
         self.ListContainer = VScroll(GUI)
         self.ListContainer.addTo(self, 95)
@@ -507,8 +503,9 @@ class Queue(VBox):
     def process(self, event):
         self.GUI.startProcess([gameGUI.Game for gameGUI in self.List])
 
-    def save(self, event):
-        pass
+    def saveList(self, event):
+        if event.button() == Qt.LeftButton and self.List:
+            self.GUI.saveList([gameGUI.game for gameGUI in self.List])
 
 class TileContent(Flow):
     def __init__(self, parent):
@@ -526,7 +523,8 @@ class TilesHeader(HBox):
         self.Type.setObjectName("header")
         self.Name = self.label()
         self.Name.setObjectName("header")
-        self.Save = Button(self, 'Save', parent.save)
+        # todo - disable when list is empty
+        self.SaveList = Button(self, 'Save', parent.saveList)
         self.addTo(parent, 5)
 
     def setText(self, type, name=''):
@@ -590,8 +588,9 @@ class Tiles(VBox):
                     self.All_Games.append(game)
                     game.GUI.Tile.addTo(self.Content)
 
-    def save(self, event):
-        pass
+    def saveList(self, event):
+        if event.button() == Qt.LeftButton and self.All_Games:
+            self.GUI.saveList(self.All_Games)
 
     def removeList(self, list, type):
         lists = getattr(self, type + '_Lists')
@@ -888,6 +887,19 @@ class MainContents(HBox):
 
         self.Games = Games(self)
         self.addTo(window.Widget)
+
+    def saveList(self, list):
+        fileName, ext = QFileDialog.getSaveFileName(self, 'Save List As', 'local/lists','*.json')
+        if fileName:
+            data = {}
+            for game in list:
+                if game.author in data:
+                    data[game.author].append(game.title)
+                else:
+                    data[game.author] = [game.title]
+
+            with open(fileName,'w') as f:
+                f.write(json.dumps(data))
 
     def startProcess(self, games):
         if not self.Window.Process:
