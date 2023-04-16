@@ -36,12 +36,17 @@ list_dir = data_dir + 'lists/'
 mkdir(games_dir, data_dir, list_dir)
 
 class CatalogEntry:
-    def __init__(self, manager, name, guiClass):
-        self.Manager = manager
+    def __init__(self, catalog, name):
+        self.Catalog = catalog
+        self.Manager = catalog.Manager
         self.Name = name
-        self.GUI = guiClass(self) if manager.GUI else None
-        self.reset()
-        
+        self.GUI = gui.CatalogEntryGUI(self) if catalog.GUI else None
+        self.GameStructure = {}
+        self.GameList = []
+
+    def has(self, game):
+        return game in self.GameList
+
     def reset(self):
         self.GameStructure = {}
         self.GameList = []
@@ -56,7 +61,9 @@ class CatalogEntry:
 
 class AuthorEntry(CatalogEntry):
     def __init__(self, *args):
-        super().__init__(*args, gui.AuthorEntryGUI)
+        super().__init__(*args)
+
+        # TODO - only when the game is getting built...
         mkdir(games_dir + self.Name)
 
     def getGame(self, title):
@@ -73,12 +80,11 @@ class AuthorEntry(CatalogEntry):
         super().removeGame(game)
 
 class TagEntry(CatalogEntry):
-    def __init__(self, *args):
-        super().__init__(*args, gui.TagEntryGUI)
+    pass
 
 class ListEntry(CatalogEntry):
-    def __init__(self, *args):
-        super().__init__(*args, gui.ListEntryGUI)
+    def reset(self):
+        [game.removeFromList(self) for game in self.GameList[:]]
 
     def addGame(self, game):
         super().addGame(game)
@@ -90,21 +96,39 @@ class ListEntry(CatalogEntry):
         pass
 
 class Catalog:
-    def __init__(self, name):
+    def __init__(self, manager, name, entryClass):
+        self.Manager = manager
         self.Name = name
+        self.EntryClass = entryClass
         self.Entries = {}
+        self.GUI = gui.CatalogGUI(self) if manager.GUI else None
 
-    def addEntry(self, name, entry):
-        self.Entries[name] = entry
+    def get(self, entry):
+        return self.Entries[entry] if self.has(entry) else None
+
+    def add(self, name):
+        self.Entries[name] = self.EntryClass(self, name)
+
+    def has(self, name):
+        return name in self.Entries
+
+class ListCatalog(Catalog):
+    def __init__(self, *args):
+        super().__init__(*args, 'Lists', ListEntry)
+
+class AuthorCatalog(Catalog):
+    def __init__(self, *args):
+        super().__init__(*args, 'Authors', AuthorEntry)
+
+class TagCatalog(Catalog):
+    def __init__(self, *args):
+        super().__init__(*args, 'Tags', TagEntry)
 
 class PRET_Manager:
     def __init__(self):
         self.Directory = games_dir
         
         self.All = []
-        self.Authors = {}
-        self.Lists = {}
-        self.Tags = {}
         self.Verbose = False
 
         self.doGUI = False
@@ -117,13 +141,13 @@ class PRET_Manager:
         self.doClean = False
 
     def addList(self, name, list):
-        if name not in self.Lists:
-            self.Lists[name] = ListEntry(self, name)
+        if self.Lists.has(name):
+            self.Lists.get(name).reset()
         else:
-            self.Lists[name].reset()
+            self.Lists.add(name)
 
         for author in list:
-            [self.Authors[author].getGame(title).addToList(self.Lists[name]) for title in list[author]]
+            [self.Authors.get(author).getGame(title).addToList(self.Lists.get(name)) for title in list[author]]
 
     def init_GUI(self):
         # TODO - these should come from default parameters loaded within 'init'
@@ -146,6 +170,10 @@ class PRET_Manager:
         subprocess.run(['git', 'pull'], capture_output=True)
 
     def init(self):
+        self.Lists = ListCatalog(self)
+        self.Authors = AuthorCatalog(self)
+        self.Tags = TagCatalog(self)
+
         self.load('data.json')
 
         # Initialize the base lists
@@ -211,7 +239,7 @@ class PRET_Manager:
             self.print('Queue is empty')
         elif self.doUpdate or self.doClean or self.doBuild != None:
             for repo in self.Queue:
-                if repo in self.Lists['Excluding'].GameList:
+                if self.Lists.get('Excluding').has(repo):
                     self.print('Excluding ' + repo.name)
                     continue
 
@@ -248,7 +276,7 @@ class PRET_Manager:
             data = json.loads(f.read())
 
         for author in data:
-            self.Authors[author] = AuthorEntry(self, author)
+            self.Authors.add(author)
 
             for title in data[author]:
                 if title == "rgbds":
@@ -258,16 +286,16 @@ class PRET_Manager:
                     repo = repository(self, author, title, data[author][title])
                     self.All.append(repo)
 
-                self.Authors[author].addGame(repo)
+                self.Authors.get(author).addGame(repo)
 
                 for tag in repo.tags:
                     self.add_repo_tag(repo, tag)
 
     def add_repo_tag(self, repo, tag):
-        if tag not in self.Tags:
-            self.Tags[tag] = TagEntry(self, tag)
+        if not self.Tags.has(tag):
+            self.Tags.add(tag)
 
-        self.Tags[tag].addGame(repo)
+        self.Tags.get(tag).addGame(repo)
 
     def add_to_queue(self, repos):
         for repo in repos:
@@ -291,42 +319,42 @@ class PRET_Manager:
     def add_repos(self, repos):
         for repo in repos:
             [author, title] = repo.split('/')
-            self.add_to_queue([self.Authors[author].getGame(title)])
+            self.add_to_queue([self.Authors.get(author).getGame(title)])
 
     def remove_repos(self, repos):
         for repo in repos:
             [author, title] = repo.split('/')
-            self.remove_from_queue([self.Authors[author].getGame(title)])
+            self.remove_from_queue([self.Authors.get(author).getGame(title)])
 
     def add_authors(self, authors):
         for author in authors:
-            self.add_to_queue(self.Authors[author].GameList)
+            self.add_to_queue(self.Authors.get(author).GameList)
 
     def remove_authors(self, authors):
         for author in authors:
-            self.remove_from_queue(self.Authors[author].GameList)
+            self.remove_from_queue(self.Authors.get(author).GameList)
     
     def keep_authors(self, authors):
         repos = []
         for author in authors:
-            repos += [self.Authors[author].GameList]
+            repos += [self.Authors.get(author).GameList]
         
         self.keep_in_queue(repos)
 
     def add_tags(self, tags):
         for tag in tags:
-            if tag in self.Tags:
-                self.add_to_queue(self.Tags[tag].GameList)
+            if self.Tags.has(tag):
+                self.add_to_queue(self.Tags.get(tag).GameList)
 
     def remove_tags(self, tags):
         for tag in tags:
-            if tag in self.Tags:
-                 self.remove_from_queue(self.Tags[tag].GameList)
+            if self.Tags.has(tag):
+                 self.remove_from_queue(self.Tags.get(tag).GameList)
 
     def keep_tags(self, tags):
         for tag in tags:
-            if tag in self.Tags:
-                self.keep_in_queue(self.Tags[tag].GameList)
+            if self.Tags.has(tag):
+                self.keep_in_queue(self.Tags.get(tag).GameList)
 
 class game:
     def __init__(self, manager):

@@ -243,7 +243,8 @@ class VScroll(VBox):
         parent.add(self.Scroll, *args)
 
 class CatalogEntryGUI(HBox):
-    def __init__(self, parent, data):
+    def __init__(self, data):
+        parent = data.Catalog.GUI
         super().__init__(parent.GUI)
         self.Data = data
         self.Name = data.Name
@@ -271,20 +272,11 @@ class CatalogEntryGUI(HBox):
         elif event.button() == Qt.RightButton:
             self.GUI.Queue.addGames(self.getData())
 
-class AuthorEntryGUI(CatalogEntryGUI):
-    def __init__(self, data):
-        super().__init__(data.Manager.GUI.Content.Catalogs.AuthorCatalogGUI, data)
-
-class TagEntryGUI(CatalogEntryGUI):
-    def __init__(self, data):
-        super().__init__(data.Manager.GUI.Content.Catalogs.TagCatalogGUI, data)
-
-class ListEntryGUI(CatalogEntryGUI):
-    def __init__(self, data):
-        super().__init__(data.Manager.GUI.Content.Catalogs.ListCatalogGUI, data)
-
 class CatalogGUI(VBox):
-    def __init__(self, parent, ID):
+    def __init__(self, data):
+        parent = data.Manager.GUI.Content.Catalogs
+        self.Data = data
+        ID = data.Name
         super().__init__(parent.GUI)
 
         self.ID = ID[:-1]
@@ -313,18 +305,6 @@ class CatalogGUI(VBox):
         else:
             super().add(widget, *args)
 
-class AuthorCatalogGUI(CatalogGUI):
-    def __init__(self, parent):
-        super().__init__(parent, "Authors")
-
-class TagCatalogGUI(CatalogGUI):
-    def __init__(self, parent):
-        super().__init__(parent, "Tags")
-
-class ListCatalogGUI(CatalogGUI):
-    def __init__(self, parent):
-        super().__init__(parent, "Lists")
-
 class GroupFooter(HBox):
     def __init__(self, parent):
         super().__init__(parent.GUI)
@@ -345,10 +325,6 @@ class Catalogs(VBox):
         self.Mode = None
         self.Body = HBox(GUI)
         self.Body.addTo(self)
-
-        self.ListCatalogGUI = ListCatalogGUI(self)
-        self.AuthorCatalogGUI = AuthorCatalogGUI(self)
-        self.TagCatalogGUI = TagCatalogGUI(self)
 
         self.Footer = GroupFooter(self)
         self.setMode('New')
