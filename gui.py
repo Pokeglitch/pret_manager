@@ -18,6 +18,10 @@ For Panel:
 ---------
 Finish functionality:
 
+- Sorting (date of last update, alphabet, etc)
+
+- show size of each list next to name
+
 - Detect if downloaded/missing, up to date/out of date
 -- Add to corresponding list
 -- Show in Panel, Tile
@@ -36,6 +40,10 @@ Show files within each build directory (collapsible?)
 -- double click to launch in emulator...
 
 Finish fields/dropdowns for branch/commit/make/rgbds
+
+Releases
+Open directory
+Way to copy selected builds to another location
 ---------
 Extra functionality:
 - And invert filter (for all tiles, for easy 'excluding')
@@ -226,15 +234,6 @@ class VScroll(VBox):
         self.Parent = parent
         parent.add(self.Scroll, *args)
 
-'''
-Mode:
-- OR Mode
--- Active, will be added to content
--- Inactive, relevance is ignored
-- AND Mode
--- Inactive, will remove elements from content that arent in this list
--- Active - will be removed from list
-'''
 class ListElement(HBox):
     def __init__(self, parent, Name):
         super().__init__(parent.GUI)
@@ -242,37 +241,25 @@ class ListElement(HBox):
         self.Source = parent.Source
         self.Label = self.label(Name)
         self.Data = self.Source[Name]
-        self.Active = False
-        self.AndMode = False
+        self.Mode = None
         self.addTo(parent)
 
-    def toggleActive(self):
-        self.Active = not self.Active
-        self.setProperty("active",self.Active)
-
-    def toggleAndMode(self):
-        self.AndMode = not self.AndMode
-        self.setProperty("andMode",self.AndMode)
-
-    def handleClick(self):
-        if self.Active:
-            if self.AndMode:
-                self.GUI.Tiles.addNOT(self)
-            else:
-                self.GUI.Tiles.addOR(self)
-        elif self.AndMode:
-            self.GUI.Tiles.addAND(self)
-        else:
-            self.GUI.Tiles.remove(self)
+    def setMode(self, mode):
+        self.Mode = mode
+        self.setProperty("mode",mode)
+        self.updateStyle()
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            self.toggleActive()
+            mode = self.GUI.Groups.Mode
+            if mode == self.Mode:
+                self.GUI.Tiles.remove(self)
+                self.setMode(None)
+            else:
+                getattr(self.GUI.Tiles,'add' + mode.upper())(self)
+                self.setMode(mode)
         elif event.button() == Qt.RightButton:
-            self.toggleAndMode()
-
-        self.updateStyle()
-        self.handleClick()
+            self.GUI.Queue.addGames(self.getData())
 
 class DictList(ListElement):
     def __init__(self, *args):
@@ -309,7 +296,7 @@ class List(VBox):
         [Class(self, name) for name in self.Source]
         self.ScrollBox.Layout.addStretch()
 
-        self.addTo(parent, width)
+        self.addTo(parent.Body, width)
 
     def add(self, widget, *args):
         if hasattr(widget,'Name'):
@@ -330,13 +317,39 @@ class Lists(List):
     def __init__(self, parent):
         super().__init__(parent, "Lists", ArrayList, 3)
 
-class Groups(HBox):
+class GroupFooter(HBox):
+    def __init__(self, parent):
+        super().__init__(parent.GUI)
+        self.setObjectName('footer')
+        self.New = ToggleButton(self, 'New', lambda e: parent.setMode('New'))
+        self.New.setProperty('active',False)
+        self.Or = ToggleButton(self, 'Or', lambda e: parent.setMode('Or'))
+        self.Or.setProperty('active',False)
+        self.And = ToggleButton(self, 'And', lambda e: parent.setMode('And'))
+        self.And.setProperty('active',False)
+        self.Not = ToggleButton(self, 'Not', lambda e: parent.setMode('Not'))
+        self.Not.setProperty('active',False)
+        self.addTo(parent)
+
+class Groups(VBox):
     def __init__(self, GUI):
         super().__init__(GUI)
+        self.Mode = None
+        self.Body = HBox(GUI)
+        self.Body.addTo(self)
         self.Lists = Lists(self)
         self.Authors = Authors(self)
         self.Tags = Tags(self)
+        self.Footer = GroupFooter(self)
+        self.setMode('New')
         self.addTo(GUI, 20)
+
+    def setMode(self, mode):
+        if self.Mode:
+            getattr(self.Footer, self.Mode).setActive(False)
+        
+        self.Mode = mode
+        getattr(self.Footer, mode).setActive(True)
 
 class GameQueue(HBox):
     def __init__(self, gameGUI):
@@ -345,7 +358,10 @@ class GameQueue(HBox):
         self.label(gameGUI.Game.name)
 
     def mousePressEvent(self, event):
-        self.GUI.Panel.setActive(self.GameGUI)
+        if event.button() == Qt.LeftButton:
+            self.GUI.Panel.setActive(self.GameGUI)
+        elif event.button() == Qt.RightButton:
+            self.GUI.Queue.removeGame(self.GameGUI)
 
 class GameTile(VBox):
     def __init__(self, gameGUI):
@@ -358,7 +374,10 @@ class GameTile(VBox):
         self.Author = self.label(gameGUI.Game.author)
 
     def mousePressEvent(self, event):
-        self.GUI.Panel.setActive(self.GameGUI)
+        if event.button() == Qt.LeftButton:
+            self.GUI.Panel.setActive(self.GameGUI)
+        elif event.button() == Qt.RightButton:
+            self.GUI.Queue.addGame(self.GameGUI)
 
 class Field(HBox):
     def __init__(self, parent, left, right):
@@ -528,7 +547,13 @@ class PanelFooter(HBox):
 class Tiles(VBox):
     def __init__(self, GUI):
         super().__init__(GUI)
-        self.Active = None
+        self.Header = TilesHeader(self)
+        self.Content = TileContent(self)
+        self.Footer = PanelFooter(self)
+        self.reset()
+        self.addTo(GUI, 25)
+
+    def reset(self):
         self.OR_Lists = []
         self.OR_Games = []
         self.AND_Lists = []
@@ -536,19 +561,14 @@ class Tiles(VBox):
         self.NOT_Lists = []
         self.NOT_Games = []
         self.All_Games = []
-
-        self.Header = TilesHeader(self)
-        self.Content = TileContent(self)
-        self.Footer = PanelFooter(self)
-        self.addTo(GUI, 29)
     
     def is_game_valid(self, game):
-        if self.OR_Games:
-            if self.AND_Games:
+        if self.OR_Lists:
+            if self.AND_Lists:
                 return game in self.OR_Games and game in self.AND_Games and game not in self.NOT_Games
             else:
                 return game in self.OR_Games and game not in self.NOT_Games
-        elif self.AND_Games:
+        elif self.AND_Lists:
             return game in self.AND_Games and game not in self.NOT_Games
         else:
             return False
@@ -634,6 +654,16 @@ class Tiles(VBox):
                     self.AND_Games.pop(self.AND_Games.index(game))
 
         self.compile()
+
+    def addNEW(self, list):
+        for game in self.All_Games:
+            game.GUI.Tile.setParent(None)
+
+        for other_list in self.OR_Lists + self.AND_Lists + self.NOT_Lists:
+            other_list.setMode(None)
+
+        self.reset()
+        self.addOR(list)
 
     def addNOT(self, list):
         self.removeAND(list)
@@ -738,7 +768,7 @@ class Panel(VBox):
 
         self.Active = None
         self.setActive(None)
-        self.addTo(GUI, 20)
+        self.addTo(GUI, 25)
 
     def setActive(self, game):
         if self.Active:
