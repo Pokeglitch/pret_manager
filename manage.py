@@ -47,7 +47,10 @@ class PRET_Manager:
         for author in list:
             [self.Authors[author][title].addToList(self.Lists[name]) for title in list[author]]
 
-    def build_GUI(self):
+    def init_GUI(self):
+        self.doUpdate = True
+        self.doBuild = []
+        self.doClean = True
         self.init()
         self.App, self.GUI = gui.init(self)
 
@@ -59,7 +62,7 @@ class PRET_Manager:
             self.GUI.addStatus(msg)
 
     def update(self):
-        self.print('Updating repository')
+        self.print('Updating pret-manager')
         subprocess.run(['git', 'pull'], capture_output=True)
 
     def init(self):
@@ -74,7 +77,7 @@ class PRET_Manager:
     def handle_args(self):
         # if no args at all, launch the gui
         if len(sys.argv) == 1:
-            return self.build_GUI()
+            return self.init_GUI()
 
         args = parser.parse_args()
 
@@ -122,8 +125,13 @@ class PRET_Manager:
             self.print('Queue is empty')
         elif self.doUpdate or self.doClean or self.doBuild != None:
             for repo in self.Queue:
+                if repo in self.Lists['Excluding']:
+                    self.print('Excluding ' + repo.name)
+                    continue
+
                 if repo.GUI:
                     repo.GUI.setProcessing(True)
+
                 self.print('Processing ' + repo.name)
 
                 if self.doUpdate:
