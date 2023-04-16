@@ -1,0 +1,141 @@
+QMainWindow {
+    background-color: #FFFFFF;
+    min-height:800px;
+    min-width:1400px;
+}
+
+QScrollArea * {
+    padding: 5;
+}
+
+QWidget#status * {
+    background-color: #000000;
+    color: #FFFFFF;
+    padding: 5;
+}
+
+QWidget#status-header, QWidget#status-header > QLabel {
+    background-color: #000000;
+    color: #FFFFFF;
+}
+
+QLabel#header, QWidget#status-header > QLabel {
+    font-size: 20px;
+    margin: 5;
+}
+
+QLabel#list-header {
+    font-size: 16px;
+}
+
+QWidget#header-frame, QLabel#list-header, QWidget#status-header, QWidget#footer {
+    border: 1px solid black;
+    min-height:50px;
+    max-height:50px;
+}
+
+Button:hover {
+    background-color: #EEEEEE;
+}
+
+Button, ToggleButton {
+    border: 1px solid black;
+    border-radius: 10px;
+}
+
+Button {
+    max-height: 30px;
+    min-height: 30px;
+    min-width: 60px;
+    margin: 5;
+    background-color: #DDDDDD;
+}
+
+ToggleButton {
+    max-height: 30px;
+    min-height: 30px;
+    min-width: 60px;
+    margin: 5;
+}
+
+ToggleButton[active="false"] {
+    background-color: #775858;
+}
+
+ToggleButton[active="false"]:hover {
+    background-color: #846868;
+}
+
+ToggleButton[active="true"] {
+    background-color: #58775a;
+}
+
+ToggleButton[active="true"]:hover {
+    background-color: #68846a;
+}
+
+ListElement[mode="Not"] {
+    background-color: #e58080
+}
+
+ListElement[mode="Not"]:hover {
+    background-color: #e78c8c
+}
+
+ListElement[mode="And"] {
+    background-color: #E5DD80
+}
+
+ListElement[mode="And"]:hover {
+    background-color: #e7e08c
+}
+
+GameQueue, ListElement {
+    min-height: 15px;
+    max-height: 15px;
+    background-color: #EEEEEE
+}
+
+GameQueue:hover, ListElement:hover, GameTile:hover {
+    background-color: #FFFFFF
+}
+
+GameQueue[active="true"], ListElement[mode="New"], ListElement[mode="Or"], GameTile[active="true"] {
+    background-color: #9FB4D3;
+}
+
+GameQueue[active="true"]:hover, ListElement[mode="New"]:hover, ListElement[mode="Or"]:hover, GameTile[active="true"]:hover {
+    background-color: #a8bbd7;
+}
+
+GameQueue[processing="true"], ListElement[processing="true"], GameTile[processing="true"] {
+    background-color: #65ba68;
+}
+
+GameQueue[processing="true"]:hover, ListElement[processing="true"]:hover, GameTile[processing="true"]:hover {
+    background-color: #74c077;
+}
+
+GameTile[queued="true"] {
+    border: 2px solid black;
+    min-width:98px;
+    max-width:98px;
+    min-height:98px;
+    max-height:98px;
+}
+
+GameTile {
+    border: 1px solid black;
+    min-width:100px;
+    max-width:100px;
+    min-height:100px;
+    max-height:100px;
+    background-color: #EEEEEE
+}
+
+QWidget#Tiles {
+    background-color: #FFFFFF;
+    border: none;
+    margin-left:5;
+    margin-top:5;
+}

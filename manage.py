@@ -41,9 +41,11 @@ class PRET_Manager:
         self.doClean = False
 
     def addList(self, name, list):
-        self.Lists[name] = []
+        if name not in self.Lists:
+            self.Lists[name] = []
+
         for author in list:
-            self.Lists[name] += [self.Authors[author][title] for title in list[author]]
+            [self.Authors[author][title].addToList(self.Lists[name]) for title in list[author]]
 
     def build_GUI(self):
         self.init()
@@ -255,6 +257,7 @@ class repository:
         self.author = author
         self.title = title
         self.GUI = None
+        self.Lists = []
         self.name = self.title + ' (' + self.author + ')'
         self.url = 'https://github.com/' + author + '/' + title
 
@@ -278,6 +281,16 @@ class repository:
 
         self.parse_builds()
         self.parse_releases()
+
+    def addToList(self, list):
+        if list not in self.Lists:
+            self.Lists.append(list)
+            list.append(self)
+
+    def removeFromList(self, list):
+        if list in self.Lists:
+            self.Lists.pop(self.Lists.index(list))
+            list.pop(list.index(self))
 
     def parse_builds(self):
         self.builds = {}

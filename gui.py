@@ -2,12 +2,18 @@ import sys, webbrowser, json
 
 '''
 TODO:
+
+Filter:
 - When no filters, show All
 - Save filter separately from list
+- Update Filter when game is added/removed to List
+- Instead of the buttons at bottom:
+-- Have a dropdown which includes all Queue (default), all lists + New
+--- Have buttons for: Add to/Remove From/Toggle In
+- (True for Game Panel as well, though Fav/Exclude are also quick clicks)
 
 Lists:
 - Implement how 'excluding' works
-- Way to remove favorite & exclude
 - show in Tile, Panel if favorite/excluded
 
 - Way to load a list
@@ -816,11 +822,11 @@ class Panel(VBox):
 
     def favorite(self, event):
         if self.Active:
-            self.GUI.addToList('Favorites', [self.Active.Game])
+            self.GUI.toggleInList('Favorites', [self.Active.Game])
 
     def exclude(self, event):
         if self.Active:
-            self.GUI.addToList('Excluding', [self.Active.Game])
+            self.GUI.toggleInList('Excluding', [self.Active.Game])
 
     def applyPatch(self, event):
         pass
@@ -908,19 +914,41 @@ class MainContents(HBox):
         self.Games = Games(self)
         self.addTo(window.Widget)
 
+    def toggleInList(self, name, games):
+        list = self.Groups.Lists.List[name].getData()
+
+        for game in games:
+            if game in list:
+                self.removeFromList(name, [game])
+            else:
+                self.addToList(name, [game])
+
+    def removeFromList(self, name, games):
+        list = self.Groups.Lists.List[name].getData()
+        listChanged = False
+        for game in games:
+            if game in list:
+                listChanged = True
+                list.pop(list.index(game))
+        if listChanged:
+            self.exportList(name, list)
+
     def addToList(self, name, games):
         list = self.Groups.Lists.List[name].getData()
-        newAdded = False
+        listChanged = False
         for game in games:
             if game not in list:
-                newAdded = True
+                listChanged = True
                 list.append(game)
-        if newAdded:
-            data = listToDict(list)
-            self.Manager.addList(name, data)
+        if listChanged:
+            self.exportList(name, list)
 
-            with open('local/lists/' + name + '.json', 'w') as f:
-                f.write(json.dumps(data))
+    def exportList(self, name, list):
+        data = listToDict(list)
+        self.Manager.addList(name, data)
+
+        with open('local/lists/' + name + '.json', 'w') as f:
+            f.write(json.dumps(data))
 
     def saveList(self, list):
         fileName, ext = QFileDialog.getSaveFileName(self, 'Save List As', 'local/lists','*.json')
