@@ -39,7 +39,10 @@ class CatalogEntry:
     def __init__(self, manager, name, guiClass):
         self.Manager = manager
         self.Name = name
-        self.GUI = guiClass(self) if manager.doGUI else None
+        self.GUI = guiClass(self) if manager.GUI else None
+        self.reset()
+        
+    def reset(self):
         self.GameStructure = {}
         self.GameList = []
 
@@ -54,6 +57,10 @@ class CatalogEntry:
 class AuthorEntry(CatalogEntry):
     def __init__(self, *args):
         super().__init__(*args, gui.AuthorEntryGUI)
+        mkdir(games_dir + self.Name)
+
+    def getGame(self, title):
+        return self.GameStructure[title]
 
     def addGame(self, game):
         if game.title not in self.GameStructure:
@@ -82,6 +89,14 @@ class ListEntry(CatalogEntry):
     def write(self):
         pass
 
+class Catalog:
+    def __init__(self, name):
+        self.Name = name
+        self.Entries = {}
+
+    def addEntry(self, name, entry):
+        self.Entries[name] = entry
+
 class PRET_Manager:
     def __init__(self):
         self.Directory = games_dir
@@ -104,13 +119,13 @@ class PRET_Manager:
     def addList(self, name, list):
         if name not in self.Lists:
             self.Lists[name] = ListEntry(self, name)
+        else:
+            self.Lists[name].reset()
 
         for author in list:
-            [self.Authors[author][title].addToList(self.Lists[name]) for title in list[author]]
+            [self.Authors[author].getGame(title).addToList(self.Lists[name]) for title in list[author]]
 
     def init_GUI(self):
-        self.doGUI = True
-
         # TODO - these should come from default parameters loaded within 'init'
         self.doUpdate = True
         self.doBuild = []
@@ -233,10 +248,7 @@ class PRET_Manager:
             data = json.loads(f.read())
 
         for author in data:
-            self.Authors[author] = {}
-            authorInstance = AuthorEntry(self, author)
-
-            mkdir(self.Directory + author)
+            self.Authors[author] = AuthorEntry(self, author)
 
             for title in data[author]:
                 if title == "rgbds":
@@ -246,8 +258,7 @@ class PRET_Manager:
                     repo = repository(self, author, title, data[author][title])
                     self.All.append(repo)
 
-                self.Authors[author][title] = repo
-                authorInstance.addGame(repo)
+                self.Authors[author].addGame(repo)
 
                 for tag in repo.tags:
                     self.add_repo_tag(repo, tag)
@@ -280,25 +291,25 @@ class PRET_Manager:
     def add_repos(self, repos):
         for repo in repos:
             [author, title] = repo.split('/')
-            self.add_to_queue([self.Authors[author][title]])
+            self.add_to_queue([self.Authors[author].getGame(title)])
 
     def remove_repos(self, repos):
         for repo in repos:
             [author, title] = repo.split('/')
-            self.remove_from_queue([self.Authors[author][title]])
+            self.remove_from_queue([self.Authors[author].getGame(title)])
 
     def add_authors(self, authors):
         for author in authors:
-            self.add_to_queue([self.Authors[author][title] for title in self.Authors[author]])
+            self.add_to_queue(self.Authors[author].GameList)
 
     def remove_authors(self, authors):
         for author in authors:
-            self.remove_from_queue([self.Authors[author][title] for title in self.Authors[author]])
+            self.remove_from_queue(self.Authors[author].GameList)
     
     def keep_authors(self, authors):
         repos = []
         for author in authors:
-            repos += [self.Authors[author][title] for title in self.Authors[author]]
+            repos += [self.Authors[author].GameList]
         
         self.keep_in_queue(repos)
 
@@ -355,7 +366,7 @@ class repository(game):
         self.parse_builds()
         self.parse_releases()
 
-        if self.manager.doGUI:
+        if self.manager.GUI:
             self.init_GUI()
 
     def addToList(self, list):

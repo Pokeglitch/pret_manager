@@ -13,9 +13,9 @@ Filter:
 - (True for Game Panel as well, though Fav/Exclude are also quick clicks)
 
 Lists:
-- show in Tile, Panel if favorite/excluded
+- show in Tile, Panel if in favorite/excluded
 
-- Way to load a list
+- Way to load a list, delete a list
 - Add lists as option to CLI
 - show size of each list next to name
 
@@ -247,7 +247,6 @@ class CatalogEntryGUI(HBox):
         super().__init__(parent.GUI)
         self.Data = data
         self.Name = data.Name
-        self.Source = parent.Source
         self.Label = self.label(data.Name)
         self.Mode = None
         self.addTo(parent)
@@ -262,7 +261,7 @@ class CatalogEntryGUI(HBox):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            mode = self.GUI.Groups.Mode
+            mode = self.GUI.Catalogs.Mode
             if mode == self.Mode:
                 self.GUI.Tiles.remove(self)
                 self.setMode(None)
@@ -274,15 +273,15 @@ class CatalogEntryGUI(HBox):
 
 class AuthorEntryGUI(CatalogEntryGUI):
     def __init__(self, data):
-        super().__init__(data.Manager.GUI.Content.Groups.Authors, data)
+        super().__init__(data.Manager.GUI.Content.Catalogs.AuthorCatalogGUI, data)
 
 class TagEntryGUI(CatalogEntryGUI):
     def __init__(self, data):
-        super().__init__(data.Manager.GUI.Content.Groups.Tags, data)
+        super().__init__(data.Manager.GUI.Content.Catalogs.TagCatalogGUI, data)
 
 class ListEntryGUI(CatalogEntryGUI):
     def __init__(self, data):
-        super().__init__(data.Manager.GUI.Content.Groups.Lists, data)
+        super().__init__(data.Manager.GUI.Content.Catalogs.ListCatalogGUI, data)
 
 class CatalogGUI(VBox):
     def __init__(self, parent, ID):
@@ -302,8 +301,6 @@ class CatalogGUI(VBox):
         self.ListGUI.addTo(self.ListContainer)
         self.ListContainer.addStretch()
 
-        self.Source = getattr(parent.GUI.Manager, ID)
-
         self.addTo(parent.Body)
 
     def addElement(self, name):
@@ -316,15 +313,15 @@ class CatalogGUI(VBox):
         else:
             super().add(widget, *args)
 
-class Authors(CatalogGUI):
+class AuthorCatalogGUI(CatalogGUI):
     def __init__(self, parent):
         super().__init__(parent, "Authors")
 
-class Tags(CatalogGUI):
+class TagCatalogGUI(CatalogGUI):
     def __init__(self, parent):
         super().__init__(parent, "Tags")
 
-class Lists(CatalogGUI):
+class ListCatalogGUI(CatalogGUI):
     def __init__(self, parent):
         super().__init__(parent, "Lists")
 
@@ -342,16 +339,16 @@ class GroupFooter(HBox):
         self.Not.setProperty('active',False)
         self.addTo(parent)
 
-class Groups(VBox):
+class Catalogs(VBox):
     def __init__(self, GUI):
         super().__init__(GUI)
         self.Mode = None
         self.Body = HBox(GUI)
         self.Body.addTo(self)
 
-        self.Lists = Lists(self)
-        self.Authors = Authors(self)
-        self.Tags = Tags(self)
+        self.ListCatalogGUI = ListCatalogGUI(self)
+        self.AuthorCatalogGUI = AuthorCatalogGUI(self)
+        self.TagCatalogGUI = TagCatalogGUI(self)
 
         self.Footer = GroupFooter(self)
         self.setMode('New')
@@ -893,7 +890,7 @@ class MainContents(HBox):
         super().__init__(self)
         self.Window = window
         self.Manager = window.Manager
-        self.Groups = Groups(self)
+        self.Catalogs = Catalogs(self)
         self.Tiles = Tiles(self)
         self.Panel = Panel(self)
 
@@ -906,7 +903,7 @@ class MainContents(HBox):
         self.addTo(window.Widget)
 
     def toggleInList(self, name, games):
-        list = self.Groups.Lists.List[name].getData()
+        list = self.Catalogs.Lists.List[name].getData()
 
         for game in games:
             if game in list:
@@ -915,7 +912,7 @@ class MainContents(HBox):
                 self.addToList(name, [game])
 
     def removeFromList(self, name, games):
-        list = self.Groups.Lists.List[name].getData()
+        list = self.Catalogs.Lists.List[name].getData()
         listChanged = False
         for game in games:
             if game in list:
@@ -925,7 +922,7 @@ class MainContents(HBox):
             self.exportList(name, list)
 
     def addToList(self, name, games):
-        list = self.Groups.Lists.List[name].getData()
+        list = self.Catalogs.Lists.List[name].getData()
         listChanged = False
         for game in games:
             if game not in list:
@@ -950,9 +947,6 @@ class MainContents(HBox):
 
             name = fileName.split('/')[-1].split('.')[0]
             self.Manager.addList(name, data)
-
-            if name not in self.Manager.Lists:
-                ArrayList(self.Groups.Lists, name)
 
     def startProcess(self, games):
         if not self.Window.Process:
