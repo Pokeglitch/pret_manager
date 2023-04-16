@@ -276,6 +276,11 @@ class DictList(ListElement):
     def getData(self):
         return [self.Source[self.Name][title] for title in self.Source[self.Name]]
 
+class AuthorGUI(DictList):
+    def __init__(self, author):
+        self.Author = author
+        super().__init__(author.Manager.GUI.Content.Groups.Authors, author.Name)
+
 class ArrayList(ListElement):
     def __init__(self, *args):
         super().__init__(*args)
@@ -318,7 +323,7 @@ class List(VBox):
 
 class Authors(List):
     def __init__(self, parent):
-        super().__init__(parent, "Authors", DictList)
+        super().__init__(parent, "Authors", AuthorGUI)
 
 class Tags(List):
     def __init__(self, parent):

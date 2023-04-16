@@ -35,6 +35,16 @@ data_dir = 'data/'
 list_dir = data_dir + 'lists/'
 mkdir(games_dir, data_dir, list_dir)
 
+class Author:
+    def __init__(self, manager, name):
+        self.Manager = manager
+        self.Name = name
+        self.Games = {}
+        self.GUI = gui.AuthorGUI(self) if manager.doGUI else None
+
+    def addGame(self, title, game):
+        self.Games[title] = game
+
 class PRET_Manager:
     def __init__(self):
         self.Directory = games_dir
@@ -190,9 +200,7 @@ class PRET_Manager:
 
         for author in data:
             self.Authors[author] = {}
-
-            if self.doGUI:
-                self.GUI.Content.Groups.Authors.addElement(author)
+            authorInstance = Author(self, author)
 
             mkdir(self.Directory + author)
 
@@ -205,6 +213,7 @@ class PRET_Manager:
                     self.All.append(repo)
 
                 self.Authors[author][title] = repo
+                authorInstance.addGame(title, repo)
 
                 for tag in repo.tags:
                     self.add_repo_tag(repo, tag)
