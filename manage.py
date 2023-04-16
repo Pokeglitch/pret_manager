@@ -88,12 +88,51 @@ class ListEntry(CatalogEntry):
 
     def addGame(self, game):
         super().addGame(game)
+        if game.author not in self.GameStructure:
+            self.GameStructure[game.author] = [game.title]
+        else:
+            self.GameStructure[game.author].append(game.title)
+
+    def addGames(self, games):
+        isChanged = False
+        for game in games:
+            if game not in self.GameList:
+                isChanged = True
+                game.addToList(self)
+
+        if isChanged:
+            self.write()
 
     def removeGame(self, game):
         super().removeGame(game)
+        self.GameStructure[game.author].pop( self.GameStructure[game.author].index(game.title) )
+        if not self.GameStructure[game.author]:
+            del self.GameStructure[game.author]
+
+    def removeGames(self, games):
+        isChanged = False
+        for game in games:
+            if game in self.GameList:
+                isChanged = True
+                game.removeFromList(self)
+
+        if isChanged:
+            self.write()
+
+    def toggleGames(self, games):
+        for game in games:
+            if game in self.GameList:
+                game.removeFromList(self)
+            else:
+                game.addToList(self)
+
+        if games:
+            self.write()
 
     def write(self):
-        pass
+        with open(list_dir + self.Name + '.json', 'w') as f:
+            f.write(json.dumps(self.GameStructure))
+
 
 class Catalog:
     def __init__(self, catalogs, name, entryClass):
@@ -128,7 +167,7 @@ class TagCatalog(Catalog):
 class Catalogs:
     def __init__(self, manager):
         self.Manager = manager
-        self.GUI = True if manager.GUI else None
+        self.GUI = gui.CatalogsGUI(self) if manager.GUI else None
         self.Lists = ListCatalog(self)
         self.Authors = AuthorCatalog(self)
         self.Tags = TagCatalog(self)
@@ -140,7 +179,6 @@ class PRET_Manager:
         self.All = []
         self.Verbose = False
 
-        self.doGUI = False
         self.GUI = None
         self.App = None
 

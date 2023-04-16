@@ -262,7 +262,7 @@ class CatalogEntryGUI(HBox):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            mode = self.GUI.Catalogs.Mode
+            mode = self.Data.Catalog.Catalogs.GUI.Mode
             if mode == self.Mode:
                 self.GUI.Tiles.remove(self)
                 self.setMode(None)
@@ -274,7 +274,7 @@ class CatalogEntryGUI(HBox):
 
 class CatalogGUI(VBox):
     def __init__(self, data):
-        parent = data.Manager.GUI.Content.Catalogs
+        parent = data.Catalogs.GUI
         self.Data = data
         ID = data.Name
         super().__init__(parent.GUI)
@@ -320,11 +320,11 @@ class GroupFooter(HBox):
         self.addTo(parent)
 
 class CatalogsGUI(VBox):
-    # TODO - switch to this once all 4 columns are ready (since Catalogs should be first...)
-    #def __init__(self, data):
-    #    self.Data = data
-    #    GUI = data.Manager.GUI.Content
-    def __init__(self, GUI):
+    def __init__(self, data):
+        self.Data = data
+        GUI = data.Manager.GUI.Content
+        GUI.Catalogs = self
+
         super().__init__(GUI)
         self.Mode = None
         self.Body = HBox(GUI)
@@ -332,7 +332,8 @@ class CatalogsGUI(VBox):
 
         self.Footer = GroupFooter(self)
         self.setMode('New')
-        self.addTo(GUI, 20)
+        
+        self.addTo(GUI.Col1, 20)
 
     def setMode(self, mode):
         if self.Mode:
@@ -696,11 +697,11 @@ class Tiles(VBox):
 
     def favorite(self, event):
         if self.All_Games:
-            self.GUI.addToList('Favorites', self.All_Games)
+            self.GUI.Manager.Catalogs.Lists.get('Favorites').addGames(self.All_Games)
 
     def exclude(self, event):
         if self.All_Games:
-            self.GUI.addToList('Excluding', self.All_Games)
+            self.GUI.Manager.Catalogs.Lists.get('Excluding').addGames(self.All_Games)
 
 class Button(QLabel):
     def __init__(self, parent, text, click):
@@ -791,11 +792,11 @@ class Panel(VBox):
 
     def favorite(self, event):
         if self.Active:
-            self.GUI.toggleInList('Favorites', [self.Active.Game])
+            self.GUI.Manager.Catalogs.Lists.get('Favorites').toggleGames([self.Active.Game])
 
     def exclude(self, event):
         if self.Active:
-            self.GUI.toggleInList('Excluding', [self.Active.Game])
+            self.GUI.Manager.Catalogs.Lists.get('Excluding').toggleGames([self.Active.Game])
 
     def applyPatch(self, event):
         pass
@@ -870,7 +871,10 @@ class MainContents(HBox):
         super().__init__(self)
         self.Window = window
         self.Manager = window.Manager
-        self.Catalogs = CatalogsGUI(self)
+        
+        self.Col1 = VBox(self)
+        self.Col1.addTo(self)
+
         self.Tiles = Tiles(self)
         self.Panel = Panel(self)
 
@@ -882,50 +886,15 @@ class MainContents(HBox):
 
         self.addTo(window.Widget)
 
-    def toggleInList(self, name, games):
-        list = self.Catalogs.Lists.List[name].getData()
-
-        for game in games:
-            if game in list:
-                self.removeFromList(name, [game])
-            else:
-                self.addToList(name, [game])
-
-    def removeFromList(self, name, games):
-        list = self.Catalogs.Lists.List[name].getData()
-        listChanged = False
-        for game in games:
-            if game in list:
-                listChanged = True
-                list.pop(list.index(game))
-        if listChanged:
-            self.exportList(name, list)
-
-    def addToList(self, name, games):
-        list = self.Catalogs.Lists.List[name].getData()
-        listChanged = False
-        for game in games:
-            if game not in list:
-                listChanged = True
-                list.append(game)
-        if listChanged:
-            self.exportList(name, list)
-
-    def exportList(self, name, list):
-        data = listToDict(list)
-        self.Manager.addList(name, data)
-
-        with open('data/lists/' + name + '.json', 'w') as f:
-            f.write(json.dumps(data))
-
     def saveList(self, list):
         fileName, ext = QFileDialog.getSaveFileName(self, 'Save List As', 'data/lists','*.json')
         if fileName:
+            name = fileName.split('/')[-1].split('.')[0]
+
             data = listToDict(list)
             with open(fileName,'w') as f:
                 f.write(json.dumps(data))
 
-            name = fileName.split('/')[-1].split('.')[0]
             self.Manager.addList(name, data)
 
     def startProcess(self, games):
