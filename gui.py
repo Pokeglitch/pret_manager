@@ -272,15 +272,15 @@ class CatalogEntryGUI(HBox):
         elif event.button() == Qt.RightButton:
             self.GUI.Queue.addGames(self.getData())
 
-class AuthorGUI(CatalogEntryGUI):
+class AuthorEntryGUI(CatalogEntryGUI):
     def __init__(self, data):
         super().__init__(data.Manager.GUI.Content.Groups.Authors, data)
 
-class TagGUI(CatalogEntryGUI):
+class TagEntryGUI(CatalogEntryGUI):
     def __init__(self, data):
         super().__init__(data.Manager.GUI.Content.Groups.Tags, data)
 
-class ListGUI(CatalogEntryGUI):
+class ListEntryGUI(CatalogEntryGUI):
     def __init__(self, data):
         super().__init__(data.Manager.GUI.Content.Groups.Lists, data)
 

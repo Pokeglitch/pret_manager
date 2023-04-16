@@ -51,29 +51,36 @@ class CatalogEntry:
         if game in self.GameList:
             self.GameList.pop(self.GameList.index(game))
 
-class Author(CatalogEntry):
+class AuthorEntry(CatalogEntry):
     def __init__(self, *args):
-        super().__init__(*args, gui.AuthorGUI)
+        super().__init__(*args, gui.AuthorEntryGUI)
 
     def addGame(self, game):
         if game.title not in self.GameStructure:
             self.GameStructure[game.title] = game
-            
         super().addGame(game)
 
     def removeGame(self, game):
         if game.title in self.GameStructure:
             del self.GameStructure[game.title]
-            
         super().removeGame(game)
 
-class Tag(CatalogEntry):
+class TagEntry(CatalogEntry):
     def __init__(self, *args):
-        super().__init__(*args, gui.TagGUI)
+        super().__init__(*args, gui.TagEntryGUI)
 
-class List(CatalogEntry):
+class ListEntry(CatalogEntry):
     def __init__(self, *args):
-        super().__init__(*args, gui.ListGUI)
+        super().__init__(*args, gui.ListEntryGUI)
+
+    def addGame(self, game):
+        super().addGame(game)
+
+    def removeGame(self, game):
+        super().removeGame(game)
+
+    def write(self):
+        pass
 
 class PRET_Manager:
     def __init__(self):
@@ -96,7 +103,7 @@ class PRET_Manager:
 
     def addList(self, name, list):
         if name not in self.Lists:
-            self.Lists[name] = List(self, name)
+            self.Lists[name] = ListEntry(self, name)
 
         for author in list:
             [self.Authors[author][title].addToList(self.Lists[name]) for title in list[author]]
@@ -189,7 +196,7 @@ class PRET_Manager:
             self.print('Queue is empty')
         elif self.doUpdate or self.doClean or self.doBuild != None:
             for repo in self.Queue:
-                if repo in self.Lists['Excluding'].Games:
+                if repo in self.Lists['Excluding'].GameList:
                     self.print('Excluding ' + repo.name)
                     continue
 
@@ -227,7 +234,7 @@ class PRET_Manager:
 
         for author in data:
             self.Authors[author] = {}
-            authorInstance = Author(self, author)
+            authorInstance = AuthorEntry(self, author)
 
             mkdir(self.Directory + author)
 
@@ -247,7 +254,7 @@ class PRET_Manager:
 
     def add_repo_tag(self, repo, tag):
         if tag not in self.Tags:
-            self.Tags[tag] = Tag(self, tag)
+            self.Tags[tag] = TagEntry(self, tag)
 
         self.Tags[tag].addGame(repo)
 
@@ -298,17 +305,17 @@ class PRET_Manager:
     def add_tags(self, tags):
         for tag in tags:
             if tag in self.Tags:
-                self.add_to_queue(self.Tags[tag].Games)
+                self.add_to_queue(self.Tags[tag].GameList)
 
     def remove_tags(self, tags):
         for tag in tags:
             if tag in self.Tags:
-                 self.remove_from_queue(self.Tags[tag].Games)
+                 self.remove_from_queue(self.Tags[tag].GameList)
 
     def keep_tags(self, tags):
         for tag in tags:
             if tag in self.Tags:
-                self.keep_in_queue(self.Tags[tag].Games)
+                self.keep_in_queue(self.Tags[tag].GameList)
 
 class game:
     def __init__(self, manager):
