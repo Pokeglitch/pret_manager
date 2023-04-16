@@ -271,7 +271,7 @@ class ArrayList(ListElement):
         return self.Source[self.Name]
 
 class List(VBox):
-    def __init__(self, parent, ID, Class, width):
+    def __init__(self, parent, ID, Class):
         super().__init__(parent.GUI)
 
         self.ID = ID[:-1]
@@ -281,36 +281,37 @@ class List(VBox):
         self.Label.setAlignment(Qt.AlignCenter)
         self.Label.setObjectName("list-header")
 
-        self.ScrollBox = VScroll(parent.GUI)
-        self.ScrollBox.setObjectName("list")
-        self.ScrollBox.Scroll.setObjectName("list")
-        self.ScrollBox.addTo(self, 95)
+        self.ListContainer = VScroll(parent.GUI)
+        self.ListContainer.addTo(self)
+
+        self.ListGUI = VBox(parent.GUI)
+        self.ListGUI.addTo(self.ListContainer)
+        self.ListContainer.addStretch()
 
         self.Class = Class
         self.Source = getattr(parent.GUI.Manager, ID)
         [Class(self, name) for name in self.Source]
-        self.ScrollBox.Layout.addStretch()
 
-        self.addTo(parent.Body, width)
+        self.addTo(parent.Body)
 
     def add(self, widget, *args):
         if hasattr(widget,'Name'):
             self.List[widget.Name] = widget
-            self.ScrollBox.add(widget, *args)
+            self.ListGUI.add(widget, *args)
         else:
             super().add(widget, *args)
 
 class Authors(List):
     def __init__(self, parent):
-        super().__init__(parent, "Authors", DictList, 4)
+        super().__init__(parent, "Authors", DictList)
 
 class Tags(List):
     def __init__(self, parent):
-        super().__init__(parent, "Tags", ArrayList, 3)
+        super().__init__(parent, "Tags", ArrayList)
 
 class Lists(List):
     def __init__(self, parent):
-        super().__init__(parent, "Lists", ArrayList, 3)
+        super().__init__(parent, "Lists", ArrayList)
 
 class GroupFooter(HBox):
     def __init__(self, parent):
@@ -332,9 +333,11 @@ class Groups(VBox):
         self.Mode = None
         self.Body = HBox(GUI)
         self.Body.addTo(self)
+
         self.Lists = Lists(self)
         self.Authors = Authors(self)
         self.Tags = Tags(self)
+
         self.Footer = GroupFooter(self)
         self.setMode('New')
         self.addTo(GUI, 20)
@@ -367,12 +370,16 @@ class GameTile(VBox):
         self.Artwork = self.label('<Artwork>')
         self.Title = self.label(gameGUI.Game.title)
         self.Author = self.label(gameGUI.Game.author)
+        self.isQueued = False
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.GUI.Panel.setActive(self.GameGUI)
         elif event.button() == Qt.RightButton:
-            self.GUI.Queue.addGame(self.GameGUI)
+            if self.isQueued:
+                self.GUI.Queue.removeGame(self.GameGUI)
+            else:
+                self.GUI.Queue.addGame(self.GameGUI)
 
 class Field(HBox):
     def __init__(self, parent, left, right):
@@ -425,6 +432,7 @@ class Game:
         self.setQueued(False)
 
     def setQueued(self, queued):
+        self.Tile.isQueued = queued
         self.Tile.setProperty('queued', queued)
         self.Tile.updateStyle()
 
@@ -505,7 +513,7 @@ class Queue(VBox):
 
     def saveList(self, event):
         if event.button() == Qt.LeftButton and self.List:
-            self.GUI.saveList([gameGUI.game for gameGUI in self.List])
+            self.GUI.saveList([gameGUI.Game for gameGUI in self.List])
 
 class TileContent(Flow):
     def __init__(self, parent):
@@ -900,6 +908,10 @@ class MainContents(HBox):
 
             with open(fileName,'w') as f:
                 f.write(json.dumps(data))
+
+            name = fileName.split('/')[-1].split('.')[0]
+            self.Manager.addList(name, data)
+            ArrayList(self.Groups.Lists, name)
 
     def startProcess(self, games):
         if not self.Window.Process:

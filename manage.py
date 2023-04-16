@@ -12,11 +12,14 @@ def mkdir(*dirs):
         if not os.path.exists(dir):
             os.mkdir(dir)
 
-mkdir('local','local/lists')
+data_dir = 'data/'
+local_dir = 'local/'
+list_dir = local_dir + 'lists/'
+mkdir(local_dir, list_dir)
 
 class PRET_Manager:
     def __init__(self):
-        self.Directory = 'data/'
+        self.Directory = data_dir
         mkdir(self.Directory)
         
         self.All = []
@@ -37,6 +40,11 @@ class PRET_Manager:
         self.doBuild = None
         self.doClean = False
 
+    def addList(self, name, list):
+        self.Lists[name] = []
+        for author in list:
+            self.Lists[name] += [self.Authors[author][title] for title in list[author]]
+
     def build_GUI(self):
         self.init()
         self.App, self.GUI = gui.init(self)
@@ -54,6 +62,13 @@ class PRET_Manager:
 
     def init(self):
         self.load('data.json')
+
+        for file in get_files(list_dir):
+            with open(list_dir + file, 'r') as f:
+                list = json.loads(f.read())
+            
+            self.addList(file.split('.')[0], list)
+
         # todo - load 'custom.json' which has additional tags (ignore, favorite, etc)
 
     def handle_args(self):
@@ -221,6 +236,9 @@ class PRET_Manager:
 
 def get_dirs(path):
     return next(os.walk(path))[1]
+
+def get_files(path):
+    return next(os.walk(path))[2]
 
 def get_builds(path):
     return [file for file in Path(path).iterdir() if file.suffix[1:] in build_extensions]
