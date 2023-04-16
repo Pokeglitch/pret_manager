@@ -12,6 +12,23 @@ def mkdir(*dirs):
         if not os.path.exists(dir):
             os.mkdir(dir)
 
+def get_dirs(path):
+    return next(os.walk(path))[1]
+
+def get_files(path):
+    return next(os.walk(path))[2]
+
+def get_builds(path):
+    return [file for file in Path(path).iterdir() if file.suffix[1:] in build_extensions]
+
+# prepend wsl if platform is windows
+def wsl(commands):
+    return ['wsl'] + commands if platform.system() == 'Windows' else commands
+
+# remove invalid windows path chars from name
+def legal_name(name):
+    return re.sub(r'[<>:"/\|?*]', '', name)
+
 # Ensure all necessary base directories exist
 games_dir = 'games/'
 data_dir = 'data/'
@@ -24,14 +41,11 @@ class PRET_Manager:
         
         self.All = []
         self.Authors = {}
-        self.Lists = {
-            "Favorites" : [],
-            "Excluding" : [],
-            "Missing" : [],
-            "Outdated" : []
-        }
+        self.Lists = {}
         self.Tags = {}
         self.Verbose = False
+
+        self.doGUI = False
         self.GUI = None
         self.App = None
 
@@ -43,16 +57,23 @@ class PRET_Manager:
     def addList(self, name, list):
         if name not in self.Lists:
             self.Lists[name] = []
+            
+            if self.doGUI:
+                self.GUI.Content.Groups.Lists.addElement(name)
 
         for author in list:
             [self.Authors[author][title].addToList(self.Lists[name]) for title in list[author]]
 
     def init_GUI(self):
+        self.doGUI = True
+
+        # TODO - these should come from default parameters loaded within 'init'
         self.doUpdate = True
         self.doBuild = []
         self.doClean = True
-        self.init()
         self.App, self.GUI = gui.init(self)
+
+        self.init()
 
     def print(self, msg):
         msg = 'pret-manager:\t' + str(msg)
@@ -68,6 +89,11 @@ class PRET_Manager:
     def init(self):
         self.load('data.json')
 
+        # Initialize the base lists
+        for name in ["Favorites", "Excluding", "Missing", "Outdated"]:
+            self.addList(name, [])
+
+        # Load lists
         for file in get_files(list_dir):
             with open(list_dir + file, 'r') as f:
                 list = json.loads(f.read())
@@ -76,6 +102,7 @@ class PRET_Manager:
 
     def handle_args(self):
         # if no args at all, launch the gui
+        # TODO - or, -g (also, what about if only -v?)
         if len(sys.argv) == 1:
             return self.init_GUI()
 
@@ -163,6 +190,10 @@ class PRET_Manager:
 
         for author in data:
             self.Authors[author] = {}
+
+            if self.doGUI:
+                self.GUI.Content.Groups.Authors.addElement(author)
+
             mkdir(self.Directory + author)
 
             for title in data[author]:
@@ -181,6 +212,10 @@ class PRET_Manager:
     def add_repo_tag(self, repo, tag):
         if tag not in self.Tags:
             self.Tags[tag] = []
+            
+            if self.doGUI:
+                self.GUI.Content.Groups.Tags.addElement(tag)
+
         self.Tags[tag].append(repo)
 
     def add_to_queue(self, repos):
@@ -242,26 +277,16 @@ class PRET_Manager:
             if tag in self.Tags:
                 self.keep_in_queue(self.Tags[tag])
 
-def get_dirs(path):
-    return next(os.walk(path))[1]
-
-def get_files(path):
-    return next(os.walk(path))[2]
-
-def get_builds(path):
-    return [file for file in Path(path).iterdir() if file.suffix[1:] in build_extensions]
-
-# prepend wsl if platform is windows
-def wsl(commands):
-    return ['wsl'] + commands if platform.system() == 'Windows' else commands
-
-# remove invalid windows path chars from name
-def legal_name(name):
-    return re.sub(r'[<>:"/\|?*]', '', name)
-
-class repository:
-    def __init__(self, manager, author, title, data):
+class game:
+    def __init__(self, manager):
         self.manager = manager
+
+    def init_GUI(self):
+        self.GUI = gui.GameGUI(self.manager.GUI.Content, self)
+
+class repository(game):
+    def __init__(self, manager, author, title, data):
+        super().__init__(manager)
         self.author = author
         self.title = title
         self.GUI = None
@@ -289,6 +314,9 @@ class repository:
 
         self.parse_builds()
         self.parse_releases()
+
+        if self.manager.doGUI:
+            self.init_GUI()
 
     def addToList(self, list):
         if list not in self.Lists:

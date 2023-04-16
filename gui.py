@@ -13,7 +13,6 @@ Filter:
 - (True for Game Panel as well, though Fav/Exclude are also quick clicks)
 
 Lists:
-- Implement how 'excluding' works
 - show in Tile, Panel if favorite/excluded
 
 - Way to load a list
@@ -304,9 +303,11 @@ class List(VBox):
 
         self.Class = Class
         self.Source = getattr(parent.GUI.Manager, ID)
-        [Class(self, name) for name in self.Source]
 
         self.addTo(parent.Body)
+
+    def addElement(self, name):
+        self.Class(self, name)
 
     def add(self, widget, *args):
         if hasattr(widget,'Name'):
@@ -429,11 +430,10 @@ class GamePanel(VBox):
     def openURL(self, event):
         webbrowser.open(self.GameGUI.Game.url)
 
-class Game:
+class GameGUI:
     def __init__(self, GUI, game):
         self.GUI = GUI
         self.Game = game
-        game.GUI = self
 
         # TODO
         self.isIPS = False
@@ -465,14 +465,6 @@ class Game:
         self.Tile.setProperty("processing",value)
         self.Queue.updateStyle()
         self.Tile.updateStyle()
-
-class Games:
-    def __init__(self, GUI):
-        self.GUI = GUI
-        self.All = [Game(GUI, repo) for repo in GUI.Manager.All]
-
-    def update(self):
-        [game.update() for game in self.All]
 
 class Queue(VBox):
     def __init__(self, GUI):
@@ -911,7 +903,6 @@ class MainContents(HBox):
         self.Queue = Queue(self)
         self.Status = Status(self)
 
-        self.Games = Games(self)
         self.addTo(window.Widget)
 
     def toggleInList(self, name, games):
