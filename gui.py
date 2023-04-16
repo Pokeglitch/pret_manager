@@ -2,31 +2,28 @@ import sys, webbrowser, json
 
 '''
 TODO:
-Fix Functionality:
-
 - When no filters, show All
-- Way to save filter separately from list
+- Save filter separately from list
 
-For Panel:
-- Show when game is in queue, being processed
+Lists:
+- Implement how 'excluding' works
+- Way to remove favorite & exclude
+- show in Tile, Panel if favorite/excluded
 
----------
-Finish functionality:
-
-- Sorting (date of last update, alphabet, etc)
-
+- Way to load a list
+- Add lists as option to CLI
 - show size of each list next to name
 
 - Detect if downloaded/missing, up to date/out of date
 -- Add to corresponding list
 -- Show in Panel, Tile
 
-- Finish Favorite/Exclude, & way to export
--- show in Tile
-
-- Finish Saving Filter, Queue (& load upon opening)
+Group/Tile/Queue Sorting:
+- date of last update, alphabet, etc
 ---------
 Finish Game Panel
+- Show when game is in queue, being processed
+
 - make tags individual widgets
 -- click to display in Tiles panel
 --- Way to add extra tags?
@@ -49,6 +46,8 @@ Way to create/handle Groups of Tags (i.e. Gen1, Gen2, TCG)
 -- if object, the sub tags will be the exact same array at the real tag
 --- can have nested subtags
 
+- Add new Tags
+
 New column:
 -Way to check if this program has updates/apply update
 -Way to Modify Settings:
@@ -66,6 +65,15 @@ from PyQt5.QtWidgets import QFileDialog, QApplication, QStyleOption, QStyle, QLa
 from PyQt5.QtGui import QIcon, QPainter
 
 threadpool = QThreadPool()
+
+def listToDict(list):
+    data = {}
+    for game in list:
+        if game.author in data:
+            data[game.author].append(game.title)
+        else:
+            data[game.author] = [game.title]
+    return data
 
 # https://doc.qt.io/qtforpython/examples/example_widgets_layouts_flowlayout.html
 class FlowLayout(QLayout):
@@ -712,10 +720,12 @@ class Tiles(VBox):
         self.GUI.startProcess([game for game in self.All_Games])
 
     def favorite(self, event):
-        pass
+        if self.All_Games:
+            self.GUI.addToList('Favorites', self.All_Games)
 
     def exclude(self, event):
-        pass
+        if self.All_Games:
+            self.GUI.addToList('Excluding', self.All_Games)
 
 class Button(QLabel):
     def __init__(self, parent, text, click):
@@ -805,10 +815,12 @@ class Panel(VBox):
             self.GUI.startProcess([self.Active.Game])
 
     def favorite(self, event):
-        pass
+        if self.Active:
+            self.GUI.addToList('Favorites', [self.Active.Game])
 
     def exclude(self, event):
-        pass
+        if self.Active:
+            self.GUI.addToList('Excluding', [self.Active.Game])
 
     def applyPatch(self, event):
         pass
@@ -896,22 +908,32 @@ class MainContents(HBox):
         self.Games = Games(self)
         self.addTo(window.Widget)
 
+    def addToList(self, name, games):
+        list = self.Groups.Lists.List[name].getData()
+        newAdded = False
+        for game in games:
+            if game not in list:
+                newAdded = True
+                list.append(game)
+        if newAdded:
+            data = listToDict(list)
+            self.Manager.addList(name, data)
+
+            with open('local/lists/' + name + '.json', 'w') as f:
+                f.write(json.dumps(data))
+
     def saveList(self, list):
         fileName, ext = QFileDialog.getSaveFileName(self, 'Save List As', 'local/lists','*.json')
         if fileName:
-            data = {}
-            for game in list:
-                if game.author in data:
-                    data[game.author].append(game.title)
-                else:
-                    data[game.author] = [game.title]
-
+            data = listToDict(list)
             with open(fileName,'w') as f:
                 f.write(json.dumps(data))
 
             name = fileName.split('/')[-1].split('.')[0]
             self.Manager.addList(name, data)
-            ArrayList(self.Groups.Lists, name)
+
+            if name not in self.Manager.Lists:
+                ArrayList(self.Groups.Lists, name)
 
     def startProcess(self, games):
         if not self.Window.Process:

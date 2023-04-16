@@ -26,7 +26,7 @@ class PRET_Manager:
         self.Authors = {}
         self.Lists = {
             "Favorites" : [],
-            "Exclude" : [],
+            "Excluding" : [],
             "Missing" : [],
             "Outdated" : []
         }
@@ -68,8 +68,6 @@ class PRET_Manager:
                 list = json.loads(f.read())
             
             self.addList(file.split('.')[0], list)
-
-        # todo - load 'custom.json' which has additional tags (ignore, favorite, etc)
 
     def handle_args(self):
         # if no args at all, launch the gui
