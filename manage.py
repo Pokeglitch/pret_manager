@@ -513,6 +513,10 @@ class repository(game):
 
         return process.stdout.decode('utf-8').split('\n') if capture_output else process
 
+    def set_branch(self, branch):
+        self.checkout(branch)
+        self.Branch = branch
+
     def get_branches(self):
         branches = self.git('branch', capture_output=True)[:-1]
 
@@ -544,6 +548,12 @@ class repository(game):
     def git(self, *args, capture_output=False):
         return self.run(['git'] + [*args], capture_output, self.path['repo'])
 
+    def checkout(self, *args):
+        #self.git('clean','-f')
+        # TODO - handle failed checkout?
+        self.print('Switching to ' + ' '.join(args), True)
+        return self.git('checkout', *args)
+
     def pull(self):
         return self.git('pull','--all')
 
@@ -572,14 +582,7 @@ class repository(game):
             self.update()
 
         if len(args):
-            self.didCheckout = True
-            self.git(*(['checkout'] + [*args]))
-        # TODO - not necessary after changing branch immediately from dropdown selection
-        elif self.GUI and self.GUI.SelectedBranch and self.GUI.SelectedBranch != self.CurrentBranch:
-            self.didCheckout = True
-            self.git('checkout', self.GUI.SelectedBranch)
-        else:
-            self.didCheckout = False
+            self.checkout(*args)
 
         self.get_build_info()
 
@@ -591,7 +594,8 @@ class repository(game):
             self.print('Building', True)
             self.build_rgbds(self.rgbds)
 
-        if self.didCheckout:
+        if len(args):
+            self.print('Switching back', True)
             self.git('switch','-')
 
 
