@@ -725,6 +725,7 @@ class repository(game):
 
         # if any exist, then download
         if len(releases) > 1:
+            newRelease = False
             for release in releases:
                 # ignore empty lines
                 if release:
@@ -743,12 +744,17 @@ class repository(game):
                         else:
                             roms = get_builds(path)
                             if roms:
+                                newRelease = True
                                 self.releases[name] = {}
                                 for rom in roms:
                                     self.releases[name][rom.name] = rom
 
                     else:
                         self.print('Skipping ' + path)
+            
+            if newRelease and self.GUI:
+                self.manager.GUI.Process.ProcessSignals.doRelease.emit(self)
+
         else:
             self.print('No releases found')
          

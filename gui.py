@@ -3,22 +3,17 @@ import sys, webbrowser, json, re
 '''
 TODO:
 
-- Releases needs to update when new one is found
--- sort releases by newest first
-- sort builds by newest first
-
-- Color in the tags
--- make the tag list look like the tags (can be skinnier)
-
 - Display in log when process is successful or failed
-
-- meta data should include successful/failed commit attempts
--- extra tags?
 
 - Detect if up to date/out of date
 
 - Disable all process buttons when process is active
 - Disable save buttons when queue/filter is empty
+
+Have the directory be database (if shortcut, then git, etc)
+- data file in each (for which rgbds, title, tags, etc)
+-- separate from metadata
+--- meta data should include successful/failed commit attempts
 
 Filter:
 - Add title text for Filter
@@ -580,7 +575,11 @@ class GamePanel(VBox):
         if self.GameGUI.Game.releases.keys():
             releasesItem.Path = QUrl.fromLocalFile(self.GameGUI.Game.path['releases'])
 
-            for releaseName, roms in self.GameGUI.Game.releases.items():
+            releases = list(self.GameGUI.Game.releases.keys())
+            releases.sort()
+
+            for releaseName in reversed(releases):
+                roms = self.GameGUI.Game.releases[releaseName]
                 releaseItem = QTreeWidgetItem(releasesItem)
                 releaseItem.setText(0, re.match(r'^\d{4}-\d{2}-\d{2} - .* \((.*)\)$', releaseName).group(1))
                 releaseItem.Path = QUrl.fromLocalFile(self.GameGUI.Game.path['releases'] + releaseName)
@@ -608,7 +607,11 @@ class GamePanel(VBox):
                 branchItem.setText(0, branchName)
                 branchItem.Path = QUrl.fromLocalFile(self.GameGUI.Game.path['builds'] + branchName)
 
-                for buildName, roms in branchBuilds.items():
+                builds = list(branchBuilds.keys())
+                builds.sort()
+
+                for buildName in reversed(builds):
+                    roms = branchBuilds[buildName]
                     buildItem = QTreeWidgetItem(branchItem)
                     buildItem.setText(0, buildName)
                     buildItem.Path = QUrl.fromLocalFile(self.GameGUI.Game.path['builds'] + branchName + '/' + buildName)
@@ -1042,6 +1045,7 @@ class Panel(VBox):
 
 class ProcessSignals(QObject):
     doBuild = pyqtSignal(object)
+    doRelease = pyqtSignal(object)
 
 class Process(QRunnable):
     def __init__(self, GUI):
@@ -1049,6 +1053,7 @@ class Process(QRunnable):
         self.GUI = GUI
         self.ProcessSignals = ProcessSignals()
         self.ProcessSignals.doBuild.connect(GUI.handleBuildSignal)
+        self.ProcessSignals.doRelease.connect(GUI.handleReleaseSignal)
 
     def run(self):
         self.GUI.Manager.run()
@@ -1151,6 +1156,9 @@ class MainContents(HBox):
 
     def handleBuildSignal(self, game):
         game.GUI.Panel.drawBuilds()
+
+    def handleReleaseSignal(self, game):
+        game.GUI.Panel.drawReleases()
 
 class PRET_Manager_GUI(QMainWindow):
     def __init__(self, manager):

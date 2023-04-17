@@ -259,7 +259,7 @@ TagGUI[which=spaceworld] {
 }
 
 TagGUI[which=spaceworld]:hover {
-    background-color: #c2a147;
+    background-color: #c8aa59;
 }
 
 TagGUI[which=binary] {

@@ -1,29 +1,36 @@
 {
   "pret": {
     "pokered": {
+      "title" : "Pokemon Red",
       "rgbds": "0.6.1",
       "tags": ["official","disasm","red","blue","debug","vc-patch"]
     },
     "pokeyellow": {
+      "title" : "Pokemon Yellow",
       "rgbds": "0.6.1",
       "tags": ["official","disasm","yellow","debug","vc-patch"]
     },
     "pokegold": {
+      "title" : "Pokemon Gold",
       "rgbds": "0.6.1",
       "tags": ["official","disasm","gold","silver","debug","vc-patch"]
     },
     "pokecrystal": {
+      "title" : "Pokemon Crystal",
       "rgbds": "0.6.1",
       "tags": ["official","disasm","crystal","debug","vc-patch"]
     },
     "poketcg": {
+      "title" : "Trading Card Game",
       "rgbds": "0.6.1",
       "tags": ["official","disasm","tcg1"]
     },
     "poketcg2": {
+      "title" : "Trading Card Game 2",
       "tags": ["official","disasm","tcg2"]
     },
     "pokegold-spaceworld": {
+      "title" : "Gold Spaceworld",
       "tags": ["official","disasm","gold","debug","spaceworld"]
     }
   },
