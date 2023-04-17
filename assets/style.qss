@@ -120,17 +120,25 @@ GameTile[queued="true"] {
     border: 2px solid black;
     min-width:98px;
     max-width:98px;
-    min-height:98px;
-    max-height:98px;
+    min-height:148px;
+    max-height:148px;
 }
 
 GameTile {
     border: 1px solid black;
     min-width:100px;
     max-width:100px;
+    min-height:150px;
+    max-height:150px;
+    background-color: #EEEEEE
+}
+
+TileArt {
+    border: 1px solid black;
+    min-width:100px;
+    max-width:100px;
     min-height:100px;
     max-height:100px;
-    background-color: #EEEEEE
 }
 
 QWidget#Tiles {
@@ -319,12 +327,13 @@ TagGUI[which=analogue]:hover * {
 }
 
 GamePanelArtwork {
-    min-height: 250px;
-    max-height: 250px;
-    min-width: 250px;
-    max-width: 250px;
+    min-height: 300px;
+    max-height: 300px;
+    min-width: 300px;
+    max-width: 300px;
     border: 1px solid black;
     margin:5px;
+    padding: 0;
 }
 
 QLabel#url {

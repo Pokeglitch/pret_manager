@@ -457,6 +457,7 @@ class repository(game):
         self.parse_releases()
 
         self.Missing = not os.path.exists(self.path['repo'])
+        self.Excluding = False
 
         self.readMetaData()
 
@@ -500,10 +501,20 @@ class repository(game):
             self.Lists.append(list)
             list.addGame(self)
 
+            if list.Name == "Excluding":
+                self.Excluding = True
+                if self.GUI:
+                    self.GUI.updateExcluding(self.Excluding)
+
     def removeFromList(self, list):
         if list in self.Lists:
             self.Lists.pop(self.Lists.index(list))
             list.removeGame(self)
+
+            if list.Name == "Excluding":
+                self.Excluding = False
+                if self.GUI:
+                    self.GUI.updateExcluding(self.Excluding)
 
     def parse_builds(self):
         self.builds = {}

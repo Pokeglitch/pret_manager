@@ -79,9 +79,9 @@ Option to build multiple branches within a single 'update'
 Associate Authors with a Team
 '''
 
-from PyQt5.QtCore import Qt, pyqtSignal, QObject, QUrl, QThreadPool, QRunnable, QMargins, QPoint, QRect, QSize
+from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QObject, QUrl, QThreadPool, QRunnable, QMargins, QPoint, QRect, QSize
 from PyQt5.QtWidgets import QComboBox, QHeaderView, QTreeWidgetItem, QFileDialog, QTreeWidget, QApplication, QStyleOption, QStyle, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
-from PyQt5.QtGui import QDesktopServices, QIcon, QPainter
+from PyQt5.QtGui import QPixmap, QDesktopServices, QIcon, QPainter
 
 threadpool = QThreadPool()
 
@@ -394,11 +394,30 @@ class GameTile(VBox):
         super().__init__(gameGUI.GUI)
         self.setObjectName("Tile")
         self.GameGUI = gameGUI
-        self.Name = self.label(gameGUI.Game.name)
-        self.Artwork = self.label('<Artwork>')
+        #self.Name = self.label(gameGUI.Game.name)
+
+        self.Artwork = self.label()
+        self.Artwork.setObjectName("TileArt")
+
+        self.Pixmap = QPixmap('assets/images/red.png').scaled(100, 100)
+
+        self.Faded = QPixmap(self.Pixmap.size())
+        self.Faded.fill(Qt.transparent)
+        painter = QPainter(self.Faded)
+        painter.setOpacity(0.5)
+        painter.drawPixmap(QPoint(), self.Pixmap)
+        painter.end()
+
         self.Title = self.label(gameGUI.Game.title)
         self.Author = self.label(gameGUI.Game.author)
         self.isQueued = False
+
+    def updateExcluding(self, excluding):
+        if excluding:
+            self.Artwork.setPixmap(self.Faded)
+        else:
+            self.Artwork.setPixmap(self.Pixmap)
+        
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -437,12 +456,28 @@ class TagGUI(HBox):
 class GamePanelArtwork(VBox):
     def __init__(self, parent):
         super().__init__(parent.GUI)
-        self.Label = self.label("<Artwork>")
+        self.Label = self.label()
         self.Label.setAlignment(Qt.AlignCenter)
+        
+        self.Pixmap = QPixmap('assets/images/red.png').scaled(300, 300)
+
+        self.Faded = QPixmap(self.Pixmap.size())
+        self.Faded.fill(Qt.transparent)
+        painter = QPainter(self.Faded)
+        painter.setOpacity(0.5)
+        painter.drawPixmap(QPoint(), self.Pixmap)
+        painter.end()
+
 
         self.Container = HBox(self.GUI)
         self.Container.addTo(parent)
         self.addTo(self.Container)
+
+    def updateExcluding(self, excluding):
+        if excluding:
+            self.Label.setPixmap(self.Faded)
+        else:
+            self.Label.setPixmap(self.Pixmap)
 
 class GamePanel(VBox):
     def __init__(self, gameGUI):
@@ -640,6 +675,11 @@ class GameGUI:
         self.Panel = GamePanel(self)
 
         self.setQueued(False)
+        self.updateExcluding(self.Game.Excluding)
+
+    def updateExcluding(self, excluding):
+        self.Tile.updateExcluding(excluding)
+        self.Panel.Artwork.updateExcluding(excluding)
 
     def setQueued(self, queued):
         self.Tile.isQueued = queued
