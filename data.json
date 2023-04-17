@@ -2,23 +2,23 @@
   "pret": {
     "pokered": {
       "rgbds": "0.6.1",
-      "tags": ["official","disasm","red","blue","debug","patch"]
+      "tags": ["official","disasm","red","blue","debug","vc-patch"]
     },
     "pokeyellow": {
       "rgbds": "0.6.1",
-      "tags": ["official","disasm","yellow","debug","patch"]
+      "tags": ["official","disasm","yellow","debug","vc-patch"]
     },
     "pokegold": {
       "rgbds": "0.6.1",
-      "tags": ["official","disasm","gold","silver","debug","patch"]
+      "tags": ["official","disasm","gold","silver","debug","vc-patch"]
     },
     "pokecrystal": {
       "rgbds": "0.6.1",
-      "tags": ["official","disasm","crystal","debug","patch"]
+      "tags": ["official","disasm","crystal","debug","vc-patch"]
     },
     "poketcg": {
       "rgbds": "0.6.1",
-      "tags": ["official","disasm","tcg"]
+      "tags": ["official","disasm","tcg1"]
     },
     "poketcg2": {
       "tags": ["official","disasm","tcg2"]
@@ -257,7 +257,7 @@
   "Pokeglitch": {
     "poketre2": {
       "rgbds": "0.6.1",
-      "tags": ["red", "disasm"]
+      "tags": ["red", "disasm","analogue"]
     }
   },
   "Raguzero": {

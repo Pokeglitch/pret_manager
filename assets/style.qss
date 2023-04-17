@@ -150,6 +150,174 @@ QWidget#Tag {
     margin:2px;
 }
 
+TagGUI[which=red] {
+    background-color: #da0000;
+}
+
+TagGUI[which=red]:hover {
+    background-color: #f30000;
+}
+
+TagGUI[which=green] {
+    background-color: #1aba00;
+}
+
+TagGUI[which=green]:hover {
+    background-color: #1dcf00;
+}
+
+TagGUI[which=blue] {
+    background-color: #0030ff;
+}
+
+TagGUI[which=blue]:hover {
+    background-color: #2f56ff;
+}
+
+TagGUI[which=yellow] {
+    background-color: #e5d200;
+}
+
+TagGUI[which=yellow]:hover {
+    background-color: #ffea00;
+}
+
+TagGUI[which=gold] {
+    background-color: #d1b34b;
+}
+
+TagGUI[which=gold]:hover {
+    background-color: #d9c06d;
+}
+
+TagGUI[which=silver] {
+    background-color: #8aa0a6;
+}
+
+TagGUI[which=silver]:hover {
+    background-color: #9fb1b6;
+}
+
+TagGUI[which=crystal] {
+    background-color: #50bde6;
+}
+
+TagGUI[which=crystal]:hover {
+    background-color: #70c9ea;
+}
+
+TagGUI[which=official] {
+    background-color: #ffffff;
+}
+
+TagGUI[which=official] * {
+    color: #da0000;
+}
+
+TagGUI[which=official]:hover {
+    background-color: #ffffff;
+}
+
+TagGUI[which=official]:hover * {
+    color: #f53232;
+}
+
+TagGUI[which=tcg1] {
+    background-color: #da782b;
+}
+
+TagGUI[which=tcg1]:hover {
+    background-color: #dd8540;
+}
+
+TagGUI[which=tcg2] {
+    background-color: #c94cb9;
+}
+
+TagGUI[which=tcg2]:hover {
+    background-color: #ce5dc0;
+}
+
+TagGUI[which=extras] {
+    background-color: #8e7cc3;
+}
+
+TagGUI[which=extras]:hover {
+    background-color: #a496cf;
+}
+
+TagGUI[which=spaceworld] {
+    background-color: #bc9733;
+}
+
+TagGUI[which=spaceworld]:hover {
+    background-color: #c2a147;
+}
+
+TagGUI[which=binary] {
+    background-color: #000000;
+}
+
+TagGUI[which=binary] * {
+    color: #ffffff;
+}
+
+TagGUI[which=binary]:hover {
+    background-color: #333333;
+}
+
+TagGUI[which=binary]:hover * {
+    color: #ffffff;
+}
+
+TagGUI[which=disasm] {
+    background-color: #ffffff;
+}
+
+TagGUI[which=disasm] * {
+    color: #000000;
+}
+
+TagGUI[which=disasm]:hover {
+    background-color: #ffffff;
+}
+
+TagGUI[which=disasm]:hover * {
+    color: #333333;
+}
+
+TagGUI[which=debug] {
+    background-color: #a3e1d3;
+}
+
+TagGUI[which=debug]:hover {
+    background-color: #b6fbeb;
+}
+
+TagGUI[which=vc-patch] {
+    background-color: #e4708d;
+}
+
+TagGUI[which=vc-patch]:hover {
+    background-color: #e67e98;
+}
+
+TagGUI[which=analogue] {
+    background-color: qlineargradient( x1:0, y1:0, x2:1, y2:1, stop:0 #181818, stop:1 #5a5a5a);
+}
+
+TagGUI[which=analogue] * {
+    color: #ffffff;
+}
+
+TagGUI[which=analogue]:hover {
+    background-color: qlineargradient( x1:0, y1:0, x2:1, y2:1, stop:0 #333333, stop:1 #777777);
+}
+
+TagGUI[which=analogue]:hover * {
+    color: #ffffff;
+}
+
 GamePanelArtwork {
     min-height: 250px;
     max-height: 250px;

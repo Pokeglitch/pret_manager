@@ -2,7 +2,7 @@ import subprocess, os, re, glob, platform, shutil, argparse, json, sys
 from pathlib import Path
 import gui
 
-build_extensions = ['gb','gbc','pocket','patch','.ips']
+build_extensions = ['gb','gbc','pocket','patch','ips']
 metadata_properties = ['Branches','CurrentBranch','RGBDS']
 
 def error(msg):
@@ -81,7 +81,11 @@ class AuthorEntry(CatalogEntry):
         super().removeGame(game)
 
 class TagEntry(CatalogEntry):
-    pass
+    def __init__(self, *args):
+        super().__init__(*args)
+        if self.GUI:
+            self.GUI.Label.setParent(None)
+            self.GUI.TagGUI = gui.TagGUI(self.GUI, self.Name)
 
 class ListEntry(CatalogEntry):
     def reset(self):
@@ -676,7 +680,7 @@ class repository(game):
         commit = self.get_commit()
         date = self.get_date()
         self.build_name = date[:10] + ' ' + commit[:8] + ' (' + version + ')'
-        mkdir(self.path['builds'] + self.CurrentBranch)
+        mkdir(self.path['builds'], self.path['builds'] + self.CurrentBranch)
         self.build_dir = self.path['builds'] + self.CurrentBranch + '/' + self.build_name + '/'
 
     def build(self, *args):

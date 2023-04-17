@@ -3,17 +3,19 @@ import sys, webbrowser, json, re
 '''
 TODO:
 
-- build should have subdirectorie for branch
+- Releases needs to update when new one is found
+-- sort releases by newest first
+- sort builds by newest first
+
+- Color in the tags
+-- make the tag list look like the tags (can be skinnier)
 
 - Display in log when process is successful or failed
 
-- Add releases to panel
-- finish rgbds dropdowns
+- meta data should include successful/failed commit attempts
+-- extra tags?
 
-- click on author to go to their github
--- instead of separate website link, have the 'title' be link to github
-
-- meta data for each game about branches, successful/failed commit attempts, etc
+- Detect if up to date/out of date
 
 - Disable all process buttons when process is active
 - Disable save buttons when queue/filter is empty
@@ -35,21 +37,16 @@ Lists:
 - Add lists as option to CLI
 - show size of each list next to name
 
-- Detect if downloaded/missing, up to date/out of date
--- Add to corresponding list
--- Show in Panel, Tile
+-- Show in missing/out of date in Tile
+--- faded = excluded, star in corner = fav
 
-Group/Tile/Queue Sorting:
+Catalog/Tile/Queue Sorting:
 - date of last update, alphabet, etc
 ---------
 Finish Game Panel
 - Show when game is in queue (just use a single button and change the text...)
 - show when game is being processed (disable the process button?)
-
-- make tags individual widgets
--- click Tag display in Tiles panel (?)
---- or, treat it as if the 'tag' in the catalog is clicked
---- Way to add extra tags?
+- show if game is missing, exlucded (faded) or out of date
 
 Way to copy selected builds to another location
 ---------
@@ -83,7 +80,7 @@ Associate Authors with a Team
 '''
 
 from PyQt5.QtCore import Qt, pyqtSignal, QObject, QUrl, QThreadPool, QRunnable, QMargins, QPoint, QRect, QSize
-from PyQt5.QtWidgets import QComboBox, QTreeWidgetItem, QFileDialog, QTreeWidget, QApplication, QStyleOption, QStyle, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
+from PyQt5.QtWidgets import QComboBox, QHeaderView, QTreeWidgetItem, QFileDialog, QTreeWidget, QApplication, QStyleOption, QStyle, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
 from PyQt5.QtGui import QDesktopServices, QIcon, QPainter
 
 threadpool = QThreadPool()
@@ -432,6 +429,7 @@ class TagGUI(HBox):
     def __init__(self, parent, name):
         super().__init__(parent.GUI)
         self.setObjectName('Tag')
+        self.setProperty('which',name)
         self.Label = self.label(name)
         self.Label.setAlignment(Qt.AlignCenter)
         self.addTo(parent)
@@ -506,13 +504,14 @@ class GamePanel(VBox):
 
         self.updateBranchDetails()
         
-        self.Trees = VBox(self.GUI)
+        self.Trees = HBox(self.GUI)
         self.Trees.addTo(self)
 
         self.Builds = VBox(self.GUI)
         self.Builds.addTo(self.Trees, 1)
         self.BuildTree = QTreeWidget()
-        self.BuildTree.header().setStretchLastSection(True)
+        self.BuildTree.header().setStretchLastSection(False)
+        self.BuildTree.header().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.BuildTree.header().hide()
         self.BuildTree.setIndentation(10)
         self.Builds.add(self.BuildTree)
@@ -522,7 +521,8 @@ class GamePanel(VBox):
         self.Releases = VBox(self.GUI)
         self.Releases.addTo(self.Trees, 1)
         self.ReleaseTree = QTreeWidget()
-        self.ReleaseTree.header().setStretchLastSection(True)
+        self.ReleaseTree.header().setStretchLastSection(False)
+        self.ReleaseTree.header().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.ReleaseTree.header().hide()
         self.ReleaseTree.setIndentation(10)
         self.Releases.add(self.ReleaseTree)
