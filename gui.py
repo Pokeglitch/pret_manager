@@ -1,4 +1,4 @@
-import sys, webbrowser, json
+import sys, webbrowser, json, re
 
 '''
 TODO:
@@ -63,7 +63,7 @@ Way to create/handle Groups of Tags (i.e. Gen1, Gen2, TCG)
 --- can have nested subtags
 
 New column:
-- Add rgbds (remove gbdev/rgbds from catalogs)
+- RGBDS panel ?
 -Way to check if this program has updates/apply update
 -Way to Modify Settings:
     - default emulator (or, per game or file type)
@@ -74,10 +74,12 @@ New column:
 
 IPS classes and applying
 
+Option to change commit to build
 Option for specific Make commands to build
 - Need to parse makefile...
 
 Option to build multiple branches within a single 'update'
+Associate Authors with a Team
 '''
 
 from PyQt5.QtCore import Qt, pyqtSignal, QObject, QUrl, QThreadPool, QRunnable, QMargins, QPoint, QRect, QSize
@@ -476,54 +478,113 @@ class GamePanel(VBox):
         self.Commit = Field(self.GitOptions, 'Commit', '-')
         self.LastUpdate = Field(self.GitOptions, 'Last Update', '-')
 
+        self.SetRGBDSVersion = HBox(self.GUI)
+        self.SetRGBDSVersion.label("RGBDS:")
+        self.RGBDSComboBox = QComboBox()
+        
+        items = ["None"]
+        default_index = 0
+        
+        for version in reversed(list(self.GameGUI.Game.manager.RGBDS.releases.keys())):
+            version = version[1:]
+            if version == self.GameGUI.Game.rgbds:
+                version += ' *'
+                if not default_index:
+                    default_index = len(items)
+            # Custom takes priority
+            if version == self.GameGUI.Game.RGBDS:
+                default_index = len(items)
+
+            items.append(version)
+
+        self.RGBDSComboBox.addItems(items)
+        self.RGBDSComboBox.setCurrentIndex(default_index)
+
+        self.RGBDSComboBox.currentTextChanged.connect(self.handleRGBDSSelected)
+        self.SetRGBDSVersion.add(self.RGBDSComboBox)
+        self.SetRGBDSVersion.addTo(self.GitOptions)
+
         self.updateBranchDetails()
         
-        self.Builds = HBox(self.GUI)
-        self.BuildsLabel = VBox(self.GUI)
-        self.BuildsLabel.addTo(self.Builds, 1)
-        self.BuildsLabel.label("Builds:")
-        self.BuildsLabel.addStretch()
-        self.Builds.addTo(self)
+        self.Trees = VBox(self.GUI)
+        self.Trees.addTo(self)
 
-        self.NoTree = VBox(self.GUI)
-        self.NoTree.label('None')
-        self.NoTree.addStretch()
-
-        self.Tree = QTreeWidget()
-        self.Tree.itemDoubleClicked.connect(lambda e: e.Path and QDesktopServices.openUrl(e.Path))
+        self.Builds = VBox(self.GUI)
+        self.Builds.addTo(self.Trees, 1)
+        self.BuildTree = QTreeWidget()
+        self.BuildTree.header().setStretchLastSection(True)
+        self.BuildTree.header().hide()
+        self.BuildTree.setIndentation(10)
+        self.Builds.add(self.BuildTree)
+        self.BuildTree.itemDoubleClicked.connect(lambda e: hasattr(e,"Path") and QDesktopServices.openUrl(e.Path))
         self.drawBuilds()
 
-        #self.Commit = Field(self.GitOptions, 'Commit', '<Change Commit>') #TODO
-        #self.Make = Field(self.GitOptions, 'Make', '<Specific Make Commands>') #TODO
-        self.SetRGBDSVersion = Field(self.GitOptions, 'RGBDS', '<Change RGBDS Version>')
+        self.Releases = VBox(self.GUI)
+        self.Releases.addTo(self.Trees, 1)
+        self.ReleaseTree = QTreeWidget()
+        self.ReleaseTree.header().setStretchLastSection(True)
+        self.ReleaseTree.header().hide()
+        self.ReleaseTree.setIndentation(10)
+        self.Releases.add(self.ReleaseTree)
+        self.ReleaseTree.itemDoubleClicked.connect(lambda e: hasattr(e,"Path") and QDesktopServices.openUrl(e.Path))
+        self.drawReleases()
 
         # if IPS
         self.IPSOptions = VBox(self.GUI)
         self.BaseROM = Field(self.IPSOptions, 'Base', '<Select Base ROM>')
         #self.IPSOptions.addTo(self)
 
-        self.addStretch()
+        #self.addStretch()
+
+    def drawReleases(self):
+        self.ReleaseTree.clear()
+        releasesItem = QTreeWidgetItem(self.ReleaseTree)
+        releasesItem.setText(0, "Releases:")
+        releasesItem.setExpanded(True)
+
+        if self.GameGUI.Game.releases.keys():
+            releasesItem.Path = QUrl.fromLocalFile(self.GameGUI.Game.path['releases'])
+
+            for releaseName, roms in self.GameGUI.Game.releases.items():
+                releaseItem = QTreeWidgetItem(releasesItem)
+                releaseItem.setText(0, re.match(r'^\d{4}-\d{2}-\d{2} - .* \((.*)\)$', releaseName).group(1))
+                releaseItem.Path = QUrl.fromLocalFile(self.GameGUI.Game.path['releases'] + releaseName)
+
+                for romName, path in roms.items():
+                    romItem = QTreeWidgetItem(releaseItem)
+                    romItem.setText(0, romName)
+                    romItem.Path = QUrl.fromLocalFile(str(path))
+        else:
+            noneItem = QTreeWidgetItem(releasesItem)
+            noneItem.setText(0, "None")
 
     def drawBuilds(self):
-        self.NoTree.setParent(None)
-        self.Tree.setParent(None)
-        self.Tree.clear()
+        self.BuildTree.clear()
 
-        self.Tree.header().hide()
-        for buildName, roms in self.GameGUI.Game.builds.items():
-            buildItem = QTreeWidgetItem(self.Tree)
-            buildItem.setText(0, buildName)
-            buildItem.Path = QUrl.fromLocalFile(self.GameGUI.Game.path['builds'] + buildName)
-
-            for romName, path in roms.items():
-                romItem = QTreeWidgetItem(buildItem)
-                romItem.setText(0, romName)
-                romItem.Path = QUrl.fromLocalFile(str(path))
-
+        buildsItem = QTreeWidgetItem(self.BuildTree)
+        buildsItem.setText(0, "Builds:")
+        buildsItem.setExpanded(True)
+        
         if self.GameGUI.Game.builds.keys():
-            self.Builds.add(self.Tree, 1)
+            buildsItem.Path = QUrl.fromLocalFile(self.GameGUI.Game.path['builds'])
+
+            for branchName, branchBuilds in self.GameGUI.Game.builds.items():
+                branchItem = QTreeWidgetItem(buildsItem)
+                branchItem.setText(0, branchName)
+                branchItem.Path = QUrl.fromLocalFile(self.GameGUI.Game.path['builds'] + branchName)
+
+                for buildName, roms in branchBuilds.items():
+                    buildItem = QTreeWidgetItem(branchItem)
+                    buildItem.setText(0, buildName)
+                    buildItem.Path = QUrl.fromLocalFile(self.GameGUI.Game.path['builds'] + branchName + '/' + buildName)
+
+                    for romName, path in roms.items():
+                        romItem = QTreeWidgetItem(buildItem)
+                        romItem.setText(0, romName)
+                        romItem.Path = QUrl.fromLocalFile(str(path))
         else:
-            self.Builds.add(self.NoTree, 1)
+            noneItem = QTreeWidgetItem(buildsItem)
+            noneItem.setText(0, "None")
 
     def openRepositoryURL(self, event):
         webbrowser.open(self.GameGUI.Game.url)
@@ -560,6 +621,9 @@ class GamePanel(VBox):
             self.updateBranchCommitDate()
 
             # todo - if it failed, change selection back to previous branch
+
+    def handleRGBDSSelected(self, rgbds):
+        self.GameGUI.Game.set_RGBDS(rgbds.split(' ')[0])
 
 
 class GameGUI:

@@ -165,8 +165,6 @@ QLabel#url {
 }
 
 QTreeWidget {
-    min-height:100px;
-    max-height:100px;
     background-color:#EEEEEE;
     border: none;
 }

@@ -2,7 +2,7 @@ import subprocess, os, re, glob, platform, shutil, argparse, json, sys
 from pathlib import Path
 import gui
 
-build_extensions = ['gb','gbc','pocket','patch']
+build_extensions = ['gb','gbc','pocket','patch','.ips']
 metadata_properties = ['Branches','CurrentBranch','RGBDS']
 
 def error(msg):
@@ -324,16 +324,20 @@ class PRET_Manager:
         with open(filepath,"r") as f:
             data = json.loads(f.read())
 
-        for author in data:
+        # do rgbds first
+        if 'gbdev' in data and 'rgbds' in data['gbdev']:
+            self.RGBDS = RGBDS(self, 'gbdev', 'rgbds', data['gbdev']['rgbds'])
+            del data['gbdev']
+
+        authors = list(data.keys())
+        authors.sort(key=str.casefold)
+
+        for author in authors:
             self.Catalogs.Authors.add(author)
 
             for title in data[author]:
-                if title == "rgbds":
-                    repo = RGBDS(self, author, title, data[author][title])
-                    self.RGBDS = repo
-                else:
-                    repo = repository(self, author, title, data[author][title])
-                    self.All.append(repo)
+                repo = repository(self, author, title, data[author][title])
+                self.All.append(repo)
 
                 self.Catalogs.Authors.get(author).addGame(repo)
 
@@ -452,7 +456,7 @@ class repository(game):
 
         self.readMetaData()
 
-        if self.manager.GUI:
+        if self.manager.GUI and self.author != 'gbdev':
             self.init_GUI()
 
     def readMetaData(self):
@@ -478,8 +482,13 @@ class repository(game):
     def updateMetaDataProperty(self, name):
         value = getattr(self, name)
         if name not in self.MetaData or value != self.MetaData[name]:
-            self.MetaData[name] = value
-            return True
+            if value:
+                self.MetaData[name] = value
+                return True
+            elif name in self.MetaData:
+                del self.MetaData[name]
+                return True
+                
         return False
 
     def addToList(self, list):
@@ -495,23 +504,34 @@ class repository(game):
     def parse_builds(self):
         self.builds = {}
         if os.path.exists(self.path['builds']):
-            for dirname in get_dirs(self.path['builds']):
-                # if the dir name matches the template, then it is a build
-                if re.match(r'^\d{4}-\d{2}-\d{2} [a-fA-F\d]{8}$',dirname):
-                    self.builds[dirname] = {}
-                    for build in get_builds(self.path['builds'] + dirname):
-                        self.builds[dirname][build.name] = build
-                else:
-                    self.print('Invalid build directory name: ' + dirname)
+            for branch in get_dirs(self.path['builds']):
+                for dirname in get_dirs(self.path['builds'] + branch):
+                    # if the dir name matches the template, then it is a build
+                    if re.match(r'^\d{4}-\d{2}-\d{2} [a-fA-F\d]{8} \([^)]+\)$',dirname):
+                        if branch not in self.builds:
+                            self.builds[branch] = {}
+
+                        self.builds[branch][dirname] = {}
+                        for build in get_builds(self.path['builds'] + branch + '/' + dirname):
+                            self.builds[branch][dirname][build.name] = build
+                    else:
+                        self.print('Invalid build directory name: ' + dirname)
 
     def parse_releases(self):
         self.releases = {}
         if os.path.exists(self.path['releases']):
             for dirname in get_dirs(self.path['releases']):
-                # if the dir name matches the template, then it is a build
+                # if the dir name matches the template, then it is a release
                 match = re.match(r'^\d{4}-\d{2}-\d{2} - .* \((.*)\)$', dirname)
                 if match:
-                    self.releases[match.group(1)] = dirname
+                    if self.title == 'rgbds':
+                        self.releases[match.group(1)] = dirname
+                    else:
+                        roms = get_builds(self.path['releases'] + dirname)
+                        if roms:
+                            self.releases[dirname] = {}
+                            for rom in roms:
+                                self.releases[dirname][rom.name] = rom
                 else:
                     self.print('Invalid release directory name: ' + dirname)
 
@@ -549,10 +569,20 @@ class repository(game):
         return process.stdout.decode('utf-8').split('\n') if capture_output else process
 
     def set_branch(self, branch):
-        self.checkout(branch)
-        # TODO - handle if failed
-        self.CurrentBranch = branch
-        self.updateMetaData()
+        if branch != self.CurrentBranch:
+            self.checkout(branch)
+            # TODO - handle if failed
+            self.CurrentBranch = branch
+            self.updateMetaData()
+
+    def set_RGBDS(self, RGBDS):
+        if RGBDS != self.RGBDS:
+            # If setting to default, then erase
+            if RGBDS == self.rgbds:
+                RGBDS = None
+            
+            self.RGBDS = RGBDS
+            self.updateMetaData()
 
     # TODO - use git fetch --all to see if branch commit/date needs to be updated.
     # dont switch if not
@@ -642,11 +672,12 @@ class repository(game):
     def get_commit(self):
         return self.git('rev-parse','HEAD', capture_output=True)[0]
 
-    def get_build_info(self):
+    def get_build_info(self, version):
         commit = self.get_commit()
         date = self.get_date()
-        self.build_name = date[:10] + ' ' + commit[:8]
-        self.build_dir = self.path['builds'] + self.build_name + '/'
+        self.build_name = date[:10] + ' ' + commit[:8] + ' (' + version + ')'
+        mkdir(self.path['builds'] + self.CurrentBranch)
+        self.build_dir = self.path['builds'] + self.CurrentBranch + '/' + self.build_name + '/'
 
     def build(self, *args):
         # if the repository doesnt exist, then update
@@ -656,18 +687,17 @@ class repository(game):
         if len(args):
             self.checkout(*args)
 
-        self.get_build_info()
+        version = self.RGBDS or self.rgbds
+        self.get_build_info(version)
 
         # only build if commit not already built
         if os.path.exists(self.build_dir):
             self.print('Commit has already been built: ' + self.build_name, True)
         # if rgbds version is known, switch to and make:
-        elif self.RGBDS: # custom
-            self.print('Building with ' + self.RGBDS, True)
-            self.build_rgbds(self.RGBDS)
-        elif self.rgbds: # default
-            self.print('Building with ' + self.rgbds, True)
-            self.build_rgbds(self.rgbds)
+        elif version:
+            if version != "None": # custom can have "None" to skip building
+                self.print('Building with ' + version, True)
+                self.build_rgbds(version)
 
         if len(args):
             self.print('Switching back', True)
@@ -693,7 +723,14 @@ class repository(game):
                         self.print('Downloading ' + title, True)
                         self.gh('release','download', id, '-R', self.url, '-D', path, '-p', '*', '--clobber')
                         self.gh('release','download', id, '-R', self.url, '-D', path, '-A','zip','--clobber')
-                        self.releases[id] = name
+                        if self.title == 'rgbds':
+                            self.releases[id] = name
+                        else:
+                            roms = get_builds(path)
+                            if roms:
+                                self.releases[name] = {}
+                                for rom in roms:
+                                    self.releases[name][rom.name] = rom
 
                     else:
                         self.print('Skipping ' + path)
@@ -775,11 +812,14 @@ class repository(game):
                 for rom, name in zip(roms, names):
                     shutil.copyfile(rom, self.build_dir + name)
 
-                self.print('Placed rom(s) in ' + self.build_name + ': ' + ', '.join(names), True)
+                self.print('Placed rom(s) in ' + self.CurrentBranch + '/' + self.build_name + ': ' + ', '.join(names), True)
                 
-                self.builds[self.build_name] = {}
+                if self.CurrentBranch not in self.builds:
+                    self.builds[self.CurrentBranch] = {}
+
+                self.builds[self.CurrentBranch][self.build_name] = {}
                 for rom in roms:
-                    self.builds[self.build_name][rom.name] = rom
+                    self.builds[self.CurrentBranch][self.build_name][rom.name] = rom
 
                 if self.GUI:
                     self.manager.GUI.Process.ProcessSignals.doBuild.emit(self)
@@ -793,7 +833,6 @@ class repository(game):
         if len(args):
             self.git(*(['checkout'] +[*args]))
 
-        self.get_build_info()
         self.rgbds = ''
         releases = [version[1:] for version in reversed(list(self.manager.RGBDS.releases.keys()))]
 
@@ -806,6 +845,7 @@ class repository(game):
 
         for release in releases:
             self.clean()
+            self.get_build_info(release)
             if self.build_rgbds(release):
                 self.rgbds = release
                 break
