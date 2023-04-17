@@ -5,7 +5,6 @@ TODO:
 
 - build should have subdirectorie for branch
 
-- Update panel after Build
 - Display in log when process is successful or failed
 
 - Add releases to panel
@@ -451,15 +450,34 @@ class GamePanel(VBox):
         self.GameGUI = gameGUI
         self.Artwork = GamePanelArtwork(self)
         self.Tags = TagsGUI(self, gameGUI.Game.tags)
-        self.Title = Field(self, 'Title', gameGUI.Game.title)
-        self.Author = Field(self, 'Author', gameGUI.Game.author)
-        if gameGUI.Game.url:
-            self.Website = Field(self, 'Website', 'Github')
-            self.Website.Right.setObjectName('url')
-            self.Website.Right.mouseDoubleClickEvent = self.openURL
-        else:
-            self.Website = Field(self, 'Website', '-')
+        
 
+        # if git repo
+        self.GitOptions = VBox(self.GUI)
+        self.GitOptions.addTo(self)
+
+        self.Repository = Field(self.GitOptions, 'Repository', gameGUI.Game.title)
+        self.Repository.Right.setObjectName('url')
+        self.Repository.Right.mouseDoubleClickEvent = self.openRepositoryURL
+
+        self.Author = Field(self.GitOptions, 'Author', gameGUI.Game.author)
+        self.Author.Right.setObjectName('url')
+        self.Author.Right.mouseDoubleClickEvent = self.openAuthorURL
+
+        self.Branch = HBox(self.GUI)
+        self.Branch.label("Branch:")
+        self.BranchComboBox = QComboBox()
+        self.ignoreComboboxChanges = False
+        self.BranchComboBox.currentTextChanged.connect(self.handleBranchSelected)
+
+        self.Branch.add(self.BranchComboBox)
+        self.Branch.addTo(self.GitOptions)
+
+        self.Commit = Field(self.GitOptions, 'Commit', '-')
+        self.LastUpdate = Field(self.GitOptions, 'Last Update', '-')
+
+        self.updateBranchDetails()
+        
         self.Builds = HBox(self.GUI)
         self.BuildsLabel = VBox(self.GUI)
         self.BuildsLabel.addTo(self.Builds, 1)
@@ -467,23 +485,13 @@ class GamePanel(VBox):
         self.BuildsLabel.addStretch()
         self.Builds.addTo(self)
 
+        self.NoTree = VBox(self.GUI)
+        self.NoTree.label('None')
+        self.NoTree.addStretch()
+
         self.Tree = QTreeWidget()
         self.Tree.itemDoubleClicked.connect(lambda e: e.Path and QDesktopServices.openUrl(e.Path))
         self.drawBuilds()
-        self.Builds.add(self.Tree, 1)
-
-        # if git repo
-        self.GitOptions = VBox(self.GUI)
-        self.GitOptions.addTo(self)
-
-        self.Branch = HBox(self.GUI)
-        self.Branch.label("Branch:")
-        self.BranchComboBox = QComboBox()
-        self.BranchComboBox.addItems(gameGUI.Game.Branches)
-        self.BranchComboBox.currentTextChanged.connect(gameGUI.handleBranchSelected)
-
-        self.Branch.add(self.BranchComboBox)
-        self.Branch.addTo(self)
 
         #self.Commit = Field(self.GitOptions, 'Commit', '<Change Commit>') #TODO
         #self.Make = Field(self.GitOptions, 'Make', '<Specific Make Commands>') #TODO
@@ -497,6 +505,8 @@ class GamePanel(VBox):
         self.addStretch()
 
     def drawBuilds(self):
+        self.NoTree.setParent(None)
+        self.Tree.setParent(None)
         self.Tree.clear()
 
         self.Tree.header().hide()
@@ -510,14 +520,52 @@ class GamePanel(VBox):
                 romItem.setText(0, romName)
                 romItem.Path = QUrl.fromLocalFile(str(path))
 
-    def openURL(self, event):
+        if self.GameGUI.Game.builds.keys():
+            self.Builds.add(self.Tree, 1)
+        else:
+            self.Builds.add(self.NoTree, 1)
+
+    def openRepositoryURL(self, event):
         webbrowser.open(self.GameGUI.Game.url)
+
+    def openAuthorURL(self, event):
+        webbrowser.open(self.GameGUI.Game.author_url)
+    
+    def updateBranchCommitDate(self):
+        if self.GameGUI.Game.CurrentBranch:
+            data = self.GameGUI.Game.Branches[self.GameGUI.Game.CurrentBranch]
+            self.Commit.Right.setText(data['LastCommit'][:8])
+            self.LastUpdate.Right.setText(data['LastUpdate'][:19])
+        else:
+            self.Commit.Right.setText('-')
+            self.LastUpdate.Right.setText('-')
+
+    def updateBranchDetails(self):
+        self.updateBranchCommitDate()
+
+        self.ignoreComboboxChanges = True
+
+        self.BranchComboBox.clear()
+        self.BranchComboBox.addItems(self.GameGUI.Game.Branches.keys())
+
+        if self.GameGUI.Game.CurrentBranch:
+            self.BranchComboBox.setCurrentText(self.GameGUI.Game.CurrentBranch)
+
+        self.ignoreComboboxChanges = False
+        
+    def handleBranchSelected(self, branch):
+        if not self.ignoreComboboxChanges and branch != self.GameGUI.Game.CurrentBranch:
+            # todo - should be in separate process
+            self.GameGUI.Game.set_branch(branch)
+            self.updateBranchCommitDate()
+
+            # todo - if it failed, change selection back to previous branch
+
 
 class GameGUI:
     def __init__(self, GUI, game):
         self.GUI = GUI
         self.Game = game
-        self.SelectedBranch = None
 
         # TODO
         self.isIPS = False
@@ -528,12 +576,6 @@ class GameGUI:
         self.Panel = GamePanel(self)
 
         self.setQueued(False)
-
-    # TODO - when updating due to branch list changing, make sure selected branch doesnt change
-    def handleBranchSelected(self, branch):
-        self.SelectedBranch = branch
-        # todo - should be process separately
-        self.Game.set_branch(branch)
 
     def setQueued(self, queued):
         self.Tile.isQueued = queued

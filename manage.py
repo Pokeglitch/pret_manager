@@ -1,11 +1,9 @@
-'''
-TODO - Store branches as meta data in directory?
-'''
 import subprocess, os, re, glob, platform, shutil, argparse, json, sys
 from pathlib import Path
 import gui
 
 build_extensions = ['gb','gbc','pocket','patch']
+metadata_properties = ['Branches','CurrentBranch','RGBDS']
 
 def error(msg):
     raise Exception('Error:\t' + msg)
@@ -133,8 +131,9 @@ class ListEntry(CatalogEntry):
             self.write()
 
     def write(self):
-        with open(list_dir + self.Name + '.json', 'w') as f:
-            f.write(json.dumps(self.GameStructure))
+        if self.Name not in ["Missing","Outdated"]:
+            with open(list_dir + self.Name + '.json', 'w') as f:
+                f.write(json.dumps(self.GameStructure))
 
 
 class Catalog:
@@ -225,8 +224,10 @@ class PRET_Manager:
         self.load('data.json')
 
         # Initialize the base lists
-        for name in ["Favorites", "Excluding", "Missing", "Outdated"]:
+        for name in ["Favorites", "Excluding", "Outdated", "Missing"]:
             self.addList(name, [])
+
+        self.Catalogs.Lists.get(name).addGames([game for game in self.All if game.Missing])
 
         # Load lists
         for file in get_files(list_dir):
@@ -417,13 +418,16 @@ class repository(game):
         self.author = author
         self.title = title
         self.GUI = None
+        self.MetaData = {}
         self.Lists = []
-        self.Branches = []
+        self.Branches = {}
         self.CurrentBranch = None
         self.name = self.title + ' (' + self.author + ')'
-        self.url = 'https://github.com/' + author + '/' + title
+        self.author_url = 'https://github.com/' + author + '/'
+        self.url = self.author_url + title
 
         self.rgbds = data["rgbds"] if "rgbds" in data else ""
+        self.RGBDS = None
         
         if "tags" in data:
             if isinstance(data["tags"], list):
@@ -444,8 +448,39 @@ class repository(game):
         self.parse_builds()
         self.parse_releases()
 
+        self.Missing = not os.path.exists(self.path['repo'])
+
+        self.readMetaData()
+
         if self.manager.GUI:
             self.init_GUI()
+
+    def readMetaData(self):
+        path = self.path['base'] + 'metadata.json'
+        if os.path.exists(path):
+            with open(path, 'r') as f:
+                self.MetaData = json.loads(f.read())
+
+        for prop in metadata_properties:
+            self.getMetaDataProperty(prop)
+
+    def getMetaDataProperty(self, name):
+        if name in self.MetaData:
+            setattr(self, name, self.MetaData[name])
+
+    def updateMetaData(self):
+        metadataChanged = [self.updateMetaDataProperty(prop) for prop in metadata_properties]
+
+        if any(metadataChanged):
+            with open(self.path['base'] + 'metadata.json', 'w') as f:
+                f.write(json.dumps(self.MetaData))
+
+    def updateMetaDataProperty(self, name):
+        value = getattr(self, name)
+        if name not in self.MetaData or value != self.MetaData[name]:
+            self.MetaData[name] = value
+            return True
+        return False
 
     def addToList(self, list):
         if list not in self.Lists:
@@ -515,29 +550,60 @@ class repository(game):
 
     def set_branch(self, branch):
         self.checkout(branch)
-        self.Branch = branch
+        # TODO - handle if failed
+        self.CurrentBranch = branch
+        self.updateMetaData()
 
+    # TODO - use git fetch --all to see if branch commit/date needs to be updated.
+    # dont switch if not
     def get_branches(self):
         branches = self.git('branch', capture_output=True)[:-1]
 
         new_branches = []
+        new_current_branch = None
+        doUpdate = False
+
         for line in branches:
             split = line.split(' ')
             name = split[-1]
             # set current branch as first index
             if split[0] == '*':
-                new_branches.insert(0, name)
-            else:
-                new_branches.append(name)
+                new_current_branch = name
+
+            new_branches.append(name)
+
+        # arrange alphanetically
+        new_branches.sort()
+
+        new_branch_details = {}
+        last_branch = None
+        for branch in new_branches:
+            if branch != new_current_branch:
+                self.checkout(branch)
+            lastUpdate = self.get_date()
+            lastCommit = self.get_commit()
+
+            new_branch_details[branch] = {
+                "LastUpdate" : lastUpdate,
+                "LastCommit" : lastCommit
+            }
+
+            if branch not in self.Branches or lastCommit != self.Branches[branch]["LastCommit"]:
+                doUpdate = True
+
+            last_branch = branch
+
+        # return back to start branch
+        if new_current_branch != last_branch:
+            self.checkout(new_current_branch)
 
         # if the branches changed, then update
-        if new_branches != self.Branches:
-            self.Branches = new_branches
-            self.CurrentBranch = self.Branches[0]
-
+        if doUpdate or len(new_branch_details.keys()) != len(self.Branches.keys()) or self.CurrentBranch != new_current_branch:
+            self.Branches = new_branch_details
+            self.CurrentBranch = new_current_branch
+            
             if self.GUI:
-                self.GUI.Panel.BranchComboBox.clear()
-                self.GUI.Panel.BranchComboBox.addItems(self.Branches)
+                self.GUI.Panel.updateBranchDetails()
 
     def get_url(self):
         return self.git('config','--get','remote.origin.url', capture_output=True)[0]
@@ -570,9 +636,15 @@ class repository(game):
         self.print('Cleaning', True)
         return self.make('clean', capture_output=not self.manager.Verbose)
 
+    def get_date(self):
+        return self.git('--no-pager','log','-1','--format=%ai', capture_output=True)[0]
+
+    def get_commit(self):
+        return self.git('rev-parse','HEAD', capture_output=True)[0]
+
     def get_build_info(self):
-        commit = self.git('rev-parse','HEAD', capture_output=True)[0]
-        date = self.git('--no-pager','log','-1','--format=%ai', capture_output=True)[0]
+        commit = self.get_commit()
+        date = self.get_date()
         self.build_name = date[:10] + ' ' + commit[:8]
         self.build_dir = self.path['builds'] + self.build_name + '/'
 
@@ -590,8 +662,11 @@ class repository(game):
         if os.path.exists(self.build_dir):
             self.print('Commit has already been built: ' + self.build_name, True)
         # if rgbds version is known, switch to and make:
-        elif self.rgbds:
-            self.print('Building', True)
+        elif self.RGBDS: # custom
+            self.print('Building with ' + self.RGBDS, True)
+            self.build_rgbds(self.RGBDS)
+        elif self.rgbds: # default
+            self.print('Building with ' + self.rgbds, True)
             self.build_rgbds(self.rgbds)
 
         if len(args):
@@ -649,6 +724,11 @@ class repository(game):
         self.get_branches()
         self.get_releases()
         self.get_submodules()
+        self.updateMetaData()
+
+        if self.Missing:
+            self.manager.Catalogs.Lists.get('Missing').removeGames([self])
+            self.Missing = False
 
     def get_submodules(self):
         submodules = {}
@@ -805,11 +885,12 @@ if __name__ == '__main__':
     parser.add_argument('-clean', '-c', action='store_true', help='Clean the managed repositories')
     parser.add_argument('-verbose', '-v', action='store_true', help='Display all log messages')
     
-    try:        
+    #try:
+    if True:  
         pret_manager.handle_args()
         if pret_manager.App:
             pret_manager.App.exec()
-    except Exception as e:
-        print(e)
+    #except Exception as e:
+    #    print(e)
 else:
     pret_manager.init()
