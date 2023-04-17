@@ -139,3 +139,34 @@ QWidget#Tiles {
     margin-left:5;
     margin-top:5;
 }
+
+QWidget#Tag {
+    min-height: 10px;
+    max-height: 10px;
+    min-width: 50px;
+    max-width: 50px;
+    border-radius: 5px;
+    border: 1px solid black;
+    margin:2px;
+}
+
+GamePanelArtwork {
+    min-height: 250px;
+    max-height: 250px;
+    min-width: 250px;
+    max-width: 250px;
+    border: 1px solid black;
+    margin:5px;
+}
+
+QLabel#url {
+    color: #0000EE;
+    text-decoration: underline;
+}
+
+QTreeWidget {
+    min-height:100px;
+    max-height:100px;
+    background-color:#EEEEEE;
+    border: none;
+}

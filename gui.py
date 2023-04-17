@@ -3,10 +3,29 @@ import sys, webbrowser, json
 '''
 TODO:
 
+- build should have subdirectorie for branch
+- change branch immediately when changing the dropdown
+
+- Update panel after Build
+- Display in log when process is successful or failed
+
+- Add releases to panel
+- finish rgbds dropdowns
+
+- click on author to go to their github
+-- instead of separate website link, have the 'title' be link to github
+
+- meta data for each game about branches, successful/failed commit attempts, etc
+
+- Disable all process buttons when process is active
+- Disable save buttons when queue/filter is empty
+
 Filter:
+- Add title text for Filter
+- Update Filter when game is added/removed to List
+- Show number of items in filter
 - When no filters, show All
 - Save filter separately from list
-- Update Filter when game is added/removed to List
 - Instead of the buttons at bottom:
 -- Have a dropdown which includes all Queue (default), all lists + New
 --- Have buttons for: Add to/Remove From/Toggle In
@@ -14,7 +33,6 @@ Filter:
 
 Lists:
 - show in Tile, Panel if in favorite/excluded
-
 - Way to load a list, delete a list
 - Add lists as option to CLI
 - show size of each list next to name
@@ -27,19 +45,14 @@ Group/Tile/Queue Sorting:
 - date of last update, alphabet, etc
 ---------
 Finish Game Panel
-- Show when game is in queue, being processed
+- Show when game is in queue (just use a single button and change the text...)
+- show when game is being processed (disable the process button?)
 
 - make tags individual widgets
--- click to display in Tiles panel
+-- click Tag display in Tiles panel (?)
+--- or, treat it as if the 'tag' in the catalog is clicked
 --- Way to add extra tags?
 
-Show files within each build directory (collapsible?)
--- double click to launch in emulator...
-
-Finish fields/dropdowns for branch/commit/make/rgbds
-
-Releases
-Open directory
 Way to copy selected builds to another location
 ---------
 Extra functionality:
@@ -51,9 +64,8 @@ Way to create/handle Groups of Tags (i.e. Gen1, Gen2, TCG)
 -- if object, the sub tags will be the exact same array at the real tag
 --- can have nested subtags
 
-- Add new Tags
-
 New column:
+- Add rgbds (remove gbdev/rgbds from catalogs)
 -Way to check if this program has updates/apply update
 -Way to Modify Settings:
     - default emulator (or, per game or file type)
@@ -63,11 +75,14 @@ New column:
     - default List to display
 
 IPS classes and applying
+
+Option for specific Make commands to build
+- Need to parse makefile...
 '''
 
-from PyQt5.QtCore import Qt, QThreadPool, QRunnable, QMargins, QPoint, QRect, QSize
-from PyQt5.QtWidgets import QFileDialog, QApplication, QStyleOption, QStyle, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
-from PyQt5.QtGui import QIcon, QPainter
+from PyQt5.QtCore import Qt, pyqtSignal, QObject, QUrl, QThreadPool, QRunnable, QMargins, QPoint, QRect, QSize
+from PyQt5.QtWidgets import QComboBox, QTreeWidgetItem, QFileDialog, QTreeWidget, QApplication, QStyleOption, QStyle, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
+from PyQt5.QtGui import QDesktopServices, QIcon, QPainter
 
 threadpool = QThreadPool()
 
@@ -242,6 +257,25 @@ class VScroll(VBox):
         self.Parent = parent
         parent.add(self.Scroll, *args)
 
+class Button(QLabel):
+    def __init__(self, parent, text, click):
+        super().__init__(text)
+        self.setAlignment(Qt.AlignCenter)
+        self.mousePressEvent = click
+        parent.add(self)
+
+class ToggleButton(HBox):
+    def __init__(self, parent, text, click):
+        super().__init__(None)
+        self.Label = self.label(text)
+        self.Label.setAlignment(Qt.AlignCenter)
+        self.mousePressEvent = click
+        parent.add(self)
+
+    def setActive(self, value):
+        self.setProperty("active",value)
+        self.updateStyle()
+
 class CatalogEntryGUI(HBox):
     def __init__(self, data):
         parent = data.Catalog.GUI
@@ -305,19 +339,21 @@ class CatalogGUI(VBox):
         else:
             super().add(widget, *args)
 
-class GroupFooter(HBox):
-    def __init__(self, parent):
-        super().__init__(parent.GUI)
+class CatalogsToggleButton(ToggleButton):
+    def __init__(self, parent, mode):
+        super().__init__(parent, mode, lambda e: parent.Catalogs.setMode(mode))
+        self.setProperty('active',False)
+
+class CatalogsFooter(HBox):
+    def __init__(self, catalogs):
+        super().__init__(catalogs.GUI)
         self.setObjectName('footer')
-        self.New = ToggleButton(self, 'New', lambda e: parent.setMode('New'))
-        self.New.setProperty('active',False)
-        self.Or = ToggleButton(self, 'Or', lambda e: parent.setMode('Or'))
-        self.Or.setProperty('active',False)
-        self.And = ToggleButton(self, 'And', lambda e: parent.setMode('And'))
-        self.And.setProperty('active',False)
-        self.Not = ToggleButton(self, 'Not', lambda e: parent.setMode('Not'))
-        self.Not.setProperty('active',False)
-        self.addTo(parent)
+        self.Catalogs = catalogs
+        self.New = CatalogsToggleButton(self, 'New')
+        self.Or = CatalogsToggleButton(self, 'Or')
+        self.And = CatalogsToggleButton(self, 'And')
+        self.Not = CatalogsToggleButton(self, 'Not')
+        self.addTo(catalogs)
 
 class CatalogsGUI(VBox):
     def __init__(self, data):
@@ -330,7 +366,7 @@ class CatalogsGUI(VBox):
         self.Body = HBox(GUI)
         self.Body.addTo(self)
 
-        self.Footer = GroupFooter(self)
+        self.Footer = CatalogsFooter(self)
         self.setMode('New')
         
         self.addTo(GUI.Col1, 20)
@@ -381,29 +417,97 @@ class Field(HBox):
         self.Right = self.label(right)
         self.addTo(parent)
 
+class TagsGUI(HBox):
+    def __init__(self, parent, tags):
+        super().__init__(parent.GUI)
+        self.setObjectName('PanelTags')
+        self.addTo(parent)
+        self.addStretch()
+        self.Tags = [TagGUI(self, tag) for tag in tags]
+        self.addStretch()
+
+class TagGUI(HBox):
+    def __init__(self, parent, name):
+        super().__init__(parent.GUI)
+        self.setObjectName('Tag')
+        self.Label = self.label(name)
+        self.Label.setAlignment(Qt.AlignCenter)
+        self.addTo(parent)
+
+class GamePanelArtwork(VBox):
+    def __init__(self, parent):
+        super().__init__(parent.GUI)
+        self.Label = self.label("<Artwork>")
+        self.Label.setAlignment(Qt.AlignCenter)
+
+        self.Container = HBox(self.GUI)
+        self.Container.addTo(parent)
+        self.addTo(self.Container)
+
 class GamePanel(VBox):
     def __init__(self, gameGUI):
         super().__init__(gameGUI.GUI)
         self.GameGUI = gameGUI
-        self.Artwork = self.label("<Artwork>")
+        self.Artwork = GamePanelArtwork(self)
+        self.Tags = TagsGUI(self, gameGUI.Game.tags)
         self.Title = Field(self, 'Title', gameGUI.Game.title)
         self.Author = Field(self, 'Author', gameGUI.Game.author)
         if gameGUI.Game.url:
             self.Website = Field(self, 'Website', 'Github')
+            self.Website.Right.setObjectName('url')
             self.Website.Right.mouseDoubleClickEvent = self.openURL
-        self.Tags = Field(self, 'Tags', ','.join(gameGUI.Game.tags))
-        self.Builds = Field(self, 'Builds', '\n'.join(gameGUI.Game.builds.keys()))
-        # TODO - each specific ROM within each build (expand.collapse)
-        # - Can click on ROM to launch in emulator
+        else:
+            self.Website = Field(self, 'Website', '-')
+
+        self.Builds = HBox(self.GUI)
+        self.BuildsLabel = VBox(self.GUI)
+        self.BuildsLabel.addTo(self.Builds, 1)
+        self.BuildsLabel.label("Builds:")
+        self.BuildsLabel.addStretch()
+        self.Builds.addTo(self)
+
+        self.Tree = QTreeWidget()
+        self.Tree.itemDoubleClicked.connect(lambda e: e.Path and QDesktopServices.openUrl(e.Path))
+        self.drawBuilds()
+        self.Builds.add(self.Tree, 1)
 
         # if git repo
-        self.Branch = Field(self, 'Branch', '<Change Branch>')
-        self.Commit = Field(self, 'Commit', '<Change Commit>')
-        self.Make = Field(self, 'Make', '<Specific Make Commands>')
-        self.SetRGBDSVersion = Field(self, 'RGBDS', '<Change RGBDS Version>')
+        self.GitOptions = VBox(self.GUI)
+        self.GitOptions.addTo(self)
+
+        self.Branch = HBox(self.GUI)
+        self.Branch.label("Branch:")
+        self.BranchComboBox = QComboBox()
+        self.BranchComboBox.addItems(gameGUI.Game.Branches)
+        self.BranchComboBox.currentTextChanged.connect(gameGUI.handleBranchSelected)
+
+        self.Branch.add(self.BranchComboBox)
+        self.Branch.addTo(self)
+
+        #self.Commit = Field(self.GitOptions, 'Commit', '<Change Commit>') #TODO
+        #self.Make = Field(self.GitOptions, 'Make', '<Specific Make Commands>') #TODO
+        self.SetRGBDSVersion = Field(self.GitOptions, 'RGBDS', '<Change RGBDS Version>')
 
         # if IPS
-        self.BaseROM = Field(self, 'Base', '<Select Base ROM>')
+        self.IPSOptions = VBox(self.GUI)
+        self.BaseROM = Field(self.IPSOptions, 'Base', '<Select Base ROM>')
+        #self.IPSOptions.addTo(self)
+
+        self.addStretch()
+
+    def drawBuilds(self):
+        self.Tree.clear()
+
+        self.Tree.header().hide()
+        for buildName, roms in self.GameGUI.Game.builds.items():
+            buildItem = QTreeWidgetItem(self.Tree)
+            buildItem.setText(0, buildName)
+            buildItem.Path = QUrl.fromLocalFile(self.GameGUI.Game.path['builds'] + buildName)
+
+            for romName, path in roms.items():
+                romItem = QTreeWidgetItem(buildItem)
+                romItem.setText(0, romName)
+                romItem.Path = QUrl.fromLocalFile(str(path))
 
     def openURL(self, event):
         webbrowser.open(self.GameGUI.Game.url)
@@ -412,6 +516,7 @@ class GameGUI:
     def __init__(self, GUI, game):
         self.GUI = GUI
         self.Game = game
+        self.SelectedBranch = None
 
         # TODO
         self.isIPS = False
@@ -422,6 +527,9 @@ class GameGUI:
         self.Panel = GamePanel(self)
 
         self.setQueued(False)
+
+    def handleBranchSelected(self, name):
+        self.SelectedBranch = name
 
     def setQueued(self, queued):
         self.Tile.isQueued = queued
@@ -703,25 +811,6 @@ class Tiles(VBox):
         if self.All_Games:
             self.GUI.Manager.Catalogs.Lists.get('Excluding').addGames(self.All_Games)
 
-class Button(QLabel):
-    def __init__(self, parent, text, click):
-        super().__init__(text)
-        self.setAlignment(Qt.AlignCenter)
-        self.mousePressEvent = click
-        parent.add(self)
-
-class ToggleButton(HBox):
-    def __init__(self, parent, text, click):
-        super().__init__(None)
-        self.Label = self.label(text)
-        self.Label.setAlignment(Qt.AlignCenter)
-        self.mousePressEvent = click
-        parent.add(self)
-
-    def setActive(self, value):
-        self.setProperty("active",value)
-        self.updateStyle()
-
 class PanelHeader(HBox):
     def __init__(self, parent):
         super().__init__(parent.GUI)
@@ -801,15 +890,19 @@ class Panel(VBox):
     def applyPatch(self, event):
         pass
 
+class ProcessSignals(QObject):
+    doBuild = pyqtSignal(object)
+
 class Process(QRunnable):
     def __init__(self, GUI):
         super().__init__()
         self.GUI = GUI
+        self.ProcessSignals = ProcessSignals()
+        self.ProcessSignals.doBuild.connect(GUI.handleBuildSignal)
 
     def run(self):
         self.GUI.Manager.run()
         self.GUI.endProcess()
-
 
 class Status(VBox):
     def __init__(self, GUI):
@@ -905,6 +998,9 @@ class MainContents(HBox):
 
     def endProcess(self):
         self.Window.Process = None
+
+    def handleBuildSignal(self, game):
+        game.GUI.Panel.drawBuilds()
 
 class PRET_Manager_GUI(QMainWindow):
     def __init__(self, manager):

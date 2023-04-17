@@ -1,3 +1,6 @@
+'''
+TODO - Store branches as meta data in directory?
+'''
 import subprocess, os, re, glob, platform, shutil, argparse, json, sys
 from pathlib import Path
 import gui
@@ -415,6 +418,8 @@ class repository(game):
         self.title = title
         self.GUI = None
         self.Lists = []
+        self.Branches = []
+        self.CurrentBranch = None
         self.name = self.title + ' (' + self.author + ')'
         self.url = 'https://github.com/' + author + '/' + title
 
@@ -458,7 +463,9 @@ class repository(game):
             for dirname in get_dirs(self.path['builds']):
                 # if the dir name matches the template, then it is a build
                 if re.match(r'^\d{4}-\d{2}-\d{2} [a-fA-F\d]{8}$',dirname):
-                    self.builds[dirname] = get_builds(self.path['builds'] + dirname)
+                    self.builds[dirname] = {}
+                    for build in get_builds(self.path['builds'] + dirname):
+                        self.builds[dirname][build.name] = build
                 else:
                     self.print('Invalid build directory name: ' + dirname)
 
@@ -506,6 +513,28 @@ class repository(game):
 
         return process.stdout.decode('utf-8').split('\n') if capture_output else process
 
+    def get_branches(self):
+        branches = self.git('branch', capture_output=True)[:-1]
+
+        new_branches = []
+        for line in branches:
+            split = line.split(' ')
+            name = split[-1]
+            # set current branch as first index
+            if split[0] == '*':
+                new_branches.insert(0, name)
+            else:
+                new_branches.append(name)
+
+        # if the branches changed, then update
+        if new_branches != self.Branches:
+            self.Branches = new_branches
+            self.CurrentBranch = self.Branches[0]
+
+            if self.GUI:
+                self.GUI.Panel.BranchComboBox.clear()
+                self.GUI.Panel.BranchComboBox.addItems(self.Branches)
+
     def get_url(self):
         return self.git('config','--get','remote.origin.url', capture_output=True)[0]
 
@@ -516,7 +545,7 @@ class repository(game):
         return self.run(['git'] + [*args], capture_output, self.path['repo'])
 
     def pull(self):
-        return self.git('pull')
+        return self.git('pull','--all')
 
     def make(self, *args, capture_output=False, cwd=None, version=None):
         command = ['make'] + [*args]
@@ -543,8 +572,15 @@ class repository(game):
             self.update()
 
         if len(args):
+            self.didCheckout = True
             self.git(*(['checkout'] + [*args]))
-        
+        # TODO - not necessary after changing branch immediately from dropdown selection
+        elif self.GUI and self.GUI.SelectedBranch and self.GUI.SelectedBranch != self.CurrentBranch:
+            self.didCheckout = True
+            self.git('checkout', self.GUI.SelectedBranch)
+        else:
+            self.didCheckout = False
+
         self.get_build_info()
 
         # only build if commit not already built
@@ -555,8 +591,9 @@ class repository(game):
             self.print('Building', True)
             self.build_rgbds(self.rgbds)
 
-        if len(args):
+        if self.didCheckout:
             self.git('switch','-')
+
 
     def get_releases(self, overwrite=False):
         self.print('Checking releases', True)
@@ -605,6 +642,7 @@ class repository(game):
             with open(shortcut,'w') as f:
                 f.write('[InternetShortcut]\nURL=' + self.url + '\n')
 
+        self.get_branches()
         self.get_releases()
         self.get_submodules()
 
@@ -655,7 +693,13 @@ class repository(game):
 
                 self.print('Placed rom(s) in ' + self.build_name + ': ' + ', '.join(names), True)
                 
-                self.builds[self.build_name] = roms
+                self.builds[self.build_name] = {}
+                for rom in roms:
+                    self.builds[self.build_name][rom.name] = rom
+
+                if self.GUI:
+                    self.manager.GUI.Process.ProcessSignals.doBuild.emit(self)
+
                 return True
             else:
                 self.print('No roms found after build', True)
