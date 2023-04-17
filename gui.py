@@ -4,7 +4,6 @@ import sys, webbrowser, json
 TODO:
 
 - build should have subdirectorie for branch
-- change branch immediately when changing the dropdown
 
 - Update panel after Build
 - Display in log when process is successful or failed
@@ -78,6 +77,8 @@ IPS classes and applying
 
 Option for specific Make commands to build
 - Need to parse makefile...
+
+Option to build multiple branches within a single 'update'
 '''
 
 from PyQt5.QtCore import Qt, pyqtSignal, QObject, QUrl, QThreadPool, QRunnable, QMargins, QPoint, QRect, QSize
@@ -528,8 +529,11 @@ class GameGUI:
 
         self.setQueued(False)
 
-    def handleBranchSelected(self, name):
-        self.SelectedBranch = name
+    # TODO - when updating due to branch list changing, make sure selected branch doesnt change
+    def handleBranchSelected(self, branch):
+        self.SelectedBranch = branch
+        # todo - should be process separately
+        self.Game.set_branch(branch)
 
     def setQueued(self, queued):
         self.Tile.isQueued = queued
