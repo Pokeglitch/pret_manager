@@ -240,6 +240,17 @@ class PRET_Manager:
         self.App, self.GUI = gui.init(self)
 
         self.init()
+        #self.fetch()
+    
+    def fetch(self):
+        self.print('Fetching pret-manager')
+        subprocess.run(['git', 'fetch'], capture_output=True)
+
+    def fetch_all(self):
+        self.fetch()
+
+        for game in self.All:
+            game.fetch()
 
     def print(self, msg):
         msg = 'pret-manager:\t' + str(msg)
@@ -564,7 +575,7 @@ class repository(game):
                         for build in get_builds(self.path['builds'] + branch + '/' + dirname):
                             self.builds[branch][dirname][build.name] = build
                     else:
-                        self.print('Invalid build directory name: ' + dirname)
+                        self.print('Invalid build directory name: ' + dirname, True)
 
     def parse_releases(self):
         self.releases = {}
@@ -582,7 +593,7 @@ class repository(game):
                             for rom in roms:
                                 self.releases[dirname][rom.name] = rom
                 else:
-                    self.print('Invalid release directory name: ' + dirname)
+                    self.print('Invalid release directory name: ' + dirname, True)
 
     def print(self, msg, doPrint=None):
         doGUIStatus = self.GUI and doPrint
@@ -613,7 +624,7 @@ class repository(game):
             # print the error if it hasnt already been been displayed
             if capture_output:
                 print(process.stderr.decode('utf-8'))
-            self.print('Failed with exit code ' + str(process.returncode) + ' | ' + description, True)
+            self.print('Failed with exit code ' + str(process.returncode) + ' | ' + description)
 
         return process.stdout.decode('utf-8').split('\n') if capture_output else process
 
@@ -715,6 +726,10 @@ class repository(game):
         self.print('Cleaning', True)
         return self.make('clean', capture_output=not self.manager.Verbose)
 
+    def fetch(self):
+        self.print('Fetching', True)
+        return self.git('fetch', capture_output=not self.manager.Verbose)
+
     def get_date(self):
         return self.git('--no-pager','log','-1','--format=%ai', capture_output=True)[0]
 
@@ -790,7 +805,7 @@ class repository(game):
                 self.manager.GUI.Process.ProcessSignals.doRelease.emit(self)
 
         else:
-            self.print('No releases found')
+            self.print('No releases found', True)
          
     def update(self):
         mkdir(self.path['base'])
@@ -857,7 +872,7 @@ class repository(game):
     def build_rgbds(self, version):
         # if new, successful build, copy any roms to build dir
         if self.make(version=version).returncode:
-            self.print('Build failed for: ' + self.build_name)
+            self.print('Build failed for: ' + self.build_name, True)
             return False
         else:
             mkdir(self.path['builds'], self.build_dir)
@@ -984,7 +999,7 @@ if __name__ == '__main__':
     if True:  
         pret_manager.handle_args()
         if pret_manager.App:
-            pret_manager.App.exec()
+            pret_manager.App.init()
     #except Exception as e:
     #    print(e)
 else:

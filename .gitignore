@@ -2,4 +2,4 @@
 __pycache__/
 data/lists/*
 games/*/*/*/
-games/*/*/metadata.json
+metadata.json

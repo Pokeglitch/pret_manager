@@ -2,9 +2,7 @@ import sys, webbrowser, json, re
 
 '''
 TODO:
-- Make theme independent
-
-- Display in log when process is successful or failed
+- Make theme independent ?
 
 - Detect if up to date/out of date
 
@@ -73,8 +71,9 @@ Associate Authors with a Team
 '''
 
 from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QObject, QUrl, QThreadPool, QRunnable, QMargins, QPoint, QRect, QSize
-from PyQt5.QtWidgets import QComboBox, QHeaderView, QTreeWidgetItem, QFileDialog, QTreeWidget, QApplication, QStyleOption, QStyle, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
+from PyQt5.QtWidgets import QSplashScreen, QComboBox, QHeaderView, QTreeWidgetItem, QFileDialog, QTreeWidget, QApplication, QStyleOption, QStyle, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
 from PyQt5.QtGui import QPixmap, QDesktopServices, QIcon, QPainter
+import time
 
 threadpool = QThreadPool()
 
@@ -538,15 +537,15 @@ class GamePanel(VBox):
         
         for version in reversed(list(self.GameGUI.Game.manager.RGBDS.releases.keys())):
             version = version[1:]
-            if version == self.GameGUI.Game.rgbds:
-                version += ' *'
-                if not default_index:
-                    default_index = len(items)
+            if version == self.GameGUI.Game.rgbds and not default_index:
+                default_index = len(items)
             # Custom takes priority
             if version == self.GameGUI.Game.RGBDS:
                 default_index = len(items)
 
             items.append(version)
+
+        items[default_index] += ' *'
 
         self.RGBDSComboBox.addItems(items)
         self.RGBDSComboBox.setCurrentIndex(default_index)
@@ -1249,10 +1248,36 @@ class PRET_Manager_GUI(QMainWindow):
         with open('./assets/style.qss') as f:
             self.setStyleSheet(f.read())
 
-        self.show()
-
     def addStatus(self, msg):
         self.Content.Status.addStatus(msg)
 
+class PRET_Manager_App(QApplication):
+    def __init__(self, manager, *args):
+        self.Manager = manager
+        super().__init__(*args)
+
+        # Create splashscreen
+        splash_pix = QPixmap('assets/images/logo.png')
+        splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
+        splash.setPixmap(splash_pix)
+
+        # add fade to splashscreen 
+        opaqueness = 0.0
+        step = 0.05
+        splash.setWindowOpacity(opaqueness)
+        splash.show()
+
+        while opaqueness < 1:
+            splash.setWindowOpacity(opaqueness)
+            time.sleep(step) # Gradually appears
+            opaqueness+=step
+            
+        self.Splash = splash
+
+    def init(self):
+        self.Splash.close()
+        self.Manager.GUI.show()
+        self.exec()
+
 def init(manager):
-    return QApplication(sys.argv), PRET_Manager_GUI(manager)
+    return PRET_Manager_App(manager, sys.argv), PRET_Manager_GUI(manager)
