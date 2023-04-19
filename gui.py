@@ -4,19 +4,22 @@ import sys, webbrowser, json, re
 TODO:
 - Make theme independent ?
 
+Panel should slide away when no game is selected
+
 - Detect if up to date/out of date
 
 Have the directory be database (if shortcut, then git, etc)
-- data file in each (for which rgbds, title, tags, etc)
+- folder title is name of game
+- data file in each (for which rgbds, tags, etc)
 -- separate from metadata
 --- meta data should include successful/failed commit attempts
 
 Filter:
 - Add title text for Filter
-- Update Filter when game is added/removed to List
 - Show number of items in filter
 - When no filters, show All
 - Save filter separately from list
+
 - Instead of the buttons at bottom:
 -- Have a dropdown which includes all Queue (default), all lists + New
 --- Have buttons for: Add to/Remove From/Toggle In
@@ -406,6 +409,15 @@ class GameQueue(HBox):
         elif event.button() == Qt.RightButton:
             self.GUI.Queue.removeGame(self.GameGUI)
 
+class Faded(QPixmap):
+    def __init__(self, pixmap):
+        super().__init__(pixmap.size())
+        self.fill(Qt.transparent)
+        painter = QPainter(self)
+        painter.setOpacity(0.4)
+        painter.drawPixmap(QPoint(), pixmap)
+        painter.end()
+
 class GameTile(VBox):
     def __init__(self, gameGUI):
         super().__init__(gameGUI.GUI)
@@ -414,19 +426,20 @@ class GameTile(VBox):
         #self.Name = self.label(gameGUI.Game.name)
 
         self.Artwork = self.label()
-        self.Artwork.setObjectName("TileArt")
 
         self.Pixmap = QPixmap(self.GameGUI.Game.Boxart).scaled(100, 100)
 
         self.Faded = QPixmap(self.Pixmap.size())
         self.Faded.fill(Qt.transparent)
         painter = QPainter(self.Faded)
-        painter.setOpacity(0.5)
+        painter.setOpacity(0.4)
         painter.drawPixmap(QPoint(), self.Pixmap)
         painter.end()
 
         self.Title = self.label(gameGUI.Game.title)
+        self.Title.setAlignment(Qt.AlignCenter)
         self.Author = self.label(gameGUI.Game.author)
+        self.Author.setAlignment(Qt.AlignCenter)
         self.isQueued = False
 
     def updateExcluding(self, excluding):
@@ -481,7 +494,7 @@ class GamePanelArtwork(VBox):
         self.Faded = QPixmap(self.Pixmap.size())
         self.Faded.fill(Qt.transparent)
         painter = QPainter(self.Faded)
-        painter.setOpacity(0.5)
+        painter.setOpacity(0.4)
         painter.drawPixmap(QPoint(), self.Pixmap)
         painter.end()
 
@@ -506,6 +519,7 @@ class GamePanel(VBox):
 
         # if git repo
         self.GitOptions = VBox(self.GUI)
+        self.GitOptions.setObjectName('PanelOptions')
         self.GitOptions.addTo(self)
 
         self.Repository = Field(self.GitOptions, 'Repository', gameGUI.Game.title)
@@ -558,6 +572,7 @@ class GamePanel(VBox):
         
         self.Trees = HBox(self.GUI)
         self.Trees.addTo(self)
+        self.Trees.setObjectName("Trees")
 
         self.Builds = VBox(self.GUI)
         self.Builds.addTo(self.Trees, 1)
@@ -727,19 +742,23 @@ class GameGUI:
         self.Queue.updateStyle()
         self.Tile.updateStyle()
 
+class QueueHeader(HBox):
+    def __init__(self, parent):
+        super().__init__(parent.GUI)
+        self.setObjectName("header-frame")
+
+        self.Label = self.label('Queue')
+        self.Label.setObjectName("header")
+        self.Label.setAlignment(Qt.AlignCenter)
+        self.addTo(parent, 5)
+
 class Queue(VBox):
     def __init__(self, GUI):
         super().__init__(GUI)
         self.List = []
         self.isEmpty = True
 
-        self.Header = HBox(GUI)
-        self.Header.setObjectName("header-frame")
-
-        self.HeaderLabel = self.Header.label('Queue')
-        self.HeaderLabel.setObjectName("header")
-        self.HeaderLabel.setAlignment(Qt.AlignCenter)
-        self.Header.addTo(self, 5)
+        self.Header = QueueHeader(self)
 
         self.Clear = Button(self.Header, 'Clear', self.clear)
 
@@ -829,7 +848,6 @@ class PanelFooter(HBox):
         self.Process = Button(self, 'Process', parent.process)
         self.GUI.addProcessButton(self.Process)
 
-        self.Favorite = Button(self, 'Favorite', parent.favorite)
         self.Exclude = Button(self, 'Exclude', parent.exclude)
         self.addTo(parent, 10)
 
@@ -859,7 +877,6 @@ class Tiles(VBox):
             self.Header.SaveList.setDisabled(self.isEmpty)
             self.Footer.AddToQueue.setDisabled(self.isEmpty)
             self.Footer.RemoveFromQueue.setDisabled(self.isEmpty)
-            self.Footer.Favorite.setDisabled(self.isEmpty)
             self.Footer.Exclude.setDisabled(self.isEmpty)
             self.Footer.Process.setDisabled(self.isEmpty)
 
@@ -899,7 +916,6 @@ class Tiles(VBox):
                 if game.GUI.Tile.Parent == self.Content:
                     game.GUI.Tile.addTo(None)
             else:
-                print(game.name, game.GUI.Tile.Parent)
                 if game.GUI.Tile.Parent != self.Content:
                     game.GUI.Tile.addTo(self.Content)
 
@@ -1020,7 +1036,6 @@ class Tiles(VBox):
 
     def favorite(self, event):
         if self.All_Games:
-            print(self.All_Games)
             self.GUI.Manager.Catalogs.Lists.get('Favorites').addGames(self.All_Games[:])
 
     def exclude(self, event):
@@ -1032,13 +1047,23 @@ class PanelHeader(HBox):
         super().__init__(parent.GUI)
         self.setObjectName("header-frame")
 
+        self.Right = HBox(parent.GUI)
+
+        self.Favorite =  self.Right.label()
+        self.Favorite.mousePressEvent = parent.favorite
+        self.StarPixmap = QPixmap('assets/images/favorite.png').scaled(35, 35)
+        self.FadedStar = Faded(self.StarPixmap)
+        self.Right.addTo(self)
+
         self.Label = self.label()
         self.Label.setObjectName("header")
 
-        self.Right = HBox(parent.GUI)
-        self.Right.addTo(self)
+        self.addStretch()
 
         self.addTo(parent, 10)
+
+    def updateFavorite(self, isFavorite):
+        self.Favorite.setPixmap(self.StarPixmap if isFavorite else self.FadedStar)
 
     def setText(self, text):
         self.Label.setText(text)
@@ -1052,7 +1077,6 @@ class PanelFooter(HBox):
         self.Process = Button(self, 'Process', parent.process)
         self.GUI.addProcessButton(self.Process)
 
-        self.Favorite = Button(self, 'Favorite', parent.favorite)
         self.Exclude = Button(self, 'Exclude', parent.exclude)
         self.addTo(parent, 10)
 
@@ -1062,6 +1086,7 @@ class Panel(VBox):
         self.Header = PanelHeader(self)
 
         self.Display = VScroll(GUI)
+        self.Display.setObjectName('PanelDisplay')
         self.Display.addTo(self, 80)
         
         self.Footer = PanelFooter(self)
@@ -1079,6 +1104,7 @@ class Panel(VBox):
         if self.Active:
             self.Active.setActive(True)
             self.Header.setText(self.Active.Game.name)
+            self.Header.updateFavorite(self.GUI.Manager.Catalogs.Lists.get('Favorites').has(self.Active.Game))
         else:
             self.Header.setText("Select a Game")
 
@@ -1099,7 +1125,10 @@ class Panel(VBox):
 
     def favorite(self, event):
         if self.Active:
-            self.GUI.Manager.Catalogs.Lists.get('Favorites').toggleGames([self.Active.Game])
+            favorites = self.GUI.Manager.Catalogs.Lists.get('Favorites')
+            favorites.toggleGames([self.Active.Game])
+
+            self.Header.updateFavorite(favorites.has(self.Active.Game))
 
     def exclude(self, event):
         if self.Active:
@@ -1240,7 +1269,7 @@ class PRET_Manager_GUI(QMainWindow):
         self.Process = None
         self.Manager = manager
         self.setWindowTitle("pret manager")
-        #self.setWindowIcon(QIcon('./assets/icon.png'))
+        self.setWindowIcon(QIcon('assets/images/icon.png'))
         self.Widget = VBox(self)
         self.Content = MainContents(self)
         self.setCentralWidget(self.Widget)
@@ -1269,7 +1298,7 @@ class PRET_Manager_App(QApplication):
 
         while opaqueness < 1:
             splash.setWindowOpacity(opaqueness)
-            time.sleep(step) # Gradually appears
+            time.sleep(0.05) # Gradually appears
             opaqueness+=step
             
         self.Splash = splash

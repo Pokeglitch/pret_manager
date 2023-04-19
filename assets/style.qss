@@ -1,5 +1,6 @@
 QMainWindow {
-    background-color: #FFFFFF;
+    background-color: #252526;
+    color: #ffffff;
     min-height:800px;
     min-width:1400px;
 }
@@ -26,12 +27,41 @@ QLabel#header, QWidget#status-header > QLabel {
 
 QLabel#list-header {
     font-size: 16px;
+    color: #ffffff;
 }
 
 QWidget#header-frame, QLabel#list-header, QWidget#status-header, QWidget#footer {
     border: 1px solid black;
     min-height:50px;
     max-height:50px;
+}
+
+Queue VScroll, CatalogGUI VScroll {
+    background-color: #252526;
+}
+
+Queue QScrollArea, CatalogGUI VScroll {
+    border: none;
+}
+
+PanelHeader, PanelHeader QLabel, QueueHeader, QueueHeader QLabel {
+    background-color: #1e1e1e;
+    color: #ffffff;
+}
+
+QueueHeader Button {
+    background-color: #0E639C;
+    color: #EEEEEE;
+}
+
+QueueHeader Button:hover {
+    background-color: #1176BA;
+    color: #ffffff;
+}
+
+QueueHeader Button[disabled=true], QueueHeader Button[disabled=true]:hover, QueueHeader Button[processing=true], QueueHeader Button[processing=true]:hover {
+    background-color: #094166;
+    color: #bbbbbb
 }
 
 Button:hover {
@@ -48,7 +78,7 @@ Button {
     min-height: 30px;
     min-width: 60px;
     margin: 5;
-    background-color: #DDDDDD;
+    background-color: #0E639C;
 }
 
 Button[disabled=true], Button[disabled=true]:hover, Button[processing=true], Button[processing=true]:hover {
@@ -98,19 +128,23 @@ CatalogEntryGUI[mode="And"]:hover {
 GameQueue, CatalogEntryGUI {
     min-height: 15px;
     max-height: 15px;
-    background-color: #EEEEEE
+    background-color: #252526;
+}
+
+GameQueue *, CatalogEntryGUI * {
+    color: white;
 }
 
 GameQueue:hover, CatalogEntryGUI:hover, GameTile:hover {
-    background-color: #FFFFFF
+    background-color: #3a3a3b
 }
 
 GameQueue[active="true"], CatalogEntryGUI[mode="New"], CatalogEntryGUI[mode="Or"], GameTile[active="true"] {
-    background-color: #9FB4D3;
+    background-color: #4C4C54;
 }
 
 GameQueue[active="true"]:hover, CatalogEntryGUI[mode="New"]:hover, CatalogEntryGUI[mode="Or"]:hover, GameTile[active="true"]:hover {
-    background-color: #a8bbd7;
+    background-color: #4C4C54;
 }
 
 GameQueue[processing="true"], CatalogEntryGUI[processing="true"], GameTile[processing="true"] {
@@ -130,24 +164,30 @@ GameTile[queued="true"] {
 }
 
 GameTile {
-    border: 1px solid black;
+    border: 1px solid #000000;
     min-width:100px;
-    max-width:100px;
-    min-height:150px;
-    max-height:150px;
-    background-color: #EEEEEE
+    max-width: 100px;
+    min-height: 150px;
+    max-height: 150px;
+    background-color: #252526;
 }
 
-TileArt {
-    border: 1px solid black;
-    min-width:100px;
-    max-width:100px;
-    min-height:100px;
-    max-height:100px;
+GameTile * {
+    color: #ffffff;
+}
+
+#TileArt {
+    margin: 0px;
+    padding: 0px;
+    min-width: 100px;
+    max-width: 100px;
+    min-height: 100px;
+    max-height: 100px;
+    background-color: #ffffff;
 }
 
 QWidget#Tiles {
-    background-color: #FFFFFF;
+    background-color: #252526;
     border: none;
     margin-left:5;
     margin-top:5;
@@ -161,6 +201,10 @@ QWidget#Tag {
     border-radius: 5px;
     border: 1px solid black;
     margin:2px;
+}
+
+TagGUI * {
+    color: black;
 }
 
 TagGUI[which=red] {
@@ -339,6 +383,16 @@ GamePanelArtwork {
     border: 1px solid black;
     margin:5px;
     padding: 0;
+}
+
+#PanelDisplay, GamePanel, #PanelOptions *, Field *, #Trees, #Trees * {
+    background-color: #252526;
+    color: #ffffff;
+    border: none;
+}
+
+#PanelOptions QComboBox {
+    border: 1px solid #3a3a3b;
 }
 
 QLabel#url {
