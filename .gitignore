@@ -1,3 +1,5 @@
-*/
-!assets/
-custom.txt
+~missing/
+__pycache__/
+data/lists/*
+games/*/*/*/
+games/*/*/metadata.json
