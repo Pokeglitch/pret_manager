@@ -51,8 +51,9 @@ Button {
     background-color: #DDDDDD;
 }
 
-Button[disabled=true], Button[disabled=true]:hover {
+Button[disabled=true], Button[disabled=true]:hover, Button[processing=true], Button[processing=true]:hover {
     background-color: #777777;
+    color: #222222
 }
 
 ToggleButton {

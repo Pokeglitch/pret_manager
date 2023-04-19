@@ -148,11 +148,13 @@ class ListEntry(CatalogEntry):
 
     def removeFromFilter(self):
         if self.GUI and self.GUI.Mode:
-            self.Manager.GUI.Content.Tiles.remove(self.GUI)
+            self.Manager.GUI.Content.Tiles.remove(self.GUI, False)
 
     def addToFilter(self):
         if self.GUI and self.GUI.Mode:
-            getattr(self.Manager.GUI.Content.Tiles, 'add' + self.GUI.Mode.upper())(self.GUI)
+            getattr(self.Manager.GUI.Content.Tiles, 'add' + self.GUI.Mode.upper())(self.GUI, False)
+            self.Manager.GUI.Content.Tiles.refresh()
+
 
     def write(self):
         if self.Name not in ["Missing","Outdated"]:

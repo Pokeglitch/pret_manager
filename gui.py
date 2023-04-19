@@ -2,6 +2,8 @@ import sys, webbrowser, json, re
 
 '''
 TODO:
+- Make theme independent
+
 - Display in log when process is successful or failed
 
 - Detect if up to date/out of date
@@ -28,16 +30,16 @@ Lists:
 - Add lists as option to CLI
 - show size of each list next to name
 
--- Show in missing/out of date in Tile
---- faded = excluded, star in corner = fav
+Tile:
+- Show missing/out of date
+- star in corner = fav
 
 Catalog/Tile/Queue Sorting:
 - date of last update, alphabet, etc
 ---------
 Finish Game Panel
 - Show when game is in queue (just use a single button and change the text...)
-- show when game is being processed (disable the process button?)
-- show if game is missing, exlucded (faded) or out of date
+- show if game is missing or out of date
 
 Way to copy selected builds to another location
 ---------
@@ -201,7 +203,10 @@ class Widget(QWidget):
 
     def addTo(self, parent, *args):
         self.Parent = parent
-        parent.add(self, *args)
+        if parent:
+            parent.add(self, *args)
+        else:
+            self.setParent(None)
 
     def label(self, text='', *args):
         label = QLabel(text)
@@ -225,7 +230,10 @@ class Flow(Widget):
 
     def addTo(self, parent, *args):
         self.Parent = parent
-        parent.add(self.Scroll, *args)
+        if parent:
+            parent.add(self.Scroll, *args)
+        else:
+            self.setParent(None)
 
 class HBox(Widget):
     def __init__(self, GUI):
@@ -245,7 +253,10 @@ class VScroll(VBox):
 
     def addTo(self, parent, *args):
         self.Parent = parent
-        parent.add(self.Scroll, *args)
+        if parent:
+            parent.add(self.Scroll, *args)
+        else:
+            self.setParent(None)
 
 class Button(QLabel):
     def __init__(self, parent, text, click):
@@ -260,6 +271,11 @@ class Button(QLabel):
     def setDisabled(self, isDisabled):
         self.setProperty('disabled', isDisabled)
         self.updateStyle()
+
+    def setProcessing(self, isProcessing):
+        self.setProperty('processing', isProcessing)
+        self.updateStyle()
+
 
 class ToggleButton(HBox):
     def __init__(self, parent, text, click):
@@ -704,7 +720,7 @@ class GameGUI:
         if value:
             self.Panel.addTo(self.GUI.Panel.Display)
         else:
-            self.Panel.setParent(None)
+            self.Panel.addTo(None)
 
     def setProcessing(self, value):
         self.Queue.setProperty("processing",value)
@@ -727,6 +743,7 @@ class Queue(VBox):
         self.Header.addTo(self, 5)
 
         self.Clear = Button(self.Header, 'Clear', self.clear)
+
         self.Process = Button(self.Header, 'Process', self.process)
         self.GUI.addProcessButton(self.Process)
 
@@ -763,7 +780,7 @@ class Queue(VBox):
         if gameGUI in self.List:
             self.List.pop( self.List.index(gameGUI) )
             gameGUI.setQueued(False)
-            gameGUI.Queue.setParent(None)
+            gameGUI.Queue.addTo(None)
 
             self.updateIsEmpty()
 
@@ -796,8 +813,8 @@ class TilesHeader(HBox):
         self.Type.setObjectName("header")
         self.Name = self.label()
         self.Name.setObjectName("header")
-        # todo - disable when list is empty
         self.SaveList = Button(self, 'Save', parent.saveList)
+
         self.addTo(parent, 5)
 
     def setText(self, type, name=''):
@@ -834,15 +851,19 @@ class Tiles(VBox):
         self.NOT_Lists = []
         self.NOT_Games = []
         self.All_Games = []
-        self.isEmpty = True
+        self.isEmpty = False
         self.updateIsEmpty()
 
     def updateIsEmpty(self):
         if self.isEmpty == bool(self.All_Games):
             self.isEmpty = not bool(self.All_Games)
-            self.Header.SaveList.setProperty('disabled', self.isEmpty)
-            self.Header.SaveList.updateStyle()
-    
+            self.Header.SaveList.setDisabled(self.isEmpty)
+            self.Footer.AddToQueue.setDisabled(self.isEmpty)
+            self.Footer.RemoveFromQueue.setDisabled(self.isEmpty)
+            self.Footer.Favorite.setDisabled(self.isEmpty)
+            self.Footer.Exclude.setDisabled(self.isEmpty)
+            self.Footer.Process.setDisabled(self.isEmpty)
+
     def is_game_valid(self, game):
         if self.OR_Lists:
             if self.AND_Lists:
@@ -854,24 +875,34 @@ class Tiles(VBox):
         else:
             return False
 
-    def compile(self):
+    def compile(self, updateGUI = True):
         for game in self.All_Games[:]:
             if not self.is_game_valid(game):
                 self.All_Games.pop(self.All_Games.index(game))
-                game.GUI.Tile.setParent(None)
+                if updateGUI: game.GUI.Tile.addTo(None)
 
         if self.OR_Lists:
             for game in self.OR_Games:
                 if self.is_game_valid(game) and game not in self.All_Games:
                     self.All_Games.append(game)
-                    game.GUI.Tile.addTo(self.Content)
+                    if updateGUI: game.GUI.Tile.addTo(self.Content)
         elif self.AND_Lists:
             for game in self.AND_Games:
                 if self.is_game_valid(game) and game not in self.All_Games:
                     self.All_Games.append(game)
-                    game.GUI.Tile.addTo(self.Content)
+                    if updateGUI: game.GUI.Tile.addTo(self.Content)
 
         self.updateIsEmpty()
+
+    def refresh(self):
+        for game in self.GUI.Manager.All:
+            if game not in self.All_Games:
+                if game.GUI.Tile.Parent == self.Content:
+                    game.GUI.Tile.addTo(None)
+            else:
+                print(game.name, game.GUI.Tile.Parent)
+                if game.GUI.Tile.Parent != self.Content:
+                    game.GUI.Tile.addTo(self.Content)
 
     def saveList(self, event):
         if event.button() == Qt.LeftButton and self.All_Games:
@@ -914,13 +945,13 @@ class Tiles(VBox):
     def removeOR(self, list):
         self.removeList(list, 'OR')
 
-    def remove(self, list):
+    def remove(self, list, updateGUI=True):
         self.removeList(list, 'OR')
         self.removeList(list, 'AND')
         self.removeList(list, 'NOT')
-        self.compile()
+        self.compile(updateGUI)
 
-    def addAND(self, list):
+    def addAND(self, list, updateGUI=True):
         self.removeOR(list)
         self.removeNOT(list)
 
@@ -937,19 +968,19 @@ class Tiles(VBox):
                 if game not in data:
                     self.AND_Games.pop(self.AND_Games.index(game))
 
-        self.compile()
+        self.compile(updateGUI)
 
-    def addNEW(self, list):
+    def addNEW(self, list, updateGUI=True):
         for game in self.All_Games:
-            game.GUI.Tile.setParent(None)
+            game.GUI.Tile.addTo(None)
 
         for other_list in self.OR_Lists + self.AND_Lists + self.NOT_Lists:
             other_list.setMode(None)
 
         self.reset()
-        self.addOR(list)
+        self.addOR(list, updateGUI)
 
-    def addNOT(self, list):
+    def addNOT(self, list, updateGUI=True):
         self.removeAND(list)
         self.removeOR(list)
 
@@ -962,9 +993,9 @@ class Tiles(VBox):
             if game not in self.NOT_Games:
                 self.NOT_Games.append(game)
 
-        self.compile()
+        self.compile(updateGUI)
 
-    def addOR(self, list):
+    def addOR(self, list, updateGUI=True):
         self.removeAND(list)
         self.removeNOT(list)
 
@@ -977,24 +1008,25 @@ class Tiles(VBox):
             if game not in self.OR_Games:
                 self.OR_Games.append(game)
 
-        self.compile()
+        self.compile(updateGUI)
 
     def addToQueue(self, event):
-        self.GUI.Queue.addGames(self.All_Games)
+        self.GUI.Queue.addGames(self.All_Games[:])
 
     def removeFromQueue(self, event):
-        self.GUI.Queue.removeGames(self.All_Games)
+        self.GUI.Queue.removeGames(self.All_Games[:])
 
     def process(self, event):
         self.GUI.startProcess([game for game in self.All_Games])
 
     def favorite(self, event):
         if self.All_Games:
-            self.GUI.Manager.Catalogs.Lists.get('Favorites').addGames(self.All_Games)
+            print(self.All_Games)
+            self.GUI.Manager.Catalogs.Lists.get('Favorites').addGames(self.All_Games[:])
 
     def exclude(self, event):
         if self.All_Games:
-            self.GUI.Manager.Catalogs.Lists.get('Excluding').addGames(self.All_Games)
+            self.GUI.Manager.Catalogs.Lists.get('Excluding').addGames(self.All_Games[:])
 
 class PanelHeader(HBox):
     def __init__(self, parent):
@@ -1186,13 +1218,13 @@ class MainContents(HBox):
     def startProcess(self, games):
         if not self.Window.Process:
             self.GUI.Manager.add_to_queue(games)
-            [button.setDisabled(True) for button in self.ProcessButtons]
+            [button.setProcessing(True) for button in self.ProcessButtons]
             self.Window.Process = Process(self)
             threadpool.start(self.Window.Process)
 
     def processFinished(self):
         self.Window.Process = None
-        [button.setDisabled(False) for button in self.ProcessButtons]
+        [button.setProcessing(False) for button in self.ProcessButtons]
 
     def handleBuildSignal(self, game):
         game.GUI.Panel.drawBuilds()
