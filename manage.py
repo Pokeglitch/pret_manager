@@ -11,7 +11,7 @@ def error(msg):
 def mkdir(*dirs):
     for dir in dirs:
         if not os.path.exists(dir):
-            os.mkdir(dir)
+            os.makedirs(dir)
 
 def get_dirs(path):
     return next(os.walk(path))[1]
