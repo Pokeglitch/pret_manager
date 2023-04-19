@@ -51,6 +51,10 @@ Button {
     background-color: #DDDDDD;
 }
 
+Button[disabled=true], Button[disabled=true]:hover {
+    background-color: #777777;
+}
+
 ToggleButton {
     max-height: 30px;
     min-height: 30px;

@@ -99,11 +99,15 @@ class ListEntry(CatalogEntry):
             self.GameStructure[game.author].append(game.title)
 
     def addGames(self, games):
+        self.removeFromFilter()
+
         isChanged = False
         for game in games:
             if game not in self.GameList:
                 isChanged = True
                 game.addToList(self)
+                
+        self.addToFilter()
 
         if isChanged:
             self.write()
@@ -115,24 +119,40 @@ class ListEntry(CatalogEntry):
             del self.GameStructure[game.author]
 
     def removeGames(self, games):
+        self.removeFromFilter()
+
         isChanged = False
         for game in games:
             if game in self.GameList:
                 isChanged = True
                 game.removeFromList(self)
+                
+        self.addToFilter()
 
         if isChanged:
             self.write()
 
     def toggleGames(self, games):
+        self.removeFromFilter()
+
         for game in games:
             if game in self.GameList:
                 game.removeFromList(self)
             else:
                 game.addToList(self)
 
+        self.addToFilter()
+
         if games:
             self.write()
+
+    def removeFromFilter(self):
+        if self.GUI and self.GUI.Mode:
+            self.Manager.GUI.Content.Tiles.remove(self.GUI)
+
+    def addToFilter(self):
+        if self.GUI and self.GUI.Mode:
+            getattr(self.Manager.GUI.Content.Tiles, 'add' + self.GUI.Mode.upper())(self.GUI)
 
     def write(self):
         if self.Name not in ["Missing","Outdated"]:
@@ -195,12 +215,21 @@ class PRET_Manager:
 
     def addList(self, name, list):
         if self.Catalogs.Lists.has(name):
+            catalog_entry = self.Catalogs.Lists.get(name)
+            # remove list from the corresponding filter
+            if catalog_entry.GUI and catalog_entry.GUI.Mode:
+                self.GUI.Content.Tiles.remove(catalog_entry.GUI)
+
             self.Catalogs.Lists.get(name).reset()
         else:
             self.Catalogs.Lists.add(name)
 
         for author in list:
             [self.Catalogs.Authors.get(author).getGame(title).addToList(self.Catalogs.Lists.get(name)) for title in list[author]]
+
+        catalog_entry = self.Catalogs.Lists.get(name)
+        if catalog_entry.GUI and catalog_entry.GUI.Mode:
+            getattr(self.GUI.Content.Tiles,'add' + catalog_entry.GUI.Mode.upper())(catalog_entry.GUI)
 
     def init_GUI(self):
         # TODO - these should come from default parameters loaded within 'init'
