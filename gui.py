@@ -401,7 +401,7 @@ class GameTile(VBox):
         self.Artwork = self.label()
         self.Artwork.setObjectName("TileArt")
 
-        self.Pixmap = QPixmap('assets/images/red.png').scaled(100, 100)
+        self.Pixmap = QPixmap(self.GameGUI.Game.Boxart).scaled(100, 100)
 
         self.Faded = QPixmap(self.Pixmap.size())
         self.Faded.fill(Qt.transparent)
@@ -461,7 +461,7 @@ class GamePanelArtwork(VBox):
         self.Label = self.label()
         self.Label.setAlignment(Qt.AlignCenter)
         
-        self.Pixmap = QPixmap('assets/images/red.png').scaled(300, 300)
+        self.Pixmap = QPixmap(parent.GameGUI.Game.Boxart).scaled(300, 300)
 
         self.Faded = QPixmap(self.Pixmap.size())
         self.Faded.fill(Qt.transparent)

@@ -159,7 +159,6 @@ class ListEntry(CatalogEntry):
             with open(list_dir + self.Name + '.json', 'w') as f:
                 f.write(json.dumps(self.GameStructure))
 
-
 class Catalog:
     def __init__(self, catalogs, name, entryClass):
         self.Catalogs = catalogs
@@ -481,6 +480,10 @@ class repository(game):
             'releases' : dir + 'releases/',
             'builds' : dir + 'builds/'
         }
+
+        self.Boxart = dir + 'boxart.png'
+        if not os.path.exists(self.Boxart):
+            self.Boxart = 'assets/images/gb.png'
 
         self.parse_builds()
         self.parse_releases()
