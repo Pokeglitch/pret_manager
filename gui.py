@@ -2,9 +2,27 @@ import sys, webbrowser, json, re
 
 '''
 TODO:
+- give games keywords, which are different from tags and only used in search
+
+GUI:
+- fix down arrow in Trees
+- darken color of green/yellow/red elements
+- combo-boxes, scrollbars
+- Game Tile:
+-- title above boxart
+-- Pokeball in top left corner for favorite (over boxart)
+-- Double click to launch
+
 - Make theme independent ?
+- Another auto list where there are no builds/releases with a game in them
+
+Way to launch most recent build/release
+- or, set which is the default 'launch'
 
 Panel should slide away when no game is selected
+- keep history so can go forwards/backwards
+- or, there should be tabs for all openened games
+- and save them so they reload upon re-opening
 
 - Detect if up to date/out of date
 
@@ -74,7 +92,7 @@ Associate Authors with a Team
 '''
 
 from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QObject, QUrl, QThreadPool, QRunnable, QMargins, QPoint, QRect, QSize
-from PyQt5.QtWidgets import QSplashScreen, QComboBox, QHeaderView, QTreeWidgetItem, QFileDialog, QTreeWidget, QApplication, QStyleOption, QStyle, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
+from PyQt5.QtWidgets import QLineEdit, QSplashScreen, QComboBox, QHeaderView, QTreeWidgetItem, QFileDialog, QTreeWidget, QApplication, QStyleOption, QStyle, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
 from PyQt5.QtGui import QPixmap, QDesktopServices, QIcon, QPainter
 import time
 
@@ -302,14 +320,10 @@ class CatalogEntryGUI(HBox):
         self.addTo(parent)
 
     def getData(self):
-        return self.Data.GameList
+        return self.Data.GameList[:]
 
     def setMode(self, mode):
-        if mode == "New":
-            self.Mode = "Or"
-        else:
-            self.Mode = mode
-        
+        self.Mode = mode
         self.setProperty("mode",mode)
         self.updateStyle()
 
@@ -425,21 +439,13 @@ class GameTile(VBox):
         self.GameGUI = gameGUI
         #self.Name = self.label(gameGUI.Game.name)
 
+
         self.Artwork = self.label()
-
         self.Pixmap = QPixmap(self.GameGUI.Game.Boxart).scaled(100, 100)
-
-        self.Faded = QPixmap(self.Pixmap.size())
-        self.Faded.fill(Qt.transparent)
-        painter = QPainter(self.Faded)
-        painter.setOpacity(0.4)
-        painter.drawPixmap(QPoint(), self.Pixmap)
-        painter.end()
+        self.Faded = Faded(self.Pixmap)
 
         self.Title = self.label(gameGUI.Game.title)
         self.Title.setAlignment(Qt.AlignCenter)
-        self.Author = self.label(gameGUI.Game.author)
-        self.Author.setAlignment(Qt.AlignCenter)
         self.isQueued = False
 
     def updateExcluding(self, excluding):
@@ -490,14 +496,7 @@ class GamePanelArtwork(VBox):
         self.Label.setAlignment(Qt.AlignCenter)
         
         self.Pixmap = QPixmap(parent.GameGUI.Game.Boxart).scaled(300, 300)
-
-        self.Faded = QPixmap(self.Pixmap.size())
-        self.Faded.fill(Qt.transparent)
-        painter = QPainter(self.Faded)
-        painter.setOpacity(0.4)
-        painter.drawPixmap(QPoint(), self.Pixmap)
-        painter.end()
-
+        self.Faded = Faded(self.Pixmap)
 
         self.Container = HBox(self.GUI)
         self.Container.addTo(parent)
@@ -823,6 +822,17 @@ class TileContent(Flow):
         self.Scroll.setObjectName('Tiles')
         self.addTo(parent, 95)
 
+class SearchBox(QLineEdit):
+    def __init__(self, searchList):
+        super().__init__()
+        self.Mode = "And"
+        self.SearchList = searchList
+        self.textChanged.connect(self.SearchList.onTextChanged)
+        searchList.Manager.GUI.Content.Tiles.Header.SearchContainer.add(self)
+
+    def getData(self):
+        return self.SearchList.GameList[:]
+
 class TilesHeader(HBox):
     def __init__(self, parent):
         super().__init__(parent.GUI)
@@ -831,6 +841,10 @@ class TilesHeader(HBox):
         self.Type.setObjectName("header")
         self.Name = self.label()
         self.Name.setObjectName("header")
+        
+        self.SearchContainer = HBox(self)
+        self.SearchContainer.addTo(self)
+
         self.SaveList = Button(self, 'Save', parent.saveList)
 
         self.addTo(parent, 5)
@@ -899,14 +913,16 @@ class Tiles(VBox):
 
         if self.OR_Lists:
             for game in self.OR_Games:
-                if self.is_game_valid(game) and game not in self.All_Games:
-                    self.All_Games.append(game)
-                    if updateGUI: game.GUI.Tile.addTo(self.Content)
+                if self.is_game_valid(game):
+                    if game not in self.All_Games:
+                        self.All_Games.append(game)
+                    if updateGUI and game.GUI.Tile.Parent != self.Content: game.GUI.Tile.addTo(self.Content)
         elif self.AND_Lists:
             for game in self.AND_Games:
-                if self.is_game_valid(game) and game not in self.All_Games:
-                    self.All_Games.append(game)
-                    if updateGUI: game.GUI.Tile.addTo(self.Content)
+                if self.is_game_valid(game):
+                    if game not in self.All_Games:
+                        self.All_Games.append(game)
+                    if updateGUI and game.GUI.Tile.Parent != self.Content: game.GUI.Tile.addTo(self.Content)
 
         self.updateIsEmpty()
 
@@ -960,6 +976,9 @@ class Tiles(VBox):
     def removeOR(self, list):
         self.removeList(list, 'OR')
 
+    def removeAND(self, list):
+        self.removeList(list, 'OR')
+
     def remove(self, list, updateGUI=True):
         self.removeList(list, 'OR')
         self.removeList(list, 'AND')
@@ -990,10 +1009,12 @@ class Tiles(VBox):
             game.GUI.Tile.addTo(None)
 
         for other_list in self.OR_Lists + self.AND_Lists + self.NOT_Lists:
-            other_list.setMode(None)
+            if other_list != self.GUI.Manager.Search.GUI:
+                other_list.setMode(None)
 
         self.reset()
-        self.addOR(list, updateGUI)
+        self.addOR(list, False)
+        self.addAND(self.GUI.Manager.Search.GUI, updateGUI)
 
     def addNOT(self, list, updateGUI=True):
         self.removeAND(list)

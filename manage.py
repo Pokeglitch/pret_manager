@@ -157,9 +157,59 @@ class ListEntry(CatalogEntry):
 
 
     def write(self):
-        if self.Name not in ["Missing","Outdated"]:
+        if self.Name not in ["Missing","Outdated","Search"]:
             with open(list_dir + self.Name + '.json', 'w') as f:
                 f.write(json.dumps(self.GameStructure))
+
+class SearchEntry(ListEntry):
+    def __init__(self, manager):
+        self.Manager = manager
+        self.GUI = None
+        super().__init__(self, "Search")
+
+        if manager.GUI:
+            self.GUI = gui.SearchBox(self)
+
+        self.ExcludedGames = []
+        self.addGames(self.Manager.All)
+
+        self.PreviousText = ""
+
+    def onTextChanged(self, text):
+        text_lower = text.lower()
+        # if the search term was added to:
+        if self.PreviousText in text:
+            gamesToExclude = []
+            for game in self.GameList:
+                if text_lower not in game.name.lower():
+                    gamesToExclude.append(game)
+                    self.ExcludedGames.append(game)
+            self.removeGames(gamesToExclude)
+        # if the search term was reduced:
+        elif text in self.PreviousText:
+            gamesToAdd = []
+            for game in self.ExcludedGames[:]:
+                if text_lower in game.name.lower():
+                    gamesToAdd.append(game)
+                    self.ExcludedGames.pop(self.ExcludedGames.index(game))
+            self.addGames(gamesToAdd)
+        # text changed complete:
+        else:
+            gamesToToggle = []
+            for game in self.ExcludedGames[:]:
+                if text_lower in game.name.lower():
+                    gamesToToggle.append(game)
+                    self.ExcludedGames.pop(self.ExcludedGames.index(game))
+
+            for game in self.GameList:
+                if text_lower not in game.name.lower():
+                    gamesToToggle.append(game)
+                    self.ExcludedGames.append(game)
+
+            self.toggleGames(gamesToToggle)
+
+        self.PreviousText = text
+
 
 class Catalog:
     def __init__(self, catalogs, name, entryClass):
@@ -208,6 +258,7 @@ class PRET_Manager:
 
         self.GUI = None
         self.App = None
+        self.Search = None
 
         self.Queue = []
         self.doUpdate = False
@@ -240,6 +291,7 @@ class PRET_Manager:
         self.App, self.GUI = gui.init(self)
 
         self.init()
+        self.Search = SearchEntry(self)
         #self.fetch()
     
     def fetch(self):

@@ -40,7 +40,7 @@ Queue VScroll, CatalogGUI VScroll {
     background-color: #252526;
 }
 
-Queue QScrollArea, CatalogGUI VScroll {
+Queue QScrollArea, CatalogGUI VScroll, CatalogGUI QScrollArea {
     border: none;
 }
 
@@ -169,7 +169,7 @@ GameTile {
     max-width: 100px;
     min-height: 150px;
     max-height: 150px;
-    background-color: #252526;
+    background-color: #2c2c2c;
 }
 
 GameTile * {
@@ -388,6 +388,11 @@ GamePanelArtwork {
 #PanelDisplay, GamePanel, #PanelOptions *, Field *, #Trees, #Trees * {
     background-color: #252526;
     color: #ffffff;
+    border: none;
+}
+
+
+Panel QScrollArea, Panel VScroll {
     border: none;
 }
 
