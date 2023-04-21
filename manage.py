@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import subprocess, os, re, glob, platform, shutil, argparse, json, sys
 from pathlib import Path
 import gui
@@ -218,7 +220,7 @@ class Catalog:
         self.Name = name
         self.EntryClass = entryClass
         self.Entries = {}
-        self.GUI = gui.CatalogGUI(self) if catalogs.GUI else None
+        self.GUI = gui.CatalogGUI(self) if self.Manager.GUI else None
 
     def get(self, entry):
         return self.Entries[entry] if self.has(entry) else None
@@ -244,7 +246,6 @@ class TagCatalog(Catalog):
 class Catalogs:
     def __init__(self, manager):
         self.Manager = manager
-        self.GUI = gui.CatalogsGUI(self) if manager.GUI else None
         self.Lists = ListCatalog(self)
         self.Authors = AuthorCatalog(self)
         self.Tags = TagCatalog(self)

@@ -5,13 +5,60 @@ TODO:
 - give games keywords, which are different from tags and only used in search
 
 GUI:
-- fix down arrow in Trees
 - darken color of green/yellow/red elements
-- combo-boxes, scrollbars
+- combo-boxes, scrollbars, search box
+- Catalog/Tile/Queue Sorting:
+-- date of last update, alphabet, etc
+
+
+
+Process:
+- Use animated toggles for options
+-- Fetch, Update, Clean, Build, Clean
+
+Filter:
+- Add Title Text
+- Show number of items in filter
+
+** - Add way to Save the filter options (catalogs for each mode & search term)
+-- Add way to load a filter
+
+- Use tabs for each catalog
+-- side tab with symbols, like VS Code?
+
+- New/Or/And/Not should be symbols, faded when not used
+-- No need for 'new' button, simply when rest are all inactive
+
+** - Instead of the buttons at bottom:
+-- Have a dropdown which includes all Queue (default), all lists + New
+--- Have buttons for: Add to/Remove From/Toggle In
+- (True for Game Panel as well, though Fav/Exclude are also quick clicks)
+
+Lists:
+- Way to load a list, delete a list
+- show size of each list next to name
+** - Update Outdated list
+** - 'Library' list for game that have builds
+    --- default to this list?
+    -- likewise, a list for games that dont have builds
+    - Also one for downlaoaded, not downloaded
+
 - Game Tile:
+-- Show if missing or outdated
 -- title above boxart
 -- Pokeball in top left corner for favorite (over boxart)
 -- Double click to launch
+
+- Game Panel:
+-- Empty panel shows credits
+-- can open a new panel if want to open multiple game details
+--- can close panels
+-- fix down arrow in Trees
+-- Show when game is in queue
+-- show if game is missing or out of date
+-------
+'Missing' should search for rom files in the builds or releases
+-- What about if releases are in an archive? (zip, etc)
 
 - Make theme independent ?
 - Another auto list where there are no builds/releases with a game in them
@@ -19,46 +66,16 @@ GUI:
 Way to launch most recent build/release
 - or, set which is the default 'launch'
 
-Panel should slide away when no game is selected
-- keep history so can go forwards/backwards
-- or, there should be tabs for all openened games
-- and save them so they reload upon re-opening
-
-- Detect if up to date/out of date
-
 Have the directory be database (if shortcut, then git, etc)
 - folder title is name of game
 - data file in each (for which rgbds, tags, etc)
 -- separate from metadata
 --- meta data should include successful/failed commit attempts
 
-Filter:
-- Add title text for Filter
-- Show number of items in filter
-- When no filters, show All
-- Save filter separately from list
-
-- Instead of the buttons at bottom:
--- Have a dropdown which includes all Queue (default), all lists + New
---- Have buttons for: Add to/Remove From/Toggle In
-- (True for Game Panel as well, though Fav/Exclude are also quick clicks)
-
-Lists:
-- show in Tile, Panel if in favorite/excluded
-- Way to load a list, delete a list
-- Add lists as option to CLI
-- show size of each list next to name
-
-Tile:
-- Show missing/out of date
-- star in corner = fav
-
-Catalog/Tile/Queue Sorting:
-- date of last update, alphabet, etc
----------
-Finish Game Panel
-- Show when game is in queue (just use a single button and change the text...)
-- show if game is missing or out of date
+CLI:
+- add list option, search option
+- use the same 'filter' function that the GUI current uses...
+-- -a, -ao, -aa, -an, etc
 
 Way to copy selected builds to another location
 ---------
@@ -92,7 +109,7 @@ Associate Authors with a Team
 '''
 
 from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QObject, QUrl, QThreadPool, QRunnable, QMargins, QPoint, QRect, QSize
-from PyQt5.QtWidgets import QLineEdit, QSplashScreen, QComboBox, QHeaderView, QTreeWidgetItem, QFileDialog, QTreeWidget, QApplication, QStyleOption, QStyle, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
+from PyQt5.QtWidgets import QStackedWidget, QLineEdit, QSplashScreen, QComboBox, QHeaderView, QTreeWidgetItem, QFileDialog, QTreeWidget, QApplication, QStyleOption, QStyle, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
 from PyQt5.QtGui import QPixmap, QDesktopServices, QIcon, QPainter
 import time
 
@@ -329,7 +346,7 @@ class CatalogEntryGUI(HBox):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            mode = self.Data.Catalog.Catalogs.GUI.Mode
+            mode = self.GUI.Catalogs.Mode
             if mode == self.Mode:
                 self.GUI.Tiles.remove(self)
                 self.setMode(None)
@@ -338,78 +355,6 @@ class CatalogEntryGUI(HBox):
                 self.setMode(mode)
         elif event.button() == Qt.RightButton:
             self.GUI.Queue.addGames(self.getData())
-
-class CatalogGUI(VBox):
-    def __init__(self, data):
-        parent = data.Catalogs.GUI
-        self.Data = data
-        ID = data.Name
-        super().__init__(parent.GUI)
-
-        self.ID = ID[:-1]
-        self.List = {}
-
-        self.Label = self.label(ID, 5)
-        self.Label.setAlignment(Qt.AlignCenter)
-        self.Label.setObjectName("list-header")
-
-        self.ListContainer = VScroll(parent.GUI)
-        self.ListContainer.addTo(self)
-
-        self.ListGUI = VBox(parent.GUI)
-        self.ListGUI.addTo(self.ListContainer)
-        self.ListContainer.addStretch()
-
-        self.addTo(parent.Body)
-
-    def addElement(self, name):
-        self.Class(self, name)
-
-    def add(self, widget, *args):
-        if hasattr(widget,'Name'):
-            self.List[widget.Name] = widget
-            self.ListGUI.add(widget, *args)
-        else:
-            super().add(widget, *args)
-
-class CatalogsToggleButton(ToggleButton):
-    def __init__(self, parent, mode):
-        super().__init__(parent, mode, lambda e: parent.Catalogs.setMode(mode))
-        self.setProperty('active',False)
-
-class CatalogsFooter(HBox):
-    def __init__(self, catalogs):
-        super().__init__(catalogs.GUI)
-        self.setObjectName('footer')
-        self.Catalogs = catalogs
-        self.New = CatalogsToggleButton(self, 'New')
-        self.Or = CatalogsToggleButton(self, 'Or')
-        self.And = CatalogsToggleButton(self, 'And')
-        self.Not = CatalogsToggleButton(self, 'Not')
-        self.addTo(catalogs)
-
-class CatalogsGUI(VBox):
-    def __init__(self, data):
-        self.Data = data
-        GUI = data.Manager.GUI.Content
-        GUI.Catalogs = self
-
-        super().__init__(GUI)
-        self.Mode = None
-        self.Body = HBox(GUI)
-        self.Body.addTo(self)
-
-        self.Footer = CatalogsFooter(self)
-        self.setMode('New')
-        
-        self.addTo(GUI.Col1, 20)
-
-    def setMode(self, mode):
-        if self.Mode:
-            getattr(self.Footer, self.Mode).setActive(False)
-        
-        self.Mode = mode
-        getattr(self.Footer, mode).setActive(True)
 
 class GameQueue(HBox):
     def __init__(self, gameGUI):
@@ -774,7 +719,7 @@ class Queue(VBox):
         self.ListGUI.addTo(self.ListContainer)
         self.ListContainer.addStretch()
         
-        self.addTo(GUI.RightCol, 65)
+        self.addTo(GUI.Col1, 1)
 
     def updateIsEmpty(self):
         if self.isEmpty == bool(self.List):
@@ -828,7 +773,7 @@ class SearchBox(QLineEdit):
         self.Mode = "And"
         self.SearchList = searchList
         self.textChanged.connect(self.SearchList.onTextChanged)
-        searchList.Manager.GUI.Content.Tiles.Header.SearchContainer.add(self)
+        searchList.Manager.GUI.Content.Catalogs.Header.SearchContainer.add(self)
 
     def getData(self):
         return self.SearchList.GameList[:]
@@ -842,9 +787,6 @@ class TilesHeader(HBox):
         self.Name = self.label()
         self.Name.setObjectName("header")
         
-        self.SearchContainer = HBox(self)
-        self.SearchContainer.addTo(self)
-
         self.SaveList = Button(self, 'Save', parent.saveList)
 
         self.addTo(parent, 5)
@@ -872,7 +814,7 @@ class Tiles(VBox):
         self.Content = TileContent(self)
         self.Footer = PanelFooter(self)
         self.reset()
-        self.addTo(GUI, 25)
+        self.addTo(GUI.Col2, 2)
 
     def reset(self):
         self.OR_Lists = []
@@ -1114,7 +1056,7 @@ class Panel(VBox):
 
         self.Active = None
         self.setActive(None)
-        self.addTo(GUI, 25)
+        self.addTo(GUI, 3)
 
     def setActive(self, game):
         if self.Active:
@@ -1206,7 +1148,7 @@ class Status(VBox):
 
         self.ContentContainer.setObjectName("status")
 
-        self.addTo(GUI.RightCol, 35)
+        self.addTo(GUI.Col2, 1)
 
     def toggleUpdate(self, event):
         self.GUI.Manager.doUpdate = not self.GUI.Manager.doUpdate
@@ -1231,6 +1173,156 @@ class Status(VBox):
         if self.AtMax:
             self.ContentContainer.Scroll.verticalScrollBar().setValue(self.ContentContainer.Scroll.verticalScrollBar().maximum())
 
+class Icon(HBox):
+    def __init__(self, parent, image, dim):
+        super().__init__(parent.GUI)
+        self.Label = self.label()
+        self.Label.setAlignment(Qt.AlignCenter)
+        self.Pixmap = QPixmap(image).scaled(dim, dim)
+        self.Label.setPixmap(self.Pixmap)
+        self.addTo(parent)
+
+    def setActive(self, value):
+        self.setProperty("active",value)
+        self.updateStyle()
+
+class CatalogModesRow(HBox):
+    def __init__(self, parent, mode):
+        super().__init__(parent.GUI)
+        self.addStretch()
+        self.Icon = CatalogsModeIcon(self, mode)
+        self.addTo(parent)
+
+class CatalogModes(VBox):
+    def __init__(self, parent):
+        super().__init__(parent.GUI)
+
+        self.Or = CatalogModesRow(self, 'Or')
+        self.Not = CatalogModesRow(self, 'Not')
+        self.And = CatalogModesRow(self, 'And')
+        self.addTo(parent)
+
+class CatalogsTabs(VBox):
+    def __init__(self, parent):
+        super().__init__(parent.GUI)
+
+        self.ListTab = CatalogIcon(self, 'assets/images/list.png', 0)
+        self.AuthorsTab = CatalogIcon(self, 'assets/images/author.png', 1)
+        self.TagsTab = CatalogIcon(self, 'assets/images/tag.png', 2)
+
+        self.ActiveTab = self.ListTab
+        self.ActiveTab.setActive(True)
+
+        self.addStretch()
+        
+        self.Modes = CatalogModes(self)
+
+        self.addTo(parent, 1)
+
+    def setCatalog(self, tab):
+        if tab != self.ActiveTab:
+            self.ActiveTab.setActive(None)
+            self.Parent.Container.Stack.setCurrentIndex(tab.Index)
+            self.ActiveTab = tab
+
+class CatalogIcon(Icon):
+    def __init__(self, parent, image, index):
+        super().__init__(parent, image, 35)
+        self.Index = index
+
+    def mousePressEvent(self, e):
+        self.setActive(True)
+        self.Parent.setCatalog(self)
+
+class CatalogsContainer(VBox):
+    def __init__(self, parent):
+        super().__init__(parent.GUI)
+        self.Mode = 'New'
+
+        self.Stack = QStackedWidget()
+        self.add(self.Stack)
+        self.addTo(parent, 2)
+
+class CatalogGUI(VBox):
+    def __init__(self, data):
+        parent = data.Manager.GUI.Content.Catalogs.Body.Container
+        self.Data = data
+        ID = data.Name
+        super().__init__(parent.GUI)
+
+        self.ID = ID[:-1]
+        self.List = {}
+
+        self.ListContainer = VScroll(parent.GUI)
+        self.ListContainer.addTo(self)
+
+        self.ListGUI = VBox(parent.GUI)
+        self.ListGUI.addTo(self.ListContainer)
+        self.ListContainer.addStretch()
+
+        parent.Stack.addWidget(self)
+
+    def addElement(self, name):
+        self.Class(self, name)
+
+    def add(self, widget, *args):
+        if hasattr(widget,'Name'):
+            self.List[widget.Name] = widget
+            self.ListGUI.add(widget, *args)
+        else:
+            super().add(widget, *args)
+
+
+class CatalogsBody(HBox):
+    def __init__(self, parent):
+        super().__init__(parent.GUI)
+
+        self.Tabs = CatalogsTabs(self)
+        self.Container = CatalogsContainer(self)
+
+        self.addTo(parent)
+
+class CatalogsHeader(HBox):
+    def __init__(self, parent):
+        super().__init__(parent.GUI)
+        self.setObjectName('footer')
+        self.label("Filter", 1)
+
+        self.SearchContainer = HBox(self)
+        self.SearchContainer.addTo(self, 2)
+
+        self.addTo(parent)
+
+class CatalogsModeIcon(Icon):
+    def __init__(self, parent, mode):
+        super().__init__(parent, 'assets/images/' + mode.lower() + '.png', 15)
+        
+        self.Mode = mode
+        self.setProperty('active',False)
+
+    def mousePressEvent(self, e):
+        self.GUI.Catalogs.setMode(self.Mode)
+
+class Catalogs(VBox):
+    def __init__(self, parent):
+        super().__init__(parent.GUI)
+        self.Header = CatalogsHeader(self)
+        self.Body = CatalogsBody(self)
+        self.Mode = 'New'
+
+        self.addTo(parent.Col1, 2)
+
+    def setMode(self, mode):
+        if mode == self.Mode:
+            getattr(self.Body.Tabs.Modes, self.Mode).Icon.setActive(False)
+            self.Mode = 'New'
+        else:
+            if self.Mode != 'New':
+                getattr(self.Body.Tabs.Modes, self.Mode).Icon.setActive(False)
+            self.Mode = mode
+            getattr(self.Body.Tabs.Modes, mode).Icon.setActive(True)
+
+
 class MainContents(HBox):
     def __init__(self, window):
         super().__init__(self)
@@ -1240,16 +1332,22 @@ class MainContents(HBox):
         self.ProcessButtons = []
         
         self.Col1 = VBox(self)
-        self.Col1.addTo(self)
+        self.Col1.addTo(self, 1)
 
-        self.Tiles = Tiles(self)
-        self.Panel = Panel(self)
+        self.Catalogs = Catalogs(self)
 
-        self.RightCol = VBox(self)
-        self.RightCol.addTo(self, 20)
+        
+        
 
         self.Queue = Queue(self)
+        
+        self.Col2 = VBox(self)
+        self.Col2.addTo(self, 4)
+
+        self.Tiles = Tiles(self)
         self.Status = Status(self)
+
+        self.Panel = Panel(self)
 
         self.addTo(window.Widget)
 

@@ -36,6 +36,56 @@ QWidget#header-frame, QLabel#list-header, QWidget#status-header, QWidget#footer 
     max-height:50px;
 }
 
+CatalogsModeIcon {
+    border: 1px solid #252526;
+    border-radius: 5px;
+    min-height: 30px;
+    max-height: 30px;
+    min-width: 30px;
+    max-width: 30px;
+    background-color: #252526;
+    margin: 5px;
+}
+
+CatalogsModeIcon:hover {
+    background-color: #313131;
+}
+
+CatalogsModeIcon[active=true] {
+    background-color: #404040;
+    border: 1px solid #ffffff;
+}
+
+CatalogsTabs {
+    background-color: #2b2b2b;
+}
+
+CatalogsHeader * {
+    margin: 10px;
+}
+
+CatalogsHeader > QLabel {
+    color: #ffffff;
+    font-size:20px;
+}
+
+CatalogsTabs CatalogIcon {
+    border: 1px solid black;
+    border-top: none;
+    min-height: 50px;
+    max-height: 50px;
+    background-color: #313131;
+}
+
+CatalogsTabs CatalogIcon:hover {
+    background-color: #3a3a3b;
+}
+
+CatalogsTabs CatalogIcon[active=true] {
+    background-color: #252526;
+    border-right: none;
+}
+
 Queue VScroll, CatalogGUI VScroll {
     background-color: #252526;
 }
