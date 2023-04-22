@@ -4,31 +4,26 @@ import sys, webbrowser, json, re
 TODO:
 - give games keywords, which are different from tags and only used in search
 
+CLI:
+- use -o for order, combination of any of following (in any order, can be multiple times):
+-- f u b c
+- use -l to filter by list
+- use -s for search option
+- use the same 'filter' function that the GUI current uses...
+-- -a, -ao, -aa, -an, etc
+
 GUI:
-- darken color of green/yellow/red elements
-- combo-boxes, scrollbars, search box
+- combo-boxes
 - Catalog/Tile/Queue Sorting:
 -- date of last update, alphabet, etc
 
-
-
-Process:
-- Use animated toggles for options
--- Fetch, Update, Clean, Build, Clean
-
 Filter:
-- Add Title Text
 - Show number of items in filter
 
 ** - Add way to Save the filter options (catalogs for each mode & search term)
 -- Add way to load a filter
 
-- Use tabs for each catalog
--- side tab with symbols, like VS Code?
-
-- New/Or/And/Not should be symbols, faded when not used
--- No need for 'new' button, simply when rest are all inactive
-
+Browser:
 ** - Instead of the buttons at bottom:
 -- Have a dropdown which includes all Queue (default), all lists + New
 --- Have buttons for: Add to/Remove From/Toggle In
@@ -39,7 +34,6 @@ Lists:
 - show size of each list next to name
 ** - Update Outdated list
 ** - 'Library' list for game that have builds
-    --- default to this list?
     -- likewise, a list for games that dont have builds
     - Also one for downlaoaded, not downloaded
 
@@ -56,7 +50,9 @@ Lists:
 -- fix down arrow in Trees
 -- Show when game is in queue
 -- show if game is missing or out of date
+
 -------
+
 'Missing' should search for rom files in the builds or releases
 -- What about if releases are in an archive? (zip, etc)
 
@@ -71,11 +67,6 @@ Have the directory be database (if shortcut, then git, etc)
 - data file in each (for which rgbds, tags, etc)
 -- separate from metadata
 --- meta data should include successful/failed commit attempts
-
-CLI:
-- add list option, search option
-- use the same 'filter' function that the GUI current uses...
--- -a, -ao, -aa, -an, etc
 
 Way to copy selected builds to another location
 ---------
@@ -108,253 +99,9 @@ Option to build multiple branches within a single 'update'
 Associate Authors with a Team
 '''
 
-from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QObject, QUrl, QThreadPool, QRunnable, QMargins, QPoint, QRect, QSize
-from PyQt5.QtWidgets import QStackedWidget, QLineEdit, QSplashScreen, QComboBox, QHeaderView, QTreeWidgetItem, QFileDialog, QTreeWidget, QApplication, QStyleOption, QStyle, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
-from PyQt5.QtGui import QPixmap, QDesktopServices, QIcon, QPainter
-import time
-
-threadpool = QThreadPool()
-
-def listToDict(list):
-    data = {}
-    for game in list:
-        if game.author in data:
-            data[game.author].append(game.title)
-        else:
-            data[game.author] = [game.title]
-    return data
-
-# https://doc.qt.io/qtforpython/examples/example_widgets_layouts_flowlayout.html
-class FlowLayout(QLayout):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-        if parent is not None:
-            self.setContentsMargins(QMargins(0, 0, 0, 0))
-
-        self._item_list = []
-
-    def __del__(self):
-        item = self.takeAt(0)
-        while item:
-            item = self.takeAt(0)
-
-    def addItem(self, item):
-        self._item_list.append(item)
-
-    def count(self):
-        return len(self._item_list)
-
-    def itemAt(self, index):
-        if 0 <= index < len(self._item_list):
-            return self._item_list[index]
-
-        return None
-
-    def takeAt(self, index):
-        if 0 <= index < len(self._item_list):
-            return self._item_list.pop(index)
-
-        return None
-
-    def expandingDirections(self):
-        return Qt.Orientation(0)
-
-    def hasHeightForWidth(self):
-        return True
-
-    def heightForWidth(self, width):
-        height = self._do_layout(QRect(0, 0, width, 0), True)
-        return height
-
-    def setGeometry(self, rect):
-        super(FlowLayout, self).setGeometry(rect)
-        self._do_layout(rect, False)
-
-    def sizeHint(self):
-        return self.minimumSize()
-
-    def minimumSize(self):
-        size = QSize()
-
-        for item in self._item_list:
-            size = size.expandedTo(item.minimumSize())
-
-        size += QSize(2 * self.contentsMargins().top(), 2 * self.contentsMargins().top())
-        return size
-
-    def _do_layout(self, rect, test_only):
-        x = rect.x()
-        y = rect.y()
-        line_height = 0
-        spacing = self.spacing()
-
-        for item in self._item_list:
-            style = item.widget().style()
-            layout_spacing_x = style.layoutSpacing(
-                QSizePolicy.PushButton, QSizePolicy.PushButton, Qt.Horizontal
-            )
-            layout_spacing_y = style.layoutSpacing(
-                QSizePolicy.PushButton, QSizePolicy.PushButton, Qt.Vertical
-            )
-            space_x = spacing + layout_spacing_x
-            space_y = spacing + layout_spacing_y
-            next_x = x + item.sizeHint().width() + space_x
-            if next_x - space_x > rect.right() and line_height > 0:
-                x = rect.x()
-                y = y + line_height + space_y
-                next_x = x + item.sizeHint().width() + space_x
-                line_height = 0
-
-            if not test_only:
-                item.setGeometry(QRect(QPoint(x, y), item.sizeHint()))
-
-            x = next_x
-            line_height = max(line_height, item.sizeHint().height())
-
-        return y + line_height - rect.y()
-
-class Widget(QWidget):
-    def __init__(self, GUI, layout):
-        super().__init__()
-        self.Parent = None
-        self.GUI = GUI
-        self.Layout = layout()
-        self.setLayout(self.Layout)
-        
-        self.Layout.setContentsMargins(0,0,0,0)
-        self.Layout.setSpacing(0)
-
-    def paintEvent(self, event):
-        opt= QStyleOption()
-        painter = QPainter(self)
-        opt.initFrom(self)
-        self.style().drawPrimitive(QStyle.PE_Widget, opt, painter, self)
-        painter.end()
-
-    def updateStyle(self):
-        self.style().polish(self)
-
-    def add(self, widget, *args):
-        self.Layout.addWidget(widget, *args)
-
-    def addTo(self, parent, *args):
-        self.Parent = parent
-        if parent:
-            parent.add(self, *args)
-        else:
-            self.setParent(None)
-
-    def label(self, text='', *args):
-        label = QLabel(text)
-        self.add(label, *args)
-        return label
-
-    def addStretch(self):
-        self.Layout.addStretch()
-
-class Grid(Widget):
-    def __init__(self, GUI):
-        super().__init__(GUI, QGridLayout)
-
-class Flow(Widget):
-    def __init__(self, GUI):
-        super().__init__(GUI, FlowLayout)
-        
-        self.Scroll = QScrollArea()
-        self.Scroll.setWidgetResizable(True)
-        self.Scroll.setWidget(self)
-
-    def addTo(self, parent, *args):
-        self.Parent = parent
-        if parent:
-            parent.add(self.Scroll, *args)
-        else:
-            self.setParent(None)
-
-class HBox(Widget):
-    def __init__(self, GUI):
-        super().__init__(GUI, QHBoxLayout)
-
-class VBox(Widget):
-    def __init__(self, GUI):
-        super().__init__(GUI, QVBoxLayout)
-
-class VScroll(VBox):
-    def __init__(self, GUI):
-        super().__init__(GUI)
-        
-        self.Scroll = QScrollArea()
-        self.Scroll.setWidgetResizable(True)
-        self.Scroll.setWidget(self)
-
-    def addTo(self, parent, *args):
-        self.Parent = parent
-        if parent:
-            parent.add(self.Scroll, *args)
-        else:
-            self.setParent(None)
-
-class Button(QLabel):
-    def __init__(self, parent, text, click):
-        super().__init__(text)
-        self.setAlignment(Qt.AlignCenter)
-        self.mousePressEvent = click
-        parent.add(self)
-
-    def updateStyle(self):
-        self.style().polish(self)
-
-    def setDisabled(self, isDisabled):
-        self.setProperty('disabled', isDisabled)
-        self.updateStyle()
-
-    def setProcessing(self, isProcessing):
-        self.setProperty('processing', isProcessing)
-        self.updateStyle()
-
-
-class ToggleButton(HBox):
-    def __init__(self, parent, text, click):
-        super().__init__(None)
-        self.Label = self.label(text)
-        self.Label.setAlignment(Qt.AlignCenter)
-        self.mousePressEvent = click
-        parent.add(self)
-
-    def setActive(self, value):
-        self.setProperty("active",value)
-        self.updateStyle()
-
-class CatalogEntryGUI(HBox):
-    def __init__(self, data):
-        parent = data.Catalog.GUI
-        super().__init__(parent.GUI)
-        self.Data = data
-        self.Name = data.Name
-        self.Label = self.label(data.Name)
-        self.Mode = None
-        self.addTo(parent)
-
-    def getData(self):
-        return self.Data.GameList[:]
-
-    def setMode(self, mode):
-        self.Mode = mode
-        self.setProperty("mode",mode)
-        self.updateStyle()
-
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            mode = self.GUI.Catalogs.Mode
-            if mode == self.Mode:
-                self.GUI.Tiles.remove(self)
-                self.setMode(None)
-            else:
-                getattr(self.GUI.Tiles,'add' + mode.upper())(self)
-                self.setMode(mode)
-        elif event.button() == Qt.RightButton:
-            self.GUI.Queue.addGames(self.getData())
+from src.base import *
+from src.catalogs import *
+from src.process import *
 
 class GameQueue(HBox):
     def __init__(self, gameGUI):
@@ -367,15 +114,6 @@ class GameQueue(HBox):
             self.GUI.Panel.setActive(self.GameGUI)
         elif event.button() == Qt.RightButton:
             self.GUI.Queue.removeGame(self.GameGUI)
-
-class Faded(QPixmap):
-    def __init__(self, pixmap):
-        super().__init__(pixmap.size())
-        self.fill(Qt.transparent)
-        painter = QPainter(self)
-        painter.setOpacity(0.4)
-        painter.drawPixmap(QPoint(), pixmap)
-        painter.end()
 
 class GameTile(VBox):
     def __init__(self, gameGUI):
@@ -408,13 +146,6 @@ class GameTile(VBox):
                 self.GUI.Queue.removeGame(self.GameGUI)
             else:
                 self.GUI.Queue.addGame(self.GameGUI)
-
-class Field(HBox):
-    def __init__(self, parent, left, right):
-        super().__init__(parent.GUI)
-        self.Left = self.label(left+':')
-        self.Right = self.label(right)
-        self.addTo(parent)
 
 class TagsGUI(HBox):
     def __init__(self, parent, tags):
@@ -767,18 +498,6 @@ class TileContent(Flow):
         self.Scroll.setObjectName('Tiles')
         self.addTo(parent, 95)
 
-class SearchBox(QLineEdit):
-    def __init__(self, searchList):
-        super().__init__()
-        self.Mode = "And"
-        self.setPlaceholderText("Search")
-        self.SearchList = searchList
-        self.textChanged.connect(self.SearchList.onTextChanged)
-        searchList.Manager.GUI.Content.Catalogs.Header.SearchContainer.add(self)
-
-    def getData(self):
-        return self.SearchList.GameList[:]
-
 class TilesHeader(HBox):
     def __init__(self, parent):
         super().__init__(parent.GUI)
@@ -1105,8 +824,9 @@ class ProcessSignals(QObject):
     doBuild = pyqtSignal(object)
     doRelease = pyqtSignal(object)
     finished = pyqtSignal()
+    newStatusMessage = pyqtSignal(str)
 
-class Process(QRunnable):
+class ExecuteProcess(QRunnable):
     def __init__(self, GUI):
         super().__init__()
         self.GUI = GUI
@@ -1114,215 +834,11 @@ class Process(QRunnable):
         self.ProcessSignals.doBuild.connect(GUI.handleBuildSignal)
         self.ProcessSignals.doRelease.connect(GUI.handleReleaseSignal)
         self.ProcessSignals.finished.connect(GUI.processFinished)
+        self.ProcessSignals.newStatusMessage.connect(GUI.addStatus)
 
     def run(self):
         self.GUI.Manager.run()
         self.ProcessSignals.finished.emit()
-
-class Status(VBox):
-    def __init__(self, GUI):
-        super().__init__(GUI)
-
-        self.Header = HBox(GUI)
-        self.Header.setObjectName("status-header")
-        self.HeaderLabel = self.Header.label("Process")
-        self.HeaderLabel.setAlignment(Qt.AlignCenter)
-
-        self.ToggleUpdate = ToggleButton(self.Header, 'Update', self.toggleUpdate)
-        self.ToggleBuild = ToggleButton(self.Header, 'Build', self.toggleBuild)
-        self.ToggleClean = ToggleButton(self.Header, 'Clean', self.toggleClean)
-        self.ToggleUpdate.setActive(self.GUI.Manager.doUpdate)
-        self.ToggleBuild.setActive(self.GUI.Manager.doBuild != None)
-        self.ToggleClean.setActive(self.GUI.Manager.doClean)
-
-        self.Header.addTo(self, 10)
-
-        self.ContentContainer = VScroll(GUI)
-        self.Content = VBox(GUI)
-        self.Content.addTo(self.ContentContainer)
-        self.ContentContainer.addTo(self, 90)
-        self.Content.Label = self.Content.label()
-        self.Content.addStretch()
-
-        self.AtMax = True
-        self.ContentContainer.Scroll.verticalScrollBar().valueChanged.connect(self.checkAtMax)
-
-        self.ContentContainer.setObjectName("status")
-
-        self.addTo(GUI.Col2, 1)
-
-    def toggleUpdate(self, event):
-        self.GUI.Manager.doUpdate = not self.GUI.Manager.doUpdate
-        self.ToggleUpdate.setActive(self.GUI.Manager.doUpdate)
-
-    def toggleBuild(self, event):
-        if self.GUI.Manager.doBuild == None:
-            self.GUI.Manager.doBuild = []
-        else:
-            self.GUI.Manager.doBuild = None
-        self.ToggleBuild.setActive(self.GUI.Manager.doBuild != None)
-
-    def toggleClean(self, event):
-        self.GUI.Manager.doClean = not self.GUI.Manager.doClean
-        self.ToggleClean.setActive(self.GUI.Manager.doClean)
-
-    def checkAtMax(self, event):
-        self.AtMax = self.ContentContainer.Scroll.verticalScrollBar().value() == self.ContentContainer.Scroll.verticalScrollBar().maximum()
-
-    def addStatus(self, msg):
-        self.Content.Label.setText(self.Content.Label.text() + msg + '\n')
-        if self.AtMax:
-            self.ContentContainer.Scroll.verticalScrollBar().setValue(self.ContentContainer.Scroll.verticalScrollBar().maximum())
-
-class Icon(HBox):
-    def __init__(self, parent, image, dim):
-        super().__init__(parent.GUI)
-        self.Label = self.label()
-        self.Label.setAlignment(Qt.AlignCenter)
-        self.Pixmap = QPixmap(image).scaled(dim, dim)
-        self.Label.setPixmap(self.Pixmap)
-        self.addTo(parent)
-
-    def setActive(self, value):
-        self.setProperty("active",value)
-        self.updateStyle()
-
-class CatalogModesRow(HBox):
-    def __init__(self, parent, mode):
-        super().__init__(parent.GUI)
-        self.addStretch()
-        self.Icon = CatalogsModeIcon(self, mode)
-        self.addTo(parent)
-
-class CatalogModes(VBox):
-    def __init__(self, parent):
-        super().__init__(parent.GUI)
-
-        self.Or = CatalogModesRow(self, 'Or')
-        self.Not = CatalogModesRow(self, 'Not')
-        self.And = CatalogModesRow(self, 'And')
-        self.addTo(parent)
-
-class CatalogsTabs(VBox):
-    def __init__(self, parent):
-        super().__init__(parent.GUI)
-
-        self.ListTab = CatalogIcon(self, 'assets/images/list.png', 0)
-        self.AuthorsTab = CatalogIcon(self, 'assets/images/author.png', 1)
-        self.TagsTab = CatalogIcon(self, 'assets/images/tag.png', 2)
-
-        self.ActiveTab = self.ListTab
-        self.ActiveTab.setActive(True)
-
-        self.addStretch()
-        
-        self.Modes = CatalogModes(self)
-
-        self.addTo(parent, 1)
-
-    def setCatalog(self, tab):
-        if tab != self.ActiveTab:
-            self.ActiveTab.setActive(None)
-            self.Parent.Container.Stack.setCurrentIndex(tab.Index)
-            self.ActiveTab = tab
-
-class CatalogIcon(Icon):
-    def __init__(self, parent, image, index):
-        super().__init__(parent, image, 35)
-        self.Index = index
-
-    def mousePressEvent(self, e):
-        self.setActive(True)
-        self.Parent.setCatalog(self)
-
-class CatalogsContainer(VBox):
-    def __init__(self, parent):
-        super().__init__(parent.GUI)
-        self.Mode = 'New'
-
-        self.Stack = QStackedWidget()
-        self.add(self.Stack)
-        self.addTo(parent, 2)
-
-class CatalogGUI(VBox):
-    def __init__(self, data):
-        parent = data.Manager.GUI.Content.Catalogs.Body.Container
-        self.Data = data
-        ID = data.Name
-        super().__init__(parent.GUI)
-
-        self.ID = ID[:-1]
-        self.List = {}
-
-        self.ListContainer = VScroll(parent.GUI)
-        self.ListContainer.addTo(self)
-
-        self.ListGUI = VBox(parent.GUI)
-        self.ListGUI.addTo(self.ListContainer)
-        self.ListContainer.addStretch()
-
-        parent.Stack.addWidget(self)
-
-    def addElement(self, name):
-        self.Class(self, name)
-
-    def add(self, widget, *args):
-        if hasattr(widget,'Name'):
-            self.List[widget.Name] = widget
-            self.ListGUI.add(widget, *args)
-        else:
-            super().add(widget, *args)
-
-
-class CatalogsBody(HBox):
-    def __init__(self, parent):
-        super().__init__(parent.GUI)
-
-        self.Tabs = CatalogsTabs(self)
-        self.Container = CatalogsContainer(self)
-
-        self.addTo(parent)
-
-class CatalogsHeader(HBox):
-    def __init__(self, parent):
-        super().__init__(parent.GUI)
-        self.setObjectName('footer')
-        self.label("Filter", 1)
-
-        self.SearchContainer = HBox(self)
-        self.SearchContainer.addTo(self, 2)
-
-        self.addTo(parent)
-
-class CatalogsModeIcon(Icon):
-    def __init__(self, parent, mode):
-        super().__init__(parent, 'assets/images/' + mode.lower() + '.png', 15)
-        
-        self.Mode = mode
-        self.setProperty('mode',mode)
-        self.setProperty('active',False)
-
-    def mousePressEvent(self, e):
-        self.GUI.Catalogs.setMode(self.Mode)
-
-class Catalogs(VBox):
-    def __init__(self, parent):
-        super().__init__(parent.GUI)
-        self.Header = CatalogsHeader(self)
-        self.Body = CatalogsBody(self)
-        self.Mode = 'New'
-
-        self.addTo(parent.Col1, 2)
-
-    def setMode(self, mode):
-        if mode == self.Mode:
-            getattr(self.Body.Tabs.Modes, self.Mode).Icon.setActive(False)
-            self.Mode = 'New'
-        else:
-            if self.Mode != 'New':
-                getattr(self.Body.Tabs.Modes, self.Mode).Icon.setActive(False)
-            self.Mode = mode
-            getattr(self.Body.Tabs.Modes, mode).Icon.setActive(True)
 
 
 class MainContents(HBox):
@@ -1343,7 +859,7 @@ class MainContents(HBox):
         self.Col2.addTo(self, 4)
 
         self.Tiles = Tiles(self)
-        self.Status = Status(self)
+        self.Process = Process(self)
 
         self.Panel = Panel(self)
 
@@ -1364,7 +880,7 @@ class MainContents(HBox):
         if not self.Window.Process:
             self.GUI.Manager.add_to_queue(games)
             [button.setProcessing(True) for button in self.ProcessButtons]
-            self.Window.Process = Process(self)
+            self.Window.Process = ExecuteProcess(self)
             threadpool.start(self.Window.Process)
 
     def processFinished(self):
@@ -1380,6 +896,9 @@ class MainContents(HBox):
     def addProcessButton(self, button):
         self.ProcessButtons.append(button)
 
+    def addStatus(self, msg):
+        self.Process.Body.addStatusMessage(msg)
+
 class PRET_Manager_GUI(QMainWindow):
     def __init__(self, manager):
         super().__init__()
@@ -1393,9 +912,6 @@ class PRET_Manager_GUI(QMainWindow):
         
         with open('./assets/style.qss') as f:
             self.setStyleSheet(f.read())
-
-    def addStatus(self, msg):
-        self.Content.Status.addStatus(msg)
 
 class PRET_Manager_App(QApplication):
     def __init__(self, manager, *args):

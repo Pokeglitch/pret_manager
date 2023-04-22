@@ -21,7 +21,7 @@ QWidget#status-header, QWidget#status-header > QLabel {
 }
 
 QLabel#header, QWidget#status-header > QLabel {
-    font-size: 20px;
+    font-size: 22px;
     margin: 5;
 }
 
@@ -39,6 +39,10 @@ QWidget#header-frame, QLabel#list-header, QWidget#status-header, QWidget#footer 
 QScrollBar {
     background-color: #252526;
     border-radius:3px;
+}
+
+QAbstractScrollArea {
+    background-color: #252526
 }
 
 QScrollBar::handle {
@@ -137,7 +141,7 @@ CatalogsHeader * {
 
 CatalogsHeader > QLabel {
     color: #ffffff;
-    font-size:20px;
+    font-size:22px;
 }
 
 CatalogsTabs CatalogIcon {
@@ -247,12 +251,13 @@ CatalogEntryGUI[mode="And"]:hover {
 }
 
 GameQueue, CatalogEntryGUI {
-    min-height: 15px;
-    max-height: 15px;
+    min-height: 18px;
+    max-height: 18px;
     background-color: #252526;
 }
 
 GameQueue *, CatalogEntryGUI * {
+    font-size: 12px;
     color: white;
 }
 
@@ -334,6 +339,7 @@ QWidget#Tag {
 
 TagGUI * {
     color: black;
+    font-size: 11px;
 }
 
 TagGUI[which=red] {
@@ -537,4 +543,66 @@ QLabel#url {
 QTreeWidget {
     background-color:#EEEEEE;
     border: none;
+}
+
+
+
+QSlider::groove {
+    background: transparent;
+    border: none;
+}
+
+QSlider::handle {
+    border: 1px solid #888888;
+    background: #cccccc;
+    height:20px;
+    width:20px;
+    border-radius: 10px;
+}
+
+QSlider::handle[active=true] {
+    border: 1px solid #000000;
+    background: #ffffff;
+}
+
+ProcessToggleBG {
+    min-height: 14px;
+    max-height:14px;
+    background: white;
+    border: 1px solid black;
+    border-radius: 7px;
+    border: 1px solid #777777;
+    background: #bbbbbb;
+}
+
+ProcessToggleBG[active=true] {
+    border: 1px solid black;
+    background: #2a84c0;
+}
+
+ProcessToggle {
+    min-width:60px;
+    max-width:60px;
+}
+
+Process QScrollBar, Process QAbstractScrollArea{
+    background-color: black;
+}
+
+ProcessTitle, ProcessTitle * {
+    font-size:22px;
+    color: white;
+    border-bottom: 1px solid black;
+    min-height:50px;
+    max-height:50px;
+}
+
+ProcessToggleField > QLabel {
+    font-size:18px;
+    color: white;
+    margin-left: 10px;
+}
+
+ProcessToggleBG, ProcessToggleSlider {
+    margin-right: 10px;
 }

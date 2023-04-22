@@ -262,6 +262,7 @@ class PRET_Manager:
         self.Search = None
 
         self.Queue = []
+        self.doFetch = False
         self.doUpdate = False
         self.doBuild = None
         self.doClean = False
@@ -310,7 +311,7 @@ class PRET_Manager:
         print(msg)
 
         if self.GUI:
-            self.GUI.addStatus(msg)
+            self.GUI.Process.ProcessSignals.newStatusMessage.emit(msg)
 
     def update(self):
         self.print('Updating pret-manager')
@@ -384,7 +385,7 @@ class PRET_Manager:
     def run(self):
         if not self.Queue:
             self.print('Queue is empty')
-        elif self.doUpdate or self.doClean or self.doBuild != None:
+        elif self.doFetch or self.doUpdate or self.doClean or self.doBuild != None:
             for repo in self.Queue:
                 if self.Catalogs.Lists.get('Excluding').has(repo):
                     self.print('Excluding ' + repo.name)
@@ -394,6 +395,9 @@ class PRET_Manager:
                     repo.GUI.setProcessing(True)
 
                 self.print('Processing ' + repo.name)
+
+                if self.doFetch and not self.doUpdate:
+                    repo.fetch()
 
                 if self.doUpdate:
                     repo.update()
@@ -659,7 +663,7 @@ class repository(game):
             print(msg)
 
         if doGUIStatus:
-            self.manager.GUI.addStatus(msg)
+            self.manager.GUI.Process.ProcessSignals.newStatusMessage.emit(msg)
 
     def run(self, args, capture_output, cwd, shell=None):
         if not os.path.exists(cwd):
