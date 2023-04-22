@@ -771,6 +771,7 @@ class SearchBox(QLineEdit):
     def __init__(self, searchList):
         super().__init__()
         self.Mode = "And"
+        self.setPlaceholderText("Search")
         self.SearchList = searchList
         self.textChanged.connect(self.SearchList.onTextChanged)
         searchList.Manager.GUI.Content.Catalogs.Header.SearchContainer.add(self)
@@ -1298,6 +1299,7 @@ class CatalogsModeIcon(Icon):
         super().__init__(parent, 'assets/images/' + mode.lower() + '.png', 15)
         
         self.Mode = mode
+        self.setProperty('mode',mode)
         self.setProperty('active',False)
 
     def mousePressEvent(self, e):
@@ -1335,10 +1337,6 @@ class MainContents(HBox):
         self.Col1.addTo(self, 1)
 
         self.Catalogs = Catalogs(self)
-
-        
-        
-
         self.Queue = Queue(self)
         
         self.Col2 = VBox(self)

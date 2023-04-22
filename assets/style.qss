@@ -36,23 +36,94 @@ QWidget#header-frame, QLabel#list-header, QWidget#status-header, QWidget#footer 
     max-height:50px;
 }
 
+QScrollBar {
+    background-color: #252526;
+    border-radius:3px;
+}
+
+QScrollBar::handle {
+    background: white;
+    border:1px solid black;
+    border-radius:3px;
+}
+
+QScrollBar::handle:horizontal {
+    min-width: 20px;
+}
+
+QScrollBar::handle:vertical {
+    min-height: 20px;
+}
+
+QScrollBar::add-line, QScrollBar::sub-line {
+    border: none;
+    background: none;
+}
+
+QScrollBar::add-page, QScrollBar::sub-page {
+    border: none;
+    background: #121213;
+    border-radius:3px;
+}
+
+QLineEdit {
+    height: 18px;
+    font-size:15px;
+    padding: 5px;
+    color:white;
+    border-radius:7px;
+    border: 1px solid black;
+    background-color: #3a3a3b
+}
+
 CatalogsModeIcon {
-    border: 1px solid #252526;
+    border: 1px solid #2b2b2b;
     border-radius: 5px;
     min-height: 30px;
     max-height: 30px;
     min-width: 30px;
     max-width: 30px;
-    background-color: #252526;
+    background-color: #2b2b2b;
     margin: 5px;
 }
 
-CatalogsModeIcon:hover {
-    background-color: #313131;
+CatalogsModeIcon[mode=Or]{
+    background-color: #274e13;
+}
+
+CatalogsModeIcon[mode=Or]:hover{
+    background-color: #315c1b;
+}
+
+CatalogsModeIcon[mode=Or][active=true]{
+    background-color: #315c1b;
+}
+
+CatalogsModeIcon[mode=And]{
+    background-color: #725600;
+}
+
+CatalogsModeIcon[mode=And]:hover{
+    background-color: #8b6f19;
+}
+
+CatalogsModeIcon[mode=And][active=true]{
+    background-color: #8b6f19;
+}
+
+CatalogsModeIcon[mode=Not]{
+    background-color: #7b3131;
+}
+
+CatalogsModeIcon[mode=Not]:hover{
+    background-color: #9f3f3f;
+}
+
+CatalogsModeIcon[mode=Not][active=true]{
+    background-color: #9f3f3f;
 }
 
 CatalogsModeIcon[active=true] {
-    background-color: #404040;
     border: 1px solid #ffffff;
 }
 
@@ -160,19 +231,19 @@ ToggleButton[active="true"]:hover {
 }
 
 CatalogEntryGUI[mode="Not"] {
-    background-color: #e58080
+    background-color: #7b3131
 }
 
 CatalogEntryGUI[mode="Not"]:hover {
-    background-color: #e78c8c
+    background-color: #9f3f3f
 }
 
 CatalogEntryGUI[mode="And"] {
-    background-color: #E5DD80
+    background-color: #725600
 }
 
 CatalogEntryGUI[mode="And"]:hover {
-    background-color: #e7e08c
+    background-color: #8b6f19
 }
 
 GameQueue, CatalogEntryGUI {
@@ -189,20 +260,28 @@ GameQueue:hover, CatalogEntryGUI:hover, GameTile:hover {
     background-color: #3a3a3b
 }
 
-GameQueue[active="true"], CatalogEntryGUI[mode="New"], CatalogEntryGUI[mode="Or"], GameTile[active="true"] {
+GameQueue[active="true"], CatalogEntryGUI[mode="New"], GameTile[active="true"] {
     background-color: #4C4C54;
 }
 
-GameQueue[active="true"]:hover, CatalogEntryGUI[mode="New"]:hover, CatalogEntryGUI[mode="Or"]:hover, GameTile[active="true"]:hover {
+GameQueue[active="true"]:hover, CatalogEntryGUI[mode="New"]:hover, GameTile[active="true"]:hover {
     background-color: #4C4C54;
+}
+
+CatalogEntryGUI[mode="Or"] {
+    background-color: #274e13;
+}
+
+CatalogEntryGUI[mode="Or"]:hover {
+    background-color: #315c1b;
 }
 
 GameQueue[processing="true"], CatalogEntryGUI[processing="true"], GameTile[processing="true"] {
-    background-color: #65ba68;
+    background-color: #1b5780;
 }
 
 GameQueue[processing="true"]:hover, CatalogEntryGUI[processing="true"]:hover, GameTile[processing="true"]:hover {
-    background-color: #74c077;
+    background-color: #226592;
 }
 
 GameTile[queued="true"] {
