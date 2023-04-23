@@ -12,6 +12,24 @@ class SearchBox(QLineEdit):
     def getData(self):
         return self.SearchList.GameList[:]
 
+# Todo - Clear & Delete
+class CatalogEntryContextMenu(ContextMenu):
+    def __init__(self, parent, event):
+        super().__init__(parent, event)
+
+        self.addAction( parent.AddToQueue )
+        self.addAction( parent.RemoveFromQueue )
+
+        if parent.Data != parent.GUI.Manager.Catalogs.Lists.get('Favorites'):
+            self.addAction( parent.AddToFavorites )
+            self.addAction( parent.RemoveFromFavorites )
+
+        if parent.Data != parent.GUI.Manager.Catalogs.Lists.get('Excluding'):
+            self.addAction( parent.AddToExcluding )
+            self.addAction( parent.RemoveFromExcluding )
+
+        self.start()
+
 class CatalogEntryGUI(HBox):
     def __init__(self, data):
         parent = data.Catalog.GUI
@@ -20,6 +38,16 @@ class CatalogEntryGUI(HBox):
         self.Name = data.Name
         self.Label = self.label(data.Name)
         self.Mode = None
+
+        self.AddToQueue = AddToQueue(self)
+        self.RemoveFromQueue = RemoveFromQueue(self)
+
+        self.AddToFavorites = AddToFavorites(self)
+        self.RemoveFromFavorites = RemoveFromFavorites(self)
+
+        self.AddToExcluding = AddToExcluding(self)
+        self.RemoveFromExcluding = RemoveFromExcluding(self)
+
         self.addTo(parent)
 
     def getData(self):
@@ -30,6 +58,9 @@ class CatalogEntryGUI(HBox):
         self.setProperty("mode",mode)
         self.updateStyle()
 
+    def contextMenuEvent(self, event):
+        CatalogEntryContextMenu(self, event)
+
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             mode = self.GUI.Catalogs.Mode
@@ -39,8 +70,24 @@ class CatalogEntryGUI(HBox):
             else:
                 getattr(self.GUI.Tiles,'add' + mode.upper())(self)
                 self.setMode(mode)
-        elif event.button() == Qt.RightButton:
-            self.GUI.Queue.addGames(self.getData())
+
+    def addToQueueHandler(self):
+        self.GUI.Queue.addGames(self.getData())
+
+    def removeFromQueueHandler(self):
+        self.GUI.Queue.removeGames(self.getData())
+
+    def addToFavoritesHandler(self):
+        self.GUI.Manager.Catalogs.Lists.get('Favorites').addGames(self.getData())
+
+    def removeFromFavoritesHandler(self):
+        self.GUI.Manager.Catalogs.Lists.get('Favorites').removeGames(self.getData())
+
+    def addToExcludingHandler(self):
+        self.GUI.Manager.Catalogs.Lists.get('Excluding').addGames(self.getData())
+
+    def removeFromExcludingHandler(self):
+        self.GUI.Manager.Catalogs.Lists.get('Excluding').removeGames(self.getData())
 
 class CatalogModesRow(HBox):
     def __init__(self, parent, mode):

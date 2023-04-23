@@ -115,13 +115,58 @@ class GameQueue(HBox):
         elif event.button() == Qt.RightButton:
             self.GUI.Queue.removeGame(self.GameGUI)
 
+class GameTileContextMenu(ContextMenu):
+    def __init__(self, parent, event):
+        game = parent.GameGUI.Game
+        super().__init__(parent, event)
+        
+        if parent.isQueued:
+            self.addAction( parent.RemoveFromQueue )
+        else:
+            self.addAction( parent.AddToQueue )
+
+        if game.isFavorite:
+            self.addAction( parent.RemoveFromFavorites )
+        else:
+            self.addAction( parent.AddToFavorites )
+
+        if game.isExcluding:
+            self.addAction( parent.RemoveFromExcluding )
+        else:
+            self.addAction( parent.AddToExcluding )
+
+        addLists = []
+        removeLists = []
+
+        for name, list in parent.GUI.Manager.Catalogs.Lists.Entries.items():
+            if name not in parent.GUI.Manager.BaseLists:
+                if list.has(parent.GameGUI.Game):
+                    removeLists.append(list)
+                else:
+                    addLists.append(list)
+
+        self.addMenu( AddToListMenu(parent, addLists) )
+
+        if removeLists:
+            self.addMenu( RemoveFromListMenu(parent, removeLists) )
+
+        self.start()
+
+
 class GameTile(VBox):
     def __init__(self, gameGUI):
         super().__init__(gameGUI.GUI)
         self.setObjectName("Tile")
         self.GameGUI = gameGUI
-        #self.Name = self.label(gameGUI.Game.name)
 
+        self.AddToQueue = AddToQueue(self)
+        self.RemoveFromQueue = RemoveFromQueue(self)
+
+        self.AddToFavorites = AddToFavorites(self)
+        self.RemoveFromFavorites = RemoveFromFavorites(self)
+
+        self.AddToExcluding = AddToExcluding(self)
+        self.RemoveFromExcluding = RemoveFromExcluding(self)
 
         self.Artwork = self.label()
         self.Pixmap = QPixmap(self.GameGUI.Game.Boxart).scaled(100, 100)
@@ -131,21 +176,45 @@ class GameTile(VBox):
         self.Title.setAlignment(Qt.AlignCenter)
         self.isQueued = False
 
-    def updateExcluding(self, excluding):
-        if excluding:
+    def updateExcluding(self, isExcluding):
+        if isExcluding:
             self.Artwork.setPixmap(self.Faded)
         else:
             self.Artwork.setPixmap(self.Pixmap)
-        
+
+    def updateFavorite(self, isFavorite):
+        pass
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.GUI.Panel.setActive(self.GameGUI)
-        elif event.button() == Qt.RightButton:
-            if self.isQueued:
-                self.GUI.Queue.removeGame(self.GameGUI)
-            else:
-                self.GUI.Queue.addGame(self.GameGUI)
+
+    def contextMenuEvent(self, event):
+        GameTileContextMenu(self, event)
+
+    def addToQueueHandler(self):
+        self.GUI.Queue.addGame(self.GameGUI)
+
+    def removeFromQueueHandler(self):
+        self.GUI.Queue.removeGame(self.GameGUI)
+
+    def addToFavoritesHandler(self):
+        self.toggleFavoritesHandler()
+
+    def removeFromFavoritesHandler(self):
+        self.toggleFavoritesHandler()
+        
+    def toggleFavoritesHandler(self):
+        self.GUI.Manager.Catalogs.Lists.get('Favorites').toggleGames([self.GameGUI.Game])
+
+    def addToExcludingHandler(self):
+        self.toggleExcludingHandler()
+
+    def removeFromExcludingHandler(self):
+        self.toggleExcludingHandler()
+
+    def toggleExcludingHandler(self):
+        self.GUI.Manager.Catalogs.Lists.get('Excluding').toggleGames([self.GameGUI.Game])
 
 class TagsGUI(HBox):
     def __init__(self, parent, tags):
@@ -390,11 +459,17 @@ class GameGUI:
         self.Panel = GamePanel(self)
 
         self.setQueued(False)
-        self.updateExcluding(self.Game.Excluding)
+        self.updateExcluding(self.Game.isExcluding)
+        self.updateFavorite(self.Game.isFavorite)
 
-    def updateExcluding(self, excluding):
-        self.Tile.updateExcluding(excluding)
-        self.Panel.Artwork.updateExcluding(excluding)
+    def updateExcluding(self, isExcluding):
+        self.Tile.updateExcluding(isExcluding)
+        self.Panel.Artwork.updateExcluding(isExcluding)
+
+    def updateFavorite(self, isFavorite):
+        self.Tile.updateFavorite(isFavorite)
+        if self.GUI.Panel.Active == self:
+            self.GUI.Panel.Header.updateFavorite(isFavorite)
 
     def setQueued(self, queued):
         self.Tile.isQueued = queued
@@ -898,6 +973,7 @@ class MainContents(HBox):
 
     def addStatus(self, msg):
         self.Process.Body.addStatusMessage(msg)
+
 
 class PRET_Manager_GUI(QMainWindow):
     def __init__(self, manager):

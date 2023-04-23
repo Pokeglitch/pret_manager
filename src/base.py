@@ -1,5 +1,5 @@
 from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QObject, QUrl, QThreadPool, QRunnable, QMargins, QPoint, QRect, QSize
-from PyQt5.QtWidgets import QSlider, QStackedWidget, QLineEdit, QSplashScreen, QComboBox, QHeaderView, QTreeWidgetItem, QFileDialog, QTreeWidget, QApplication, QStyleOption, QStyle, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
+from PyQt5.QtWidgets import QAction, QMenu, QSlider, QStackedWidget, QLineEdit, QSplashScreen, QComboBox, QHeaderView, QTreeWidgetItem, QFileDialog, QTreeWidget, QApplication, QStyleOption, QStyle, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
 from PyQt5.QtGui import QPixmap, QDesktopServices, QIcon, QPainter
 import time
 
@@ -243,4 +243,67 @@ class Icon(HBox):
     def setActive(self, value):
         self.setProperty("active",value)
         self.updateStyle()
+
+class ContextMenu(QMenu):
+    def __init__(self, parent, event, isQueued=None, isFavorite=None, isExcluding=None):
+        super().__init__(parent)
+        self.Coords = parent.mapToGlobal(event.pos())
+
+    def start(self):
+        self.exec_(self.Coords)
+
+class Action(QAction):
+    def __init__(self, parent, name, handler):
+        super().__init__(name, parent)
+        self.triggered.connect(handler)
+
+class AddToQueue(Action):
+    def __init__(self, parent):
+        super().__init__(parent, "Add to Queue", parent.addToQueueHandler)
+
+class RemoveFromQueue(Action):
+    def __init__(self, parent):
+        super().__init__(parent, "Remove From Queue", parent.removeFromQueueHandler)
+
+class AddToFavorites(Action):
+    def __init__(self, parent):
+        super().__init__(parent, "Add To Favorites", parent.addToFavoritesHandler)
+
+class RemoveFromFavorites(Action):
+    def __init__(self, parent):
+        super().__init__(parent, "Remove From Favorites", parent.removeFromFavoritesHandler)
+
+class AddToExcluding(Action):
+    def __init__(self, parent):
+        super().__init__(parent, "Add To Excluding", parent.addToExcludingHandler)
+
+class RemoveFromExcluding(Action):
+    def __init__(self, parent):
+        super().__init__(parent, "Remove From Excluding", parent.removeFromExcludingHandler)
+
+class AddToListMenu(QMenu):
+    def __init__(self, parent ,lists):
+        super().__init__("Add To List", parent)
+
+        for list in lists:
+            self.addAction( AddToList(parent, list))
+
+        # todo - handle new list
+        self.addAction("New List")
+
+class RemoveFromListMenu(QMenu):
+    def __init__(self, parent ,lists):
+        super().__init__("Remove From List", parent)
+
+        for list in lists:
+            self.addAction( RemoveFromList(parent, list))
+
+class AddToList(Action):
+    def __init__(self, parent, list):
+        super().__init__(parent, list.Name, lambda: list.addGames([parent.GameGUI.Game]) )
+
+
+class RemoveFromList(Action):
+    def __init__(self, parent, list):
+        super().__init__(parent, list.Name, lambda: list.removeGames([parent.GameGUI.Game]) )
 

@@ -157,7 +157,6 @@ class ListEntry(CatalogEntry):
             getattr(self.Manager.GUI.Content.Tiles, 'add' + self.GUI.Mode.upper())(self.GUI, False)
             self.Manager.GUI.Content.Tiles.refresh()
 
-
     def write(self):
         if self.Name not in ["Missing","Outdated","Search"]:
             with open(list_dir + self.Name + '.json', 'w') as f:
@@ -212,7 +211,6 @@ class SearchEntry(ListEntry):
 
         self.PreviousText = text
 
-
 class Catalog:
     def __init__(self, catalogs, name, entryClass):
         self.Catalogs = catalogs
@@ -260,6 +258,8 @@ class PRET_Manager:
         self.GUI = None
         self.App = None
         self.Search = None
+
+        self.BaseLists = ["Favorites", "Excluding", "Outdated", "Missing"]
 
         self.Queue = []
         self.doFetch = False
@@ -323,7 +323,7 @@ class PRET_Manager:
         self.load('data.json')
 
         # Initialize the base lists
-        for name in ["Favorites", "Excluding", "Outdated", "Missing"]:
+        for name in self.BaseLists:
             self.addList(name, [])
 
         self.Catalogs.Lists.get(name).addGames([game for game in self.All if game.Missing])
@@ -559,7 +559,8 @@ class repository(game):
         self.parse_releases()
 
         self.Missing = not os.path.exists(self.path['repo'])
-        self.Excluding = False
+        self.isExcluding = False
+        self.isFavorite = False
 
         self.readMetaData()
 
@@ -604,9 +605,14 @@ class repository(game):
             list.addGame(self)
 
             if list.Name == "Excluding":
-                self.Excluding = True
+                self.isExcluding = True
                 if self.GUI:
-                    self.GUI.updateExcluding(self.Excluding)
+                    self.GUI.updateExcluding(self.isExcluding)
+
+            if list.Name == "Favorites":
+                self.isFavorite = True
+                if self.GUI:
+                    self.GUI.updateFavorite(self.isFavorite)
 
     def removeFromList(self, list):
         if list in self.Lists:
@@ -614,9 +620,14 @@ class repository(game):
             list.removeGame(self)
 
             if list.Name == "Excluding":
-                self.Excluding = False
+                self.isExcluding = False
                 if self.GUI:
-                    self.GUI.updateExcluding(self.Excluding)
+                    self.GUI.updateExcluding(self.isExcluding)
+
+            if list.Name == "Favorites":
+                self.isFavorite = False
+                if self.GUI:
+                    self.GUI.updateFavorite(self.isFavorite)
 
     def parse_builds(self):
         self.builds = {}
