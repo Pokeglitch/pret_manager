@@ -43,9 +43,12 @@ class CatalogEntry:
         self.Catalog = catalog
         self.Manager = catalog.Manager
         self.Name = name
-        self.GUI = gui.CatalogEntryGUI(self) if catalog.GUI else None
         self.GameStructure = {}
         self.GameList = []
+        self.GUI = self.build_GUI() if catalog.GUI else None
+
+    def build_GUI(self):
+        return gui.CatalogEntryGUI(self)
 
     def has(self, game):
         return game in self.GameList
@@ -90,8 +93,17 @@ class TagEntry(CatalogEntry):
             self.GUI.TagGUI = gui.TagGUI(self.GUI, self.Name)
 
 class ListEntry(CatalogEntry):
-    def reset(self):
-        [game.removeFromList(self) for game in self.GameList[:]]
+    def build_GUI(self):
+        return gui.ListEntryGUI(self)
+
+    def reset(self, isPermanent=False):
+        self.removeGames(self.GameList[:], isPermanent)
+
+    def erase(self):
+        self.reset(True)
+        
+        if self.Name not in self.Manager.BaseLists:
+            os.remove(list_dir + self.Name + '.json')
 
     def addGame(self, game):
         super().addGame(game)
@@ -120,7 +132,7 @@ class ListEntry(CatalogEntry):
         if not self.GameStructure[game.author]:
             del self.GameStructure[game.author]
 
-    def removeGames(self, games):
+    def removeGames(self, games, isPermanent=False):
         self.removeFromFilter()
 
         isChanged = False
@@ -129,7 +141,11 @@ class ListEntry(CatalogEntry):
                 isChanged = True
                 game.removeFromList(self)
                 
-        self.addToFilter()
+        if isPermanent:
+            self.GUI.setMode(None)
+            self.Manager.GUI.Content.Tiles.refresh()
+        else:
+            self.addToFilter()
 
         if isChanged:
             self.write()
@@ -228,6 +244,12 @@ class Catalog:
 
     def has(self, name):
         return name in self.Entries
+    
+    def isChild(self, child):
+        return child in self.Entries.values()
+    
+    def remove(self, child):
+        del self.Entries[child.Name]
 
 class ListCatalog(Catalog):
     def __init__(self, catalogs):
@@ -269,21 +291,16 @@ class PRET_Manager:
 
     def addList(self, name, list):
         if self.Catalogs.Lists.has(name):
-            catalog_entry = self.Catalogs.Lists.get(name)
-            # remove list from the corresponding filter
-            if catalog_entry.GUI and catalog_entry.GUI.Mode:
-                self.GUI.Content.Tiles.remove(catalog_entry.GUI)
-
             self.Catalogs.Lists.get(name).reset()
         else:
             self.Catalogs.Lists.add(name)
 
+        games = []
         for author in list:
-            [self.Catalogs.Authors.get(author).getGame(title).addToList(self.Catalogs.Lists.get(name)) for title in list[author]]
+            for title in list[author]:
+                games.append(self.Catalogs.Authors.get(author).getGame(title))
 
-        catalog_entry = self.Catalogs.Lists.get(name)
-        if catalog_entry.GUI and catalog_entry.GUI.Mode:
-            getattr(self.GUI.Content.Tiles,'add' + catalog_entry.GUI.Mode.upper())(catalog_entry.GUI)
+        self.Catalogs.Lists.get(name).addGames(games)
 
     def init_GUI(self):
         # TODO - these should come from default parameters loaded within 'init'

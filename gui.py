@@ -13,9 +13,10 @@ CLI:
 -- -a, -ao, -aa, -an, etc
 
 GUI:
-- combo-boxes
+- combo-boxes, qmenu, qdialog
 - Catalog/Tile/Queue Sorting:
 -- date of last update, alphabet, etc
+--- Also, can hide missing/excluding, etc
 
 Filter:
 - Show number of items in filter
@@ -39,7 +40,6 @@ Lists:
 
 - Game Tile:
 -- Show if missing or outdated
--- title above boxart
 -- Pokeball in top left corner for favorite (over boxart)
 -- Double click to launch
 
@@ -145,10 +145,13 @@ class GameTileContextMenu(ContextMenu):
                 else:
                     addLists.append(list)
 
-        self.addMenu( AddToListMenu(parent, addLists) )
+        self.addMenu( AddGameToListMenu(parent, addLists) )
 
         if removeLists:
-            self.addMenu( RemoveFromListMenu(parent, removeLists) )
+            self.addMenu( RemoveGameFromListMenu(parent, removeLists) )
+
+        # Todo - way to delete game data from disk
+        # - option to keep builds, releases
 
         self.start()
 

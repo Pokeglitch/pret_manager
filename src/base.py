@@ -281,29 +281,62 @@ class RemoveFromExcluding(Action):
     def __init__(self, parent):
         super().__init__(parent, "Remove From Excluding", parent.removeFromExcludingHandler)
 
-class AddToListMenu(QMenu):
+class AddGameToListMenu(QMenu):
     def __init__(self, parent ,lists):
         super().__init__("Add To List", parent)
 
         for list in lists:
-            self.addAction( AddToList(parent, list))
+            self.addAction( AddGameToList(parent, list))
 
         # todo - handle new list
+        # qdialog to input name, confirmation if already exists
         self.addAction("New List")
 
-class RemoveFromListMenu(QMenu):
+class RemoveGameFromListMenu(QMenu):
     def __init__(self, parent ,lists):
         super().__init__("Remove From List", parent)
 
         for list in lists:
-            self.addAction( RemoveFromList(parent, list))
+            self.addAction( RemoveGameFromList(parent, list))
 
-class AddToList(Action):
+class AddGameToList(Action):
     def __init__(self, parent, list):
         super().__init__(parent, list.Name, lambda: list.addGames([parent.GameGUI.Game]) )
 
 
-class RemoveFromList(Action):
+class RemoveGameFromList(Action):
     def __init__(self, parent, list):
         super().__init__(parent, list.Name, lambda: list.removeGames([parent.GameGUI.Game]) )
 
+
+
+class AddListToListMenu(QMenu):
+    def __init__(self, parent ,lists):
+        super().__init__("Add To List", parent)
+
+        for list in lists:
+            self.addAction( AddListToList(parent, list))
+
+        # todo - handle new list
+        # qdialog to input name, confirmation if already exists
+        self.addAction("New List")
+
+class RemoveListFromListMenu(QMenu):
+    def __init__(self, parent ,lists):
+        super().__init__("Remove From List", parent)
+
+        for list in lists:
+            self.addAction( RemoveListFromList(parent, list))
+
+class AddListToList(Action):
+    def __init__(self, parent, list):
+        super().__init__(parent, list.Name, lambda: list.addGames(parent.getData()) )
+
+
+class RemoveListFromList(Action):
+    def __init__(self, parent, list):
+        super().__init__(parent, list.Name, lambda: list.removeGames(parent.getData()) )
+
+class EraseList(Action):
+    def __init__(self, parent):
+        super().__init__(parent, 'Erase List', parent.erase)

@@ -12,7 +12,6 @@ class SearchBox(QLineEdit):
     def getData(self):
         return self.SearchList.GameList[:]
 
-# Todo - Clear & Delete
 class CatalogEntryContextMenu(ContextMenu):
     def __init__(self, parent, event):
         super().__init__(parent, event)
@@ -27,6 +26,22 @@ class CatalogEntryContextMenu(ContextMenu):
         if parent.Data != parent.GUI.Manager.Catalogs.Lists.get('Excluding'):
             self.addAction( parent.AddToExcluding )
             self.addAction( parent.RemoveFromExcluding )
+
+        # Add to list/ remove from list (except itself)
+        lists = []
+
+        for name, list in parent.GUI.Manager.Catalogs.Lists.Entries.items():
+            if name not in parent.GUI.Manager.BaseLists and list != parent.Data:
+                lists.append(list)
+
+        self.addMenu( AddListToListMenu(parent, lists) )
+
+        if lists:
+            self.addMenu( RemoveListFromListMenu(parent, lists) )
+
+        # if list, add Erase option
+        if hasattr(parent, 'EraseAction'):
+            self.addAction( parent.EraseAction )
 
         self.start()
 
@@ -88,6 +103,16 @@ class CatalogEntryGUI(HBox):
 
     def removeFromExcludingHandler(self):
         self.GUI.Manager.Catalogs.Lists.get('Excluding').removeGames(self.getData())
+
+class ListEntryGUI(CatalogEntryGUI):
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.EraseAction = EraseList(self)
+
+    def erase(self):
+        self.Data.erase()
+        if self.Data.Name not in self.GUI.Manager.BaseLists:
+            self.addTo(None)
 
 class CatalogModesRow(HBox):
     def __init__(self, parent, mode):
