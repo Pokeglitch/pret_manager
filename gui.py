@@ -2,8 +2,33 @@ import sys, webbrowser, json, re
 
 '''
 TODO:
-- give games keywords, which are different from tags and only used in search
-Add Process to each menu
+- Clickable widgets should have cursor change to hand
+
+- Dont show process option if currently processing
+
+- Finish the add new list function
+-- qdialog for name, and confirmation if will overwrite
+--- also show confirmation when erasing a list
+
+- Finish all base lists
+-- 'Library' for games with builds/releases with rom
+-- 'Unbuilt' for games without builds/releases with rom
+-- 'Missing' for game not downloaded
+-- Update Outdated list after fetching
+
+-- Empty panel shows credits
+
+Game Tile/Panel:
+- Indicate favorite, queued, missing, outdated
+
+Styles:
+-- combobox, menu, dialog
+
+Have the directory be database (if shortcut, then git, etc)
+- folder title is name of game
+- data file in each (for which rgbds, tags, etc)
+-- separate from metadata
+--- meta data should include successful/failed commit attempts
 
 CLI:
 - use -o for order, combination of any of following (in any order, can be multiple times):
@@ -13,63 +38,38 @@ CLI:
 - use the same 'filter' function that the GUI current uses...
 -- -a, -ao, -aa, -an, etc
 
+--------------------------
+
 GUI:
-- combo-boxes, qmenu, qdialog
 - Catalog/Tile/Queue Sorting:
 -- date of last update, alphabet, etc
 --- Also, can hide missing/excluding, etc
 
 Filter:
 - Show number of items in filter
-
-** - Add way to Save the filter options (catalogs for each mode & search term)
+- Add way to Save the filter options (catalogs for each mode & search term)
 -- Add way to load a filter
 
-Browser:
-** - Instead of the buttons at bottom:
--- Have a dropdown which includes all Queue (default), all lists + New
---- Have buttons for: Add to/Remove From/Toggle In
-- (True for Game Panel as well, though Fav/Exclude are also quick clicks)
-
 Lists:
-- Way to load a list, delete a list
+- Way to load a list
 - show size of each list next to name
-** - Update Outdated list
-** - 'Library' list for game that have builds
-    -- likewise, a list for games that dont have builds
-    - Also one for downlaoaded, not downloaded
 
-- Game Tile:
--- Show if missing or outdated
--- Pokeball in top left corner for favorite (over boxart)
+Games:
+- give games keywords, which are different from tags and only used in search
+
+- way to delete a game from disk
+-- will keep builds and releases
+
+- Way to launch most recent build/release
+-- or, set which is the default 'launch'
+
+- Way to copy selected builds to another location
+
+- Tile:
 -- Double click to launch
 
-- Game Panel:
--- Empty panel shows credits
--- can open a new panel if want to open multiple game details
---- can close panels
--- fix down arrow in Trees
--- Show when game is in queue
--- show if game is missing or out of date
-
--------
-
-'Missing' should search for rom files in the builds or releases
--- What about if releases are in an archive? (zip, etc)
-
-- Make theme independent ?
-- Another auto list where there are no builds/releases with a game in them
-
-Way to launch most recent build/release
-- or, set which is the default 'launch'
-
-Have the directory be database (if shortcut, then git, etc)
-- folder title is name of game
-- data file in each (for which rgbds, tags, etc)
--- separate from metadata
---- meta data should include successful/failed commit attempts
-
-Way to copy selected builds to another location
+- Panel:
+-- can open/close multiple panels
 ---------
 Extra functionality:
 - And invert filter (for all tiles, for easy 'excluding')
@@ -79,6 +79,8 @@ Way to create/handle Groups of Tags (i.e. Gen1, Gen2, TCG)
 - tag can be a list, or an object
 -- if object, the sub tags will be the exact same array at the real tag
 --- can have nested subtags
+
+Multiple Themes
 
 New column:
 - RGBDS panel ?
@@ -152,6 +154,8 @@ class GameContextMenu(ContextMenu):
 
         if removeLists:
             self.addMenu( RemoveGameFromListMenu(gui, removeLists) )
+
+        self.addAction( gui.ProcessAction )
 
         # Todo - way to delete game data from disk
         # - option to keep builds, releases
@@ -238,13 +242,13 @@ class GamePanel(VBox):
         self.GitOptions.setObjectName('PanelOptions')
         self.GitOptions.addTo(self)
 
-        self.Repository = Field(self.GitOptions, 'Repository', gameGUI.Game.title)
-        self.Repository.Right.setObjectName('url')
-        self.Repository.Right.mouseDoubleClickEvent = self.openRepositoryURL
-
         self.Author = Field(self.GitOptions, 'Author', gameGUI.Game.author)
         self.Author.Right.setObjectName('url')
         self.Author.Right.mouseDoubleClickEvent = self.openAuthorURL
+
+        self.Repository = Field(self.GitOptions, 'Repository', gameGUI.Game.title)
+        self.Repository.Right.setObjectName('url')
+        self.Repository.Right.mouseDoubleClickEvent = self.openRepositoryURL
 
         self.Branch = HBox(self.GUI)
         self.Branch.label("Branch:")
@@ -293,6 +297,7 @@ class GamePanel(VBox):
         self.Builds = VBox(self.GUI)
         self.Builds.addTo(self.Trees, 1)
         self.BuildTree = QTreeWidget()
+        self.BuildTree.setFocusPolicy(Qt.NoFocus)
         self.BuildTree.header().setStretchLastSection(False)
         self.BuildTree.header().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.BuildTree.header().hide()
@@ -304,6 +309,7 @@ class GamePanel(VBox):
         self.Releases = VBox(self.GUI)
         self.Releases.addTo(self.Trees, 1)
         self.ReleaseTree = QTreeWidget()
+        self.BuildTree.setFocusPolicy(Qt.NoFocus)
         self.ReleaseTree.header().setStretchLastSection(False)
         self.ReleaseTree.header().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.ReleaseTree.header().hide()
@@ -435,6 +441,8 @@ class GameGUI(QWidget):
         self.AddToExcluding = AddToExcluding(self)
         self.RemoveFromExcluding = RemoveFromExcluding(self)
 
+        self.ProcessAction = ProcessAction(self)
+
         self.isQueued = False
         
         self.Queue = GameQueue(self)
@@ -475,6 +483,8 @@ class GameGUI(QWidget):
         self.Queue.updateStyle()
         self.Tile.updateStyle()
 
+    def process(self):
+        self.GUI.startProcess([self.Game])
 
     def addToQueueHandler(self):
         self.GUI.Queue.addGame(self)
@@ -500,14 +510,43 @@ class GameGUI(QWidget):
     def toggleExcludingHandler(self):
         self.GUI.Manager.Catalogs.Lists.get('Excluding').toggleGames([self.Game])
 
+class QueueContextMenu(ContextMenu):
+    def __init__(self, parent, event):
+        super().__init__(parent, event)
+
+        queue = parent.GUI.Queue
+
+        self.addAction( queue.AddToFavorites )
+        self.addAction( queue.RemoveFromFavorites )
+
+        self.addAction( queue.AddToExcluding )
+        self.addAction( queue.RemoveFromExcluding )
+
+        # Add to list/ remove from list (except itself)
+        lists = []
+
+        for name, list in parent.GUI.Manager.Catalogs.Lists.Entries.items():
+            if name not in parent.GUI.Manager.BaseLists:
+                lists.append(list)
+
+        self.addMenu( AddListToListMenu(queue, lists) )
+
+        if lists:
+            self.addMenu( RemoveListFromListMenu(queue, lists) )
+
+        self.addAction( queue.ClearAction )
+        self.addAction( queue.ProcessAction )
+
+        self.start()
+
 
 class QueueHeaderMenuIcon(Icon):
     def __init__(self, parent):
         super().__init__(parent, 'assets/images/menu.png', 35)
 
     def mousePressEvent(self, event):
-        # Same as CatalogEntry dropdown, except Clear instead of Erase
-        print('a')
+        if not self.Parent.GUI.Queue.isEmpty:
+            QueueContextMenu(self, event)
 
 class QueueHeaderMenu(HBox):
     def __init__(self, parent):
@@ -545,9 +584,16 @@ class Queue(VBox):
         self.ListContainer.addStretch()
         
         self.Footer = HBox(GUI)
-        self.Process = Button(self.Footer, 'Process', self.process)
+        self.Process = Button(self.Footer, 'Process', self.processButton)
         self.GUI.addProcessButton(self.Process)
         self.Footer.addTo(self)
+
+        self.AddToFavorites = AddToFavorites(self)
+        self.RemoveFromFavorites = RemoveFromFavorites(self)
+        self.AddToExcluding = AddToExcluding(self)
+        self.RemoveFromExcluding = RemoveFromExcluding(self)
+        self.ClearAction = ClearQueue(self)
+        self.ProcessAction = ProcessAction(self)
 
         self.updateIsEmpty()
 
@@ -581,15 +627,70 @@ class Queue(VBox):
     def removeGames(self, games):
         [self.removeGame(game.GUI) for game in games]
 
-    def clear(self, event):
-        self.removeGames([gameGUI.Game for gameGUI in self.List])
+    def erase(self):
+        self.removeGames(self.getData())
 
-    def process(self, event):
-        self.GUI.startProcess([gameGUI.Game for gameGUI in self.List])
+    def processButton(self, event):
+        if event.button() == Qt.LeftButton:
+            self.process()
+
+    def process(self):
+        if self.List:
+            self.GUI.startProcess(self.getData())
 
     def saveList(self, event):
-        if event.button() == Qt.LeftButton and self.List:
-            self.GUI.saveList([gameGUI.Game for gameGUI in self.List])
+        if self.List:
+            self.GUI.saveList(self.getData())
+    
+    def getData(self):
+        return [gameGUI.Game for gameGUI in self.List]
+
+    def addToFavoritesHandler(self):
+        self.GUI.Manager.Catalogs.Lists.get('Favorites').addGames(self.getData())
+
+    def removeFromFavoritesHandler(self):
+        self.GUI.Manager.Catalogs.Lists.get('Favorites').removeGames(self.getData())
+
+    def addToExcludingHandler(self):
+        self.GUI.Manager.Catalogs.Lists.get('Excluding').addGames(self.getData())
+
+    def removeFromExcludingHandler(self):
+        self.GUI.Manager.Catalogs.Lists.get('Excluding').removeGames(self.getData())
+
+class TilesContextMenu(ContextMenu):
+    def __init__(self, parent, event):
+        super().__init__(parent, event)
+
+        tiles = parent.GUI.Tiles
+
+        if not tiles.isEmpty:
+            self.addAction( tiles.AddToQueue )
+            self.addAction( tiles.RemoveFromQueue )
+
+            self.addAction( tiles.AddToFavorites )
+            self.addAction( tiles.RemoveFromFavorites )
+
+            self.addAction( tiles.AddToExcluding )
+            self.addAction( tiles.RemoveFromExcluding )
+
+            lists = []
+
+            for name, list in parent.GUI.Manager.Catalogs.Lists.Entries.items():
+                if name not in parent.GUI.Manager.BaseLists:
+                    lists.append(list)
+
+            self.addMenu( AddListToListMenu(tiles, lists) )
+
+            if lists:
+                self.addMenu( RemoveListFromListMenu(tiles, lists) )
+
+        if [tiles.GUI.Manager.Search.GUI] != tiles.OR_Lists + tiles.AND_Lists + tiles.NOT_Lists:
+            self.addAction( tiles.ClearAction )
+
+        self.addAction( tiles.ProcessAction )
+
+        self.start()
+
 
 class TileContent(Flow):
     def __init__(self, parent):
@@ -604,8 +705,7 @@ class TilesHeaderMenuIcon(Icon):
         super().__init__(parent, 'assets/images/menu.png', 35)
 
     def mousePressEvent(self, event):
-        # Same as CatalogEntry dropdown, except Clear instead of erase
-        print('a')
+        TilesContextMenu(self, event)
 
 class TilesHeaderMenu(HBox):
     def __init__(self, parent):
@@ -633,6 +733,16 @@ class Tiles(VBox):
         self.Header = TilesHeader(self)
         self.Content = TileContent(self)
         self.reset()
+        
+        self.AddToQueue = AddToQueue(self)
+        self.RemoveFromQueue = RemoveFromQueue(self)
+        self.AddToFavorites = AddToFavorites(self)
+        self.RemoveFromFavorites = RemoveFromFavorites(self)
+        self.AddToExcluding = AddToExcluding(self)
+        self.RemoveFromExcluding = RemoveFromExcluding(self)
+        self.ClearAction = ClearBrowser(self)
+        self.ProcessAction = ProcessAction(self)
+
         self.addTo(GUI.Col2, 2)
 
     def reset(self):
@@ -649,6 +759,35 @@ class Tiles(VBox):
     def updateIsEmpty(self):
         if self.isEmpty == bool(self.All_Games):
             self.isEmpty = not bool(self.All_Games)
+
+    def addToFavoritesHandler(self):
+        self.GUI.Manager.Catalogs.Lists.get('Favorites').addGames(self.getData())
+
+    def removeFromFavoritesHandler(self):
+        self.GUI.Manager.Catalogs.Lists.get('Favorites').removeGames(self.getData())
+
+    def addToExcludingHandler(self):
+        self.GUI.Manager.Catalogs.Lists.get('Excluding').addGames(self.getData())
+
+    def removeFromExcludingHandler(self):
+        self.GUI.Manager.Catalogs.Lists.get('Excluding').removeGames(self.getData())
+
+    def addToQueueHandler(self):
+        self.GUI.Queue.addGames(self.getData())
+
+    def removeFromQueueHandler(self):
+        self.GUI.Queue.removeGames(self.getData())
+
+    def erase(self):
+        for game in self.All_Games:
+            game.GUI.Tile.addTo(None)
+
+        for list in self.OR_Lists + self.AND_Lists + self.NOT_Lists:
+            if list != self.GUI.Manager.Search.GUI:
+                list.setMode(None)
+
+        self.reset()
+        self.addAND(self.GUI.Manager.Search.GUI, True)
 
     def is_game_valid(self, game):
         if self.OR_Lists:
@@ -802,22 +941,12 @@ class Tiles(VBox):
 
         self.compile(updateGUI)
 
-    def addToQueue(self, event):
-        self.GUI.Queue.addGames(self.All_Games[:])
-
-    def removeFromQueue(self, event):
-        self.GUI.Queue.removeGames(self.All_Games[:])
+    def getData(self):
+        return self.All_Games[:]
 
     def process(self, event):
-        self.GUI.startProcess([game for game in self.All_Games])
-
-    def favorite(self, event):
         if self.All_Games:
-            self.GUI.Manager.Catalogs.Lists.get('Favorites').addGames(self.All_Games[:])
-
-    def exclude(self, event):
-        if self.All_Games:
-            self.GUI.Manager.Catalogs.Lists.get('Excluding').addGames(self.All_Games[:])
+            self.GUI.startProcess(self.getData())
 
 class PanelHeaderMenuIcon(Icon):
     def __init__(self, parent):
@@ -882,6 +1011,10 @@ class Panel(VBox):
         self.setActive(None)
         self.addTo(GUI, 3)
 
+    def favorite(self, e):
+        if self.Active:
+            self.Active.toggleFavoritesHandler()
+
     def setActive(self, game):
         if self.Active:
             self.Active.setActive(False)
@@ -897,29 +1030,6 @@ class Panel(VBox):
 
         self.Header.Right.setVisible(bool(self.Active))
         self.Header.Menu.setVisible(bool(self.Active))
-
-    def addToQueue(self, event):
-        if self.Active:
-            self.GUI.Queue.addGame(self.Active)
-
-    def removeFromQueue(self, event):
-        if self.Active:
-            self.GUI.Queue.removeGame(self.Active)
-
-    def process(self, event):
-        if self.Active:
-            self.GUI.startProcess([self.Active.Game])
-
-    def favorite(self, event):
-        if self.Active:
-            favorites = self.GUI.Manager.Catalogs.Lists.get('Favorites')
-            favorites.toggleGames([self.Active.Game])
-
-            self.Header.updateFavorite(favorites.has(self.Active.Game))
-
-    def exclude(self, event):
-        if self.Active:
-            self.GUI.Manager.Catalogs.Lists.get('Excluding').toggleGames([self.Active.Game])
 
     def applyPatch(self, event):
         pass

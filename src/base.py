@@ -340,3 +340,15 @@ class RemoveListFromList(Action):
 class EraseList(Action):
     def __init__(self, parent):
         super().__init__(parent, 'Erase List', parent.erase)
+
+class ClearBrowser(Action):
+    def __init__(self, parent):
+        super().__init__(parent, 'Clear Filter', parent.erase)
+
+class ClearQueue(Action):
+    def __init__(self, parent):
+        super().__init__(parent, 'Clear Queue', parent.erase)
+
+class ProcessAction(Action):
+    def __init__(self, parent):
+        super().__init__(parent, 'Process', parent.process)

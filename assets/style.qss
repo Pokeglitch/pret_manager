@@ -21,6 +21,7 @@ QWidget#status-header, QWidget#status-header > QLabel {
 }
 
 QLabel#header, QWidget#status-header > QLabel {
+    color: #ffffff;
     font-size: 22px;
     margin: 5;
 }
@@ -536,16 +537,54 @@ Panel QScrollArea, Panel VScroll {
 }
 
 QLabel#url {
-    color: #0000EE;
+    color: #2478b7;
     text-decoration: underline;
 }
 
 QTreeWidget {
-    background-color:#EEEEEE;
     border: none;
 }
 
+QTreeView::branch:closed:has-children:hover {
+    image: url('assets/images/arrow_filled.png');
+}
 
+QTreeView::branch:open {
+    image: url('assets/images/down_arrow.png');
+    background: #252526;
+}
+
+QTreeView::branch:closed {
+    background: #252526;
+}
+
+QTreeView::branch:closed:has-children {
+    image: url('assets/images/arrow_hollow.png');
+}
+
+QTreeView::item {
+    background: #252526;
+    border: 1px solid #252526;
+    border-radius: 5px;
+    color: #ffffff;
+}
+
+QTreeView::item:open, QTreeView::item:closed {
+    background: #252526;
+}
+
+QTreeView::item:open:hover, QTreeView::item:closed:hover {
+    border: 1px solid #888888;
+}
+
+QTreeView::item:selected {
+    border: 1px solid white;
+}
+
+QTreeView::item:selected:hover {
+    border: 1px solid white;
+    background: #333333;
+}
 
 QSlider::groove {
     background: transparent;

@@ -42,6 +42,8 @@ class CatalogEntryContextMenu(ContextMenu):
         # if list, add Erase option
         if hasattr(parent, 'EraseAction'):
             self.addAction( parent.EraseAction )
+        
+        self.addAction( parent.ProcessAction )
 
         self.start()
 
@@ -62,6 +64,8 @@ class CatalogEntryGUI(HBox):
 
         self.AddToExcluding = AddToExcluding(self)
         self.RemoveFromExcluding = RemoveFromExcluding(self)
+
+        self.ProcessAction = ProcessAction(self)
 
         self.addTo(parent)
 
@@ -85,6 +89,9 @@ class CatalogEntryGUI(HBox):
             else:
                 getattr(self.GUI.Tiles,'add' + mode.upper())(self)
                 self.setMode(mode)
+
+    def process(self):
+        self.GUI.startProcess(self.getData())
 
     def addToQueueHandler(self):
         self.GUI.Queue.addGames(self.getData())
