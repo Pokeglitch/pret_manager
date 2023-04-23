@@ -245,7 +245,7 @@ class Icon(HBox):
         self.updateStyle()
 
 class ContextMenu(QMenu):
-    def __init__(self, parent, event, isQueued=None, isFavorite=None, isExcluding=None):
+    def __init__(self, parent, event):
         super().__init__(parent)
         self.Coords = parent.mapToGlobal(event.pos())
 
@@ -301,12 +301,12 @@ class RemoveGameFromListMenu(QMenu):
 
 class AddGameToList(Action):
     def __init__(self, parent, list):
-        super().__init__(parent, list.Name, lambda: list.addGames([parent.GameGUI.Game]) )
+        super().__init__(parent, list.Name, lambda: list.addGames([parent.Game]) )
 
 
 class RemoveGameFromList(Action):
     def __init__(self, parent, list):
-        super().__init__(parent, list.Name, lambda: list.removeGames([parent.GameGUI.Game]) )
+        super().__init__(parent, list.Name, lambda: list.removeGames([parent.Game]) )
 
 
 

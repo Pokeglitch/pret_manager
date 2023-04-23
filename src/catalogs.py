@@ -213,8 +213,11 @@ class CatalogsBody(HBox):
 class CatalogsHeader(HBox):
     def __init__(self, parent):
         super().__init__(parent.GUI)
-        self.setObjectName('footer')
-        self.label("Filter", 1)
+        self.setObjectName("header-frame")
+
+        self.Label = self.label("Filter", 1)
+        self.Label.setAlignment(Qt.AlignCenter)
+        self.Label.setObjectName("header")
 
         self.SearchContainer = HBox(self)
         self.SearchContainer.addTo(self, 2)

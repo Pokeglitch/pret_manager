@@ -3,6 +3,7 @@ import sys, webbrowser, json, re
 '''
 TODO:
 - give games keywords, which are different from tags and only used in search
+Add Process to each menu
 
 CLI:
 - use -o for order, combination of any of following (in any order, can be multiple times):
@@ -112,28 +113,30 @@ class GameQueue(HBox):
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.GUI.Panel.setActive(self.GameGUI)
-        elif event.button() == Qt.RightButton:
-            self.GUI.Queue.removeGame(self.GameGUI)
+            
+    def contextMenuEvent(self, event):
+        GameContextMenu(self, event)
 
-class GameTileContextMenu(ContextMenu):
+class GameContextMenu(ContextMenu):
     def __init__(self, parent, event):
-        game = parent.GameGUI.Game
+        gui = parent.GameGUI
+        game = gui.Game
         super().__init__(parent, event)
         
-        if parent.isQueued:
-            self.addAction( parent.RemoveFromQueue )
+        if gui.isQueued:
+            self.addAction( gui.RemoveFromQueue )
         else:
-            self.addAction( parent.AddToQueue )
+            self.addAction( gui.AddToQueue )
 
         if game.isFavorite:
-            self.addAction( parent.RemoveFromFavorites )
+            self.addAction( gui.RemoveFromFavorites )
         else:
-            self.addAction( parent.AddToFavorites )
+            self.addAction( gui.AddToFavorites )
 
         if game.isExcluding:
-            self.addAction( parent.RemoveFromExcluding )
+            self.addAction( gui.RemoveFromExcluding )
         else:
-            self.addAction( parent.AddToExcluding )
+            self.addAction( gui.AddToExcluding )
 
         addLists = []
         removeLists = []
@@ -145,10 +148,10 @@ class GameTileContextMenu(ContextMenu):
                 else:
                     addLists.append(list)
 
-        self.addMenu( AddGameToListMenu(parent, addLists) )
+        self.addMenu( AddGameToListMenu(gui, addLists) )
 
         if removeLists:
-            self.addMenu( RemoveGameFromListMenu(parent, removeLists) )
+            self.addMenu( RemoveGameFromListMenu(gui, removeLists) )
 
         # Todo - way to delete game data from disk
         # - option to keep builds, releases
@@ -162,22 +165,12 @@ class GameTile(VBox):
         self.setObjectName("Tile")
         self.GameGUI = gameGUI
 
-        self.AddToQueue = AddToQueue(self)
-        self.RemoveFromQueue = RemoveFromQueue(self)
-
-        self.AddToFavorites = AddToFavorites(self)
-        self.RemoveFromFavorites = RemoveFromFavorites(self)
-
-        self.AddToExcluding = AddToExcluding(self)
-        self.RemoveFromExcluding = RemoveFromExcluding(self)
-
         self.Artwork = self.label()
         self.Pixmap = QPixmap(self.GameGUI.Game.Boxart).scaled(100, 100)
         self.Faded = Faded(self.Pixmap)
 
         self.Title = self.label(gameGUI.Game.title)
         self.Title.setAlignment(Qt.AlignCenter)
-        self.isQueued = False
 
     def updateExcluding(self, isExcluding):
         if isExcluding:
@@ -193,31 +186,7 @@ class GameTile(VBox):
             self.GUI.Panel.setActive(self.GameGUI)
 
     def contextMenuEvent(self, event):
-        GameTileContextMenu(self, event)
-
-    def addToQueueHandler(self):
-        self.GUI.Queue.addGame(self.GameGUI)
-
-    def removeFromQueueHandler(self):
-        self.GUI.Queue.removeGame(self.GameGUI)
-
-    def addToFavoritesHandler(self):
-        self.toggleFavoritesHandler()
-
-    def removeFromFavoritesHandler(self):
-        self.toggleFavoritesHandler()
-        
-    def toggleFavoritesHandler(self):
-        self.GUI.Manager.Catalogs.Lists.get('Favorites').toggleGames([self.GameGUI.Game])
-
-    def addToExcludingHandler(self):
-        self.toggleExcludingHandler()
-
-    def removeFromExcludingHandler(self):
-        self.toggleExcludingHandler()
-
-    def toggleExcludingHandler(self):
-        self.GUI.Manager.Catalogs.Lists.get('Excluding').toggleGames([self.GameGUI.Game])
+        GameContextMenu(self, event)
 
 class TagsGUI(HBox):
     def __init__(self, parent, tags):
@@ -447,15 +416,26 @@ class GamePanel(VBox):
     def handleRGBDSSelected(self, rgbds):
         self.GameGUI.Game.set_RGBDS(rgbds.split(' ')[0])
 
-
-class GameGUI:
+class GameGUI(QWidget):
     def __init__(self, GUI, game):
+        super().__init__()
         self.GUI = GUI
         self.Game = game
 
         # TODO
         self.isIPS = False
         self.isGit = True
+        
+        self.AddToQueue = AddToQueue(self)
+        self.RemoveFromQueue = RemoveFromQueue(self)
+
+        self.AddToFavorites = AddToFavorites(self)
+        self.RemoveFromFavorites = RemoveFromFavorites(self)
+
+        self.AddToExcluding = AddToExcluding(self)
+        self.RemoveFromExcluding = RemoveFromExcluding(self)
+
+        self.isQueued = False
         
         self.Queue = GameQueue(self)
         self.Tile = GameTile(self)
@@ -475,7 +455,7 @@ class GameGUI:
             self.GUI.Panel.Header.updateFavorite(isFavorite)
 
     def setQueued(self, queued):
-        self.Tile.isQueued = queued
+        self.isQueued = queued
         self.Tile.setProperty('queued', queued)
         self.Tile.updateStyle()
 
@@ -495,31 +475,67 @@ class GameGUI:
         self.Queue.updateStyle()
         self.Tile.updateStyle()
 
-class QueueHeader(HBox):
+
+    def addToQueueHandler(self):
+        self.GUI.Queue.addGame(self)
+
+    def removeFromQueueHandler(self):
+        self.GUI.Queue.removeGame(self)
+
+    def addToFavoritesHandler(self):
+        self.toggleFavoritesHandler()
+
+    def removeFromFavoritesHandler(self):
+        self.toggleFavoritesHandler()
+        
+    def toggleFavoritesHandler(self):
+        self.GUI.Manager.Catalogs.Lists.get('Favorites').toggleGames([self.Game])
+
+    def addToExcludingHandler(self):
+        self.toggleExcludingHandler()
+
+    def removeFromExcludingHandler(self):
+        self.toggleExcludingHandler()
+
+    def toggleExcludingHandler(self):
+        self.GUI.Manager.Catalogs.Lists.get('Excluding').toggleGames([self.Game])
+
+
+class QueueHeaderMenuIcon(Icon):
+    def __init__(self, parent):
+        super().__init__(parent, 'assets/images/menu.png', 35)
+
+    def mousePressEvent(self, event):
+        # Same as CatalogEntry dropdown, except Clear instead of Erase
+        print('a')
+
+class QueueHeaderMenu(HBox):
+    def __init__(self, parent):
+        super().__init__(parent.GUI)
+        self.Menu = QueueHeaderMenuIcon(self)
+        self.addStretch()
+        self.addTo(parent, 1, 1)
+
+class QueueHeader(Grid):
     def __init__(self, parent):
         super().__init__(parent.GUI)
         self.setObjectName("header-frame")
 
-        self.Label = self.label('Queue')
-        self.Label.setObjectName("header")
+        self.Label = self.label('Queue', 1, 1)
         self.Label.setAlignment(Qt.AlignCenter)
+        self.Label.setObjectName("header")
+
+        self.Menu = QueueHeaderMenu(self)
+
         self.addTo(parent, 5)
 
 class Queue(VBox):
     def __init__(self, GUI):
         super().__init__(GUI)
         self.List = []
-        self.isEmpty = True
+        self.isEmpty = False
 
         self.Header = QueueHeader(self)
-
-        self.Clear = Button(self.Header, 'Clear', self.clear)
-
-        self.Process = Button(self.Header, 'Process', self.process)
-        self.GUI.addProcessButton(self.Process)
-
-        self.SaveList = Button(self.Header, 'Save', self.saveList)
-        self.SaveList.setProperty('disabled', self.isEmpty)
 
         self.ListContainer = VScroll(GUI)
         self.ListContainer.addTo(self, 95)
@@ -528,13 +544,20 @@ class Queue(VBox):
         self.ListGUI.addTo(self.ListContainer)
         self.ListContainer.addStretch()
         
+        self.Footer = HBox(GUI)
+        self.Process = Button(self.Footer, 'Process', self.process)
+        self.GUI.addProcessButton(self.Process)
+        self.Footer.addTo(self)
+
+        self.updateIsEmpty()
+
         self.addTo(GUI.Col1, 1)
 
     def updateIsEmpty(self):
         if self.isEmpty == bool(self.List):
             self.isEmpty = not bool(self.List)
-            self.SaveList.setProperty('disabled', self.isEmpty)
-            self.SaveList.updateStyle()
+            self.Process.setProperty('disabled', self.isEmpty)
+            self.Process.updateStyle()
 
     def addGame(self, gameGUI):
         if gameGUI not in self.List:
@@ -576,41 +599,39 @@ class TileContent(Flow):
         self.Scroll.setObjectName('Tiles')
         self.addTo(parent, 95)
 
-class TilesHeader(HBox):
+class TilesHeaderMenuIcon(Icon):
+    def __init__(self, parent):
+        super().__init__(parent, 'assets/images/menu.png', 35)
+
+    def mousePressEvent(self, event):
+        # Same as CatalogEntry dropdown, except Clear instead of erase
+        print('a')
+
+class TilesHeaderMenu(HBox):
+    def __init__(self, parent):
+        super().__init__(parent.GUI)
+        self.Menu = TilesHeaderMenuIcon(self)
+        self.addStretch()
+        self.addTo(parent, 1, 1)
+
+class TilesHeader(Grid):
     def __init__(self, parent):
         super().__init__(parent.GUI)
         self.setObjectName("header-frame")
-        self.Type = self.label()
-        self.Type.setObjectName("header")
-        self.Name = self.label()
-        self.Name.setObjectName("header")
         
-        self.SaveList = Button(self, 'Save', parent.saveList)
+        self.Label = self.label('Browser', 1, 1)
+        self.Label.setAlignment(Qt.AlignCenter)
+        self.Label.setObjectName("header")
+
+        self.Menu = TilesHeaderMenu(self)
 
         self.addTo(parent, 5)
-
-    def setText(self, type, name=''):
-        self.Type.setText(type)
-        self.Name.setText(name)
-
-class PanelFooter(HBox):
-    def __init__(self, parent):
-        super().__init__(parent.GUI)
-        self.setObjectName("footer")
-        self.AddToQueue = Button(self, 'Add', parent.addToQueue)
-        self.RemoveFromQueue = Button(self, 'Remove', parent.removeFromQueue)
-        self.Process = Button(self, 'Process', parent.process)
-        self.GUI.addProcessButton(self.Process)
-
-        self.Exclude = Button(self, 'Exclude', parent.exclude)
-        self.addTo(parent, 10)
 
 class Tiles(VBox):
     def __init__(self, GUI):
         super().__init__(GUI)
         self.Header = TilesHeader(self)
         self.Content = TileContent(self)
-        self.Footer = PanelFooter(self)
         self.reset()
         self.addTo(GUI.Col2, 2)
 
@@ -628,11 +649,6 @@ class Tiles(VBox):
     def updateIsEmpty(self):
         if self.isEmpty == bool(self.All_Games):
             self.isEmpty = not bool(self.All_Games)
-            self.Header.SaveList.setDisabled(self.isEmpty)
-            self.Footer.AddToQueue.setDisabled(self.isEmpty)
-            self.Footer.RemoveFromQueue.setDisabled(self.isEmpty)
-            self.Footer.Exclude.setDisabled(self.isEmpty)
-            self.Footer.Process.setDisabled(self.isEmpty)
 
     def is_game_valid(self, game):
         if self.OR_Lists:
@@ -803,23 +819,47 @@ class Tiles(VBox):
         if self.All_Games:
             self.GUI.Manager.Catalogs.Lists.get('Excluding').addGames(self.All_Games[:])
 
-class PanelHeader(HBox):
+class PanelHeaderMenuIcon(Icon):
+    def __init__(self, parent):
+        super().__init__(parent, 'assets/images/menu.png', 35)
+
+    @property
+    def GameGUI(self):
+        return self.Parent.Parent.Parent.Parent.Active 
+
+    def mousePressEvent(self, event):
+        if self.Parent.Parent.Parent.Parent.Active:
+            GameContextMenu(self, event)
+
+class PanelHeaderMenu(HBox):
+    def __init__(self, parent):
+        super().__init__(parent.GUI)
+        self.Menu = PanelHeaderMenuIcon(self)
+        self.addTo(parent.IconsContainer)
+
+class PanelHeader(Grid):
     def __init__(self, parent):
         super().__init__(parent.GUI)
         self.setObjectName("header-frame")
 
-        self.Right = HBox(parent.GUI)
+        
+        self.Label = self.label('', 1, 1)
+        self.Label.setObjectName("header")
+        self.Label.setAlignment(Qt.AlignCenter)
 
+        self.IconsContainer = HBox(self.GUI)
+        self.IconsContainer.addTo(self, 1, 1)
+
+        self.Right = HBox(self.GUI)
         self.Favorite =  self.Right.label()
         self.Favorite.mousePressEvent = parent.favorite
         self.StarPixmap = QPixmap('assets/images/favorite.png').scaled(35, 35)
         self.FadedStar = Faded(self.StarPixmap)
-        self.Right.addTo(self)
+        self.Right.addTo(self.IconsContainer)
+        
+        self.IconsContainer.addStretch()
 
-        self.Label = self.label()
-        self.Label.setObjectName("header")
-
-        self.addStretch()
+        self.Menu = PanelHeaderMenu(self)
 
         self.addTo(parent, 10)
 
@@ -828,18 +868,6 @@ class PanelHeader(HBox):
 
     def setText(self, text):
         self.Label.setText(text)
-
-class PanelFooter(HBox):
-    def __init__(self, parent):
-        super().__init__(parent.GUI)
-        self.setObjectName("footer")
-        self.AddToQueue = Button(self, 'Add', parent.addToQueue)
-        self.RemoveFromQueue = Button(self, 'Remove', parent.removeFromQueue)
-        self.Process = Button(self, 'Process', parent.process)
-        self.GUI.addProcessButton(self.Process)
-
-        self.Exclude = Button(self, 'Exclude', parent.exclude)
-        self.addTo(parent, 10)
 
 class Panel(VBox):
     def __init__(self, GUI):
@@ -850,8 +878,6 @@ class Panel(VBox):
         self.Display.setObjectName('PanelDisplay')
         self.Display.addTo(self, 80)
         
-        self.Footer = PanelFooter(self)
-
         self.Active = None
         self.setActive(None)
         self.addTo(GUI, 3)
@@ -869,8 +895,8 @@ class Panel(VBox):
         else:
             self.Header.setText("Select a Game")
 
-        self.Footer.setVisible(bool(self.Active))
         self.Header.Right.setVisible(bool(self.Active))
+        self.Header.Menu.setVisible(bool(self.Active))
 
     def addToQueue(self, event):
         if self.Active:
@@ -928,7 +954,7 @@ class MainContents(HBox):
         self.ProcessButtons = []
         
         self.Col1 = VBox(self)
-        self.Col1.addTo(self, 1)
+        self.Col1.addTo(self, 2)
 
         self.Catalogs = Catalogs(self)
         self.Queue = Queue(self)
