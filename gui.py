@@ -4,7 +4,12 @@ import sys, webbrowser, json, re
 TODO:
 - Clickable widgets should have cursor change to hand
 
+Menu:
+- dont show menu in queue if empty
 - Dont show process option if currently processing
+- dont show add to/remove from if list is empty
+
+- handle clicking on tags from a game panel
 
 - Finish the add new list function
 -- qdialog for name, and confirmation if will overwrite
@@ -18,17 +23,35 @@ TODO:
 
 -- Empty panel shows credits
 
+position of context menu when using hamburger menu icon
+
 Game Tile/Panel:
 - Indicate favorite, queued, missing, outdated
 
 Styles:
--- combobox, menu, dialog
+-- combobox, dialog
 
 Have the directory be database (if shortcut, then git, etc)
 - folder title is name of game
 - data file in each (for which rgbds, tags, etc)
 -- separate from metadata
 --- meta data should include successful/failed commit attempts
+
+Set the icon for the taskbar:
+- https://stackoverflow.com/questions/67599432/setting-the-same-icon-as-application-icon-in-task-bar-for-pyqt5-application
+
+- Finish additional tags, artwork:
+    — Quality of Life
+    — New Region
+    — New Story
+    — Debug
+    — Translation
+    — Speedrun
+    — Fakemon
+    — Retyped
+    — Challenge
+    — Randomizer
+    — Rebalanced
 
 CLI:
 - use -o for order, combination of any of following (in any order, can be multiple times):
@@ -37,6 +60,10 @@ CLI:
 - use -s for search option
 - use the same 'filter' function that the GUI current uses...
 -- -a, -ao, -aa, -an, etc
+
+Update README
+
+IPS Patches...
 
 --------------------------
 
@@ -67,6 +94,7 @@ Games:
 
 - Tile:
 -- Double click to launch
+--- https://wiki.python.org/moin/PyQt/Distinguishing%20between%20click%20and%20double%20click
 
 - Panel:
 -- can open/close multiple panels
@@ -91,8 +119,6 @@ New column:
     - default process actions
     - different path for rgbds builds
     - default List to display
-
-IPS classes and applying
 
 Option to change commit to build
 Option for specific Make commands to build
@@ -119,7 +145,7 @@ class GameQueue(HBox):
     def contextMenuEvent(self, event):
         GameContextMenu(self, event)
 
-class GameContextMenu(ContextMenu):
+class GameBaseContextMenu(ContextMenu):
     def __init__(self, parent, event):
         gui = parent.GameGUI
         game = gui.Game
@@ -160,8 +186,16 @@ class GameContextMenu(ContextMenu):
         # Todo - way to delete game data from disk
         # - option to keep builds, releases
 
+class GameContextMenu(GameBaseContextMenu):
+    def __init__(self, parent, event):
+        super().__init__(parent, event)
         self.start()
 
+class PanelContextMenu(GameBaseContextMenu):
+    def __init__(self, parent, event):
+        super().__init__(parent, event)
+        self.Coords = parent.GUI.Panel.Display.mapToGlobal(QPoint(0, 0))
+        self.start()
 
 class GameTile(VBox):
     def __init__(self, gameGUI):
@@ -537,13 +571,11 @@ class QueueContextMenu(ContextMenu):
         self.addAction( queue.ClearAction )
         self.addAction( queue.ProcessAction )
 
+        self.Coords = queue.ListContainer.mapToGlobal(QPoint(0, 0))
         self.start()
 
 
-class QueueHeaderMenuIcon(Icon):
-    def __init__(self, parent):
-        super().__init__(parent, 'assets/images/menu.png', 35)
-
+class QueueHeaderMenuIcon(MenuIcon):
     def mousePressEvent(self, event):
         if not self.Parent.GUI.Queue.isEmpty:
             QueueContextMenu(self, event)
@@ -689,8 +721,8 @@ class TilesContextMenu(ContextMenu):
 
         self.addAction( tiles.ProcessAction )
 
+        self.Coords = tiles.Content.Scroll.mapToGlobal(QPoint(0, 0))
         self.start()
-
 
 class TileContent(Flow):
     def __init__(self, parent):
@@ -700,12 +732,9 @@ class TileContent(Flow):
         self.Scroll.setObjectName('Tiles')
         self.addTo(parent, 95)
 
-class TilesHeaderMenuIcon(Icon):
-    def __init__(self, parent):
-        super().__init__(parent, 'assets/images/menu.png', 35)
-
+class TilesHeaderMenuIcon(MenuIcon):
     def mousePressEvent(self, event):
-        TilesContextMenu(self, event)
+        self.Menu = TilesContextMenu(self, event)
 
 class TilesHeaderMenu(HBox):
     def __init__(self, parent):
@@ -948,17 +977,14 @@ class Tiles(VBox):
         if self.All_Games:
             self.GUI.startProcess(self.getData())
 
-class PanelHeaderMenuIcon(Icon):
-    def __init__(self, parent):
-        super().__init__(parent, 'assets/images/menu.png', 35)
-
+class PanelHeaderMenuIcon(MenuIcon):
     @property
     def GameGUI(self):
         return self.Parent.Parent.Parent.Parent.Active 
 
     def mousePressEvent(self, event):
         if self.Parent.Parent.Parent.Parent.Active:
-            GameContextMenu(self, event)
+            PanelContextMenu(self, event)
 
 class PanelHeaderMenu(HBox):
     def __init__(self, parent):
@@ -979,17 +1005,18 @@ class PanelHeader(Grid):
         self.IconsContainer = HBox(self.GUI)
         self.IconsContainer.addTo(self, 1, 1)
 
+        self.Menu = PanelHeaderMenu(self)
+        
+        self.IconsContainer.addStretch()
+
         self.Right = HBox(self.GUI)
         self.Favorite =  self.Right.label()
+        self.Favorite.setObjectName("favorite")
         self.Favorite.mousePressEvent = parent.favorite
         self.StarPixmap = QPixmap('assets/images/favorite.png').scaled(35, 35)
         self.FadedStar = Faded(self.StarPixmap)
         self.Right.addTo(self.IconsContainer)
         
-        self.IconsContainer.addStretch()
-
-        self.Menu = PanelHeaderMenu(self)
-
         self.addTo(parent, 10)
 
     def updateFavorite(self, isFavorite):

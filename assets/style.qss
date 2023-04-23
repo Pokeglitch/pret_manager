@@ -191,7 +191,8 @@ QueueHeader Button[disabled=true], QueueHeader Button[disabled=true]:hover, Queu
 }
 
 Button:hover {
-    background-color: #EEEEEE;
+    background-color: #1176BA;
+    color: #ffffff;
 }
 
 Button, ToggleButton {
@@ -205,11 +206,14 @@ Button {
     min-width: 60px;
     margin: 5;
     background-color: #0E639C;
+
+    background-color: #0E639C;
+    color: #EEEEEE;
 }
 
 Button[disabled=true], Button[disabled=true]:hover, Button[processing=true], Button[processing=true]:hover {
-    background-color: #777777;
-    color: #222222
+    background-color: #094166;
+    color: #bbbbbb
 }
 
 ToggleButton {
@@ -527,7 +531,6 @@ GamePanelArtwork {
     border: none;
 }
 
-
 Panel QScrollArea, Panel VScroll {
     border: none;
 }
@@ -645,3 +648,28 @@ ProcessToggleField > QLabel {
 ProcessToggleBG, ProcessToggleSlider {
     margin-right: 10px;
 }
+
+QMenu {
+    border: 1px solid white;
+    background-color: #252526;
+    color: white;
+    margin: 0px;
+    padding: 0px;
+}
+
+ QMenu::item {
+    background-color: transparent;
+ }
+
+ QMenu::item:hover {
+    background-color: #2b2b2b;
+ }
+
+ QMenu::item:selected{
+    background-color: #313131;
+ } 
+
+ MenuIcon > QLabel, #favorite {
+    margin-left: 10px;
+    margin-right: 10px;
+ }
