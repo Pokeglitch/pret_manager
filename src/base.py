@@ -352,3 +352,7 @@ class ClearQueue(Action):
 class ProcessAction(Action):
     def __init__(self, parent):
         super().__init__(parent, 'Process', parent.process)
+
+class MenuIcon(Icon):
+    def __init__(self, parent):
+        super().__init__(parent, 'assets/images/menu.png', 35)
