@@ -332,7 +332,6 @@ class AddListToList(Action):
     def __init__(self, parent, list):
         super().__init__(parent, list.Name, lambda: list.addGames(parent.getData()) )
 
-
 class RemoveListFromList(Action):
     def __init__(self, parent, list):
         super().__init__(parent, list.Name, lambda: list.removeGames(parent.getData()) )

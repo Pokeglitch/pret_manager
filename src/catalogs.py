@@ -16,34 +16,38 @@ class CatalogEntryContextMenu(ContextMenu):
     def __init__(self, parent, event):
         super().__init__(parent, event)
 
-        self.addAction( parent.AddToQueue )
-        self.addAction( parent.RemoveFromQueue )
+        games = parent.getData()
 
-        if parent.Data != parent.GUI.Manager.Catalogs.Lists.get('Favorites'):
-            self.addAction( parent.AddToFavorites )
-            self.addAction( parent.RemoveFromFavorites )
+        if games:
+            self.addAction( parent.AddToQueue )
+            self.addAction( parent.RemoveFromQueue )
 
-        if parent.Data != parent.GUI.Manager.Catalogs.Lists.get('Excluding'):
-            self.addAction( parent.AddToExcluding )
-            self.addAction( parent.RemoveFromExcluding )
+            if parent.Data != parent.GUI.Manager.Catalogs.Lists.get('Favorites'):
+                self.addAction( parent.AddToFavorites )
+                self.addAction( parent.RemoveFromFavorites )
 
-        # Add to list/ remove from list (except itself)
-        lists = []
+            if parent.Data != parent.GUI.Manager.Catalogs.Lists.get('Excluding'):
+                self.addAction( parent.AddToExcluding )
+                self.addAction( parent.RemoveFromExcluding )
 
-        for name, list in parent.GUI.Manager.Catalogs.Lists.Entries.items():
-            if name not in parent.GUI.Manager.BaseLists and list != parent.Data:
-                lists.append(list)
+            # Add to list/ remove from list (except itself)
+            lists = []
 
-        self.addMenu( AddListToListMenu(parent, lists) )
+            for name, list in parent.GUI.Manager.Catalogs.Lists.Entries.items():
+                if name not in parent.GUI.Manager.BaseLists and list != parent.Data:
+                    lists.append(list)
 
-        if lists:
-            self.addMenu( RemoveListFromListMenu(parent, lists) )
+            self.addMenu( AddListToListMenu(parent, lists) )
+
+            if lists:
+                self.addMenu( RemoveListFromListMenu(parent, lists) )
 
         # if list, add Erase option
         if hasattr(parent, 'EraseAction'):
             self.addAction( parent.EraseAction )
         
-        self.addAction( parent.ProcessAction )
+        if games and not parent.GUI.Window.Process:
+            self.addAction( parent.ProcessAction )
 
         self.start()
 
@@ -82,13 +86,16 @@ class CatalogEntryGUI(HBox):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            mode = self.GUI.Catalogs.Mode
-            if mode == self.Mode:
-                self.GUI.Tiles.remove(self)
-                self.setMode(None)
-            else:
-                getattr(self.GUI.Tiles,'add' + mode.upper())(self)
-                self.setMode(mode)
+            self.handleClick()
+
+    def handleClick(self):
+        mode = self.GUI.Catalogs.Mode
+        if mode == self.Mode:
+            self.GUI.Tiles.remove(self)
+            self.setMode(None)
+        else:
+            getattr(self.GUI.Tiles,'add' + mode.upper())(self)
+            self.setMode(mode)
 
     def process(self):
         self.GUI.startProcess(self.getData())

@@ -536,7 +536,28 @@ Panel QScrollArea, Panel VScroll {
 }
 
 #PanelOptions QComboBox {
-    border: 1px solid #3a3a3b;
+    padding: 5px;
+    color:white;
+    border-radius:5px;
+    border: 1px solid black;
+    background-color: #3a3a3b;
+}
+
+#PanelOptions QComboBox::down-arrow {
+    background: none;
+    border: none;
+    image: url('assets/images/down_arrow.png');
+}
+
+#PanelOptions QComboBox::drop-down {
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+#PanelOptions QComboBox QAbstractItemView {
+    outline: 0px;
+    border: 1px solid black;
+    selection-background-color: #3a3a3b;
 }
 
 QLabel#url {

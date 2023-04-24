@@ -2,15 +2,6 @@ import sys, webbrowser, json, re
 
 '''
 TODO:
-- Clickable widgets should have cursor change to hand
-
-Menu:
-- dont show menu in queue if empty
-- Dont show process option if currently processing
-- dont show add to/remove from if list is empty
-
-- handle clicking on tags from a game panel
-
 - Finish the add new list function
 -- qdialog for name, and confirmation if will overwrite
 --- also show confirmation when erasing a list
@@ -23,13 +14,11 @@ Menu:
 
 -- Empty panel shows credits
 
-position of context menu when using hamburger menu icon
-
 Game Tile/Panel:
-- Indicate favorite, queued, missing, outdated
+- Indicate queued, missing, outdated
 
 Styles:
--- combobox, dialog
+-- dialog
 
 Have the directory be database (if shortcut, then git, etc)
 - folder title is name of game
@@ -64,7 +53,6 @@ CLI:
 Update README
 
 IPS Patches...
-
 --------------------------
 
 GUI:
@@ -181,7 +169,8 @@ class GameBaseContextMenu(ContextMenu):
         if removeLists:
             self.addMenu( RemoveGameFromListMenu(gui, removeLists) )
 
-        self.addAction( gui.ProcessAction )
+        if not gui.GUI.Window.Process:
+            self.addAction( gui.ProcessAction )
 
         # Todo - way to delete game data from disk
         # - option to keep builds, releases
@@ -203,12 +192,26 @@ class GameTile(VBox):
         self.setObjectName("Tile")
         self.GameGUI = gameGUI
 
-        self.Artwork = self.label()
+        self.ArtworkContainer = Grid(self.GUI)
+        self.Artwork = self.ArtworkContainer.label('', 1, 1)
         self.Pixmap = QPixmap(self.GameGUI.Game.Boxart).scaled(100, 100)
         self.Faded = Faded(self.Pixmap)
 
+        self.IconContainer = VBox(self.GUI)
+        self.FavoriteContainer = HBox(self.GUI)
+        self.FavoriteIcon = self.FavoriteContainer.label()
+        self.FavoritePixmap = QPixmap('assets/images/favorite.png').scaled(20,20)
+        self.FavoriteContainer.addStretch()
+        self.FavoriteContainer.addTo(self.IconContainer)
+        self.IconContainer.addStretch()
+        self.IconContainer.addTo(self.ArtworkContainer, 1, 1)
+
+        self.ArtworkContainer.addTo(self)
+
+        self.addStretch()
         self.Title = self.label(gameGUI.Game.title)
         self.Title.setAlignment(Qt.AlignCenter)
+        self.addStretch()
 
     def updateExcluding(self, isExcluding):
         if isExcluding:
@@ -217,7 +220,10 @@ class GameTile(VBox):
             self.Artwork.setPixmap(self.Pixmap)
 
     def updateFavorite(self, isFavorite):
-        pass
+        if isFavorite:
+            self.FavoriteIcon.setPixmap(self.FavoritePixmap)
+        else:
+            self.FavoriteIcon.clear()
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -239,10 +245,15 @@ class TagGUI(HBox):
     def __init__(self, parent, name):
         super().__init__(parent.GUI)
         self.setObjectName('Tag')
+        self.Name = name
         self.setProperty('which',name)
         self.Label = self.label(name)
         self.Label.setAlignment(Qt.AlignCenter)
         self.addTo(parent)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.GUI.Manager.Catalogs.Tags.get(self.Name).GUI.handleClick()
 
 class GamePanelArtwork(VBox):
     def __init__(self, parent):
@@ -569,7 +580,9 @@ class QueueContextMenu(ContextMenu):
             self.addMenu( RemoveListFromListMenu(queue, lists) )
 
         self.addAction( queue.ClearAction )
-        self.addAction( queue.ProcessAction )
+        
+        if not queue.GUI.Window.Process:
+            self.addAction( queue.ProcessAction )
 
         self.Coords = queue.ListContainer.mapToGlobal(QPoint(0, 0))
         self.start()
@@ -634,6 +647,7 @@ class Queue(VBox):
     def updateIsEmpty(self):
         if self.isEmpty == bool(self.List):
             self.isEmpty = not bool(self.List)
+            self.Header.Menu.setVisible(bool(self.List))
             self.Process.setProperty('disabled', self.isEmpty)
             self.Process.updateStyle()
 
@@ -719,7 +733,8 @@ class TilesContextMenu(ContextMenu):
         if [tiles.GUI.Manager.Search.GUI] != tiles.OR_Lists + tiles.AND_Lists + tiles.NOT_Lists:
             self.addAction( tiles.ClearAction )
 
-        self.addAction( tiles.ProcessAction )
+        if not tiles.isEmpty and not tiles.GUI.Window.Process:
+            self.addAction( tiles.ProcessAction )
 
         self.Coords = tiles.Content.Scroll.mapToGlobal(QPoint(0, 0))
         self.start()
