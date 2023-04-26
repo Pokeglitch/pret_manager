@@ -6,8 +6,6 @@ TODO:
 
 - changing git branch should occurs in another process
 
-- dont download rgbds releases until necessary
-
 - Finish the add new list function
 -- qdialog for name, and confirmation if will overwrite
 --- also show confirmation when erasing a list
@@ -19,21 +17,13 @@ TODO:
 -- Update Outdated list after fetching
 
 -- Empty panel shows credits
-
--- Way to hide ignored games from browser
+--- and setings...for now
 
 Game Tile/Panel:
 - Indicate queued, missing, outdated
 
 Styles:
 -- dialog
-
-Have the directory be database (if shortcut, then git, etc)
-- move rgbds to another folder... (tools)
-- folder title is name of game
-- data file in each (for which rgbds, tags, etc)
--- separate from metadata
---- meta data should include successful/failed commit attempts
 
 Set the icon for the taskbar:
 - https://stackoverflow.com/questions/67599432/setting-the-same-icon-as-application-icon-in-task-bar-for-pyqt5-application
@@ -63,12 +53,19 @@ Update README
 
 IPS Patches...
 --------------------------
+- Way to hide ignored games from browser
+-- i.e. auto NOT the excluding list...
+
+- dont download rgbds releases until necessary
+
 Scroll list if the processed game is off screen
 Option to remove from queue after processed
 
 - auto-detect if wsl/cygwin/w64devkit is installed
 -- auto download w64devkit if not ?
 - install missing python, node, & linux packages/libraries
+
+- meta data should include successful/failed commit attempts
 
 GUI:
 - Catalog/Tile/Queue Sorting:

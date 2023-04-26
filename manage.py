@@ -369,7 +369,7 @@ class PRET_Manager:
             environment = args.env[0]
             del args.env
         else:
-            environment = 'WSL'
+            environment = 'wsl'
 
         linux_env = environment if platform.system() == 'Windows' else 'shell'
         main_env = 'windows' if platform.system() == 'Windows' else 'shell'
@@ -599,7 +599,7 @@ class repository(game):
         self.github = Github(self)
         self.make = Make(self)
 
-        self.Boxart = dir + 'boxart.png'
+        self.Boxart = 'assets/artwork/{0}.png'.format(self.name)
         if not os.path.exists(self.Boxart):
             self.Boxart = 'assets/images/gb.png'
 
