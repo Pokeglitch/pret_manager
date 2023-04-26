@@ -5,6 +5,10 @@ from pathlib import Path
 import gui
 from src.Environment import Environments, Command, Git, Github, Make
 
+if platform.system() == 'Windows':
+    import ctypes
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pokeglitch.pretmanager')
+
 build_extensions = ['gb','gbc','pocket','patch','ips']
 metadata_properties = ['Branches','CurrentBranch','RGBDS']
 rgbds_files = ['rgbasm','rgbfix','rgblink','rgbgfx']
