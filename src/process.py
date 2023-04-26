@@ -47,13 +47,16 @@ class ProcessToggle(Grid):
             self.Handler(value)
 
 class ProcessToggleField(HBox):
-    def __init__(self, parent, name, initialValue, handler):
+    def __init__(self, parent, name, initialValue, handler=None):
         super().__init__(parent.GUI)
         self.Name = name
         self.Label = self.label(name)
         self.Toggle = ProcessToggle(self, initialValue, handler)
 
         self.addTo(parent)
+
+    def value(self):
+        return self.Toggle.Slider.value()
 
 class ProcessTitle(HBox):
     def __init__(self, parent):
@@ -66,26 +69,57 @@ class ProcessOptions(VBox):
     def __init__(self, parent):
         super().__init__(parent.GUI)
         
+        # todo - pull from settings
+        self.doFetch = False
+        self.doUpdate = True
+        self.doCleanBefore = True
+        self.doBuild = True
+        self.doCleanAfter = True 
+
         self.Title = ProcessTitle(self)
-        self.ToggleUpdate = ProcessToggleField(self, 'Fetch', self.GUI.Manager.doFetch, self.toggleFetch)
-        self.ToggleUpdate = ProcessToggleField(self, 'Update', self.GUI.Manager.doUpdate, self.toggleUpdate)
-        self.ToggleClean = ProcessToggleField(self, 'Clean', self.GUI.Manager.doClean, self.toggleClean)
-        self.ToggleBuild = ProcessToggleField(self, 'Build', self.GUI.Manager.doBuild != None, self.toggleBuild)
-        self.ToggleClean = ProcessToggleField(self, 'Clean', self.GUI.Manager.doClean, self.toggleClean)
+
+        # todo - get default values from settings
+        self.Fetch = ProcessToggleField(self, 'Fetch', False)
+        self.Update = ProcessToggleField(self, 'Update', True)
+        self.CleanBefore = ProcessToggleField(self, 'Clean', True)
+        self.Build = ProcessToggleField(self, 'Build', True)
+        self.CleanAfter = ProcessToggleField(self, 'Clean', True)
 
         self.addTo(parent, 1)
 
+    def compile(self):
+        processes = ''
+        if self.Fetch.value():
+            processes += 'f'
+        
+        if self.Update.value():
+            processes += 'u'
+
+        if self.CleanBefore.value():
+            processes += 'c'
+
+        if self.Build.value():
+            processes += 'b'
+
+        if self.CleanAfter.value():
+            processes += 'c'
+
+        return processes
+
     def toggleUpdate(self, value):
-        self.GUI.Manager.doUpdate = value
+        self.doUpdate = value
 
     def toggleFetch(self, value):
-        self.GUI.Manager.doFetch = value
+        self.doFetch = value
 
     def toggleBuild(self, value):
-        self.GUI.Manager.doBuild = [] if value else None
+        self.doBuild = value
 
-    def toggleClean(self, value):
-        self.GUI.Manager.doClean = value
+    def toggleCleanBefore(self, value):
+        self.doCleanBefore = value
+
+    def toggleCleanAfter(self, value):
+        self.doCleanAfter = value
 
 class ProcessStatusContent(VBox):
     def __init__(self, parent):

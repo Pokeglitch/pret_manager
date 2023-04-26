@@ -2,9 +2,10 @@ import sys, webbrowser, json, re
 
 '''
 TODO:
-- add a settings file for environment, source location for cygwin/w64devkit
-
 - changing git branch should occurs in another process
+
+- process order toggles should not directly modify pret_manager
+-- since it would affect the current running process
 
 - Finish the add new list function
 -- qdialog for name, and confirmation if will overwrite
@@ -16,8 +17,12 @@ TODO:
 -- 'Missing' for game not downloaded
 -- Update Outdated list after fetching
 
--- Empty panel shows credits
---- and setings...for now
+- Empty panel shows settings & about
+- button to check for updates to pret_manager 
+- Settings:
+    - environment
+    - source location for cygwin/w64devkit
+    - also for default process options
 
 Game Tile/Panel:
 - Indicate queued, missing, outdated
@@ -42,8 +47,7 @@ Set the icon for the taskbar:
     — Rebalanced
 
 CLI:
-- use -o for order, combination of any of following (in any order, can be multiple times):
--- f u b c
+- remove verbose
 - use -l to filter by list
 - use -s for search option
 - use the same 'filter' function that the GUI current uses...
@@ -53,6 +57,8 @@ Update README
 
 IPS Patches...
 --------------------------
+Add predefined processes to run (i.e. only pull/build pret & pokeglitch)
+
 - Way to hide ignored games from browser
 -- i.e. auto NOT the excluding list...
 
@@ -1105,6 +1111,7 @@ class ExecuteProcess(QRunnable):
     def __init__(self, GUI):
         super().__init__()
         self.GUI = GUI
+        self.Processes = self.GUI.Process.Options.compile()
         self.ProcessSignals = ProcessSignals()
         self.ProcessSignals.doBuild.connect(GUI.handleBuildSignal)
         self.ProcessSignals.doRelease.connect(GUI.handleReleaseSignal)
@@ -1112,7 +1119,7 @@ class ExecuteProcess(QRunnable):
         self.ProcessSignals.newStatusMessage.connect(GUI.addStatus)
 
     def run(self):
-        self.GUI.Manager.run()
+        self.GUI.Manager.run(self.Processes)
         self.ProcessSignals.finished.emit()
 
 
@@ -1155,7 +1162,6 @@ class MainContents(HBox):
         if not self.Window.Process:
             self.GUI.Manager.add_to_queue(games)
             [button.setProcessing(True) for button in self.ProcessButtons]
-            print('aaa')
             self.Window.Process = ExecuteProcess(self)
             threadpool.start(self.Window.Process)
 

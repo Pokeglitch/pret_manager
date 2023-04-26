@@ -286,10 +286,6 @@ class PRET_Manager:
         self.BaseLists = ["Favorites", "Excluding", "Outdated", "Missing"]
 
         self.Queue = []
-        self.doFetch = False
-        self.doUpdate = False
-        self.doBuild = None
-        self.doClean = False
 
         self.path = {
             'repo' : '.'
@@ -309,10 +305,6 @@ class PRET_Manager:
         self.Catalogs.Lists.get(name).addGames(games)
 
     def init_GUI(self):
-        # TODO - these should come from default parameters loaded within 'init'
-        self.doUpdate = True
-        self.doBuild = []
-        self.doClean = True
         self.App, self.GUI = gui.init(self)
 
         self.init()
@@ -388,17 +380,17 @@ class PRET_Manager:
         if not any(vars(args).values()):
             return self.init_GUI()
 
-        # assign defaults if none are submitted
-        if args.build is None and not args.update and not args.clean:
-            self.doUpdate = True
-            self.doBuild = []
+        if args.process is None:
+            return
+        
+        if args.process:
+            processes = ''
+            for process in args.process:
+                if re.search(r'[^ubc]',process):
+                    error('Only u, b, and c are valid process arguments. Received: ' + process)
+                processes += process
         else:
-            self.doUpdate = args.update
-            self.doBuild = args.build
-            self.doClean = args.clean
-
-        if self.doUpdate:
-            self.update()
+            processes = 'ucbc'
 
         self.init()
 
@@ -422,13 +414,16 @@ class PRET_Manager:
 
         if args.exclude_tags:
             self.remove_tags(args.exclude_tags)
-        
-        self.run()
 
-    def run(self):
+        if args.build is None:
+            args.build = []
+        
+        self.run(processes, args.build)
+
+    def run(self, processes, build_options=[]):
         if not self.Queue:
             self.print('Queue is empty')
-        elif self.doFetch or self.doUpdate or self.doClean or self.doBuild != None:
+        elif processes:
             for repo in self.Queue:
                 if self.Catalogs.Lists.get('Excluding').has(repo):
                     self.print('Excluding ' + repo.name)
@@ -439,20 +434,15 @@ class PRET_Manager:
 
                 self.print('Processing ' + repo.name)
 
-                if self.doFetch and not self.doUpdate:
-                    repo.fetch()
-
-                if self.doUpdate:
-                    repo.update()
-
-                if self.doClean:
-                    repo.clean()
-
-                if self.doBuild is not None:
-                    repo.build(*self.doBuild)
-
-                    if self.doClean:
+                for process in processes:
+                    if process == 'b':
+                        repo.build(*build_options)
+                    elif process == 'c':
                         repo.clean()
+                    elif process == 'f':
+                        repo.fetch()
+                    elif process == 'u':
+                        repo.update()
 
                 self.print('Finished Processing ' + repo.name)
                 if repo.GUI:
@@ -1103,9 +1093,8 @@ if __name__ == '__main__':
     parser.add_argument('-exclude-authors', '-xa', nargs='+', help='Author(s) to not manage')
     parser.add_argument('-tags', '-t', nargs='+', help='Tags(s) to manage')
     parser.add_argument('-exclude-tags', '-xt', nargs='+', help='Tags(s) to not manage')
-    parser.add_argument('-update', '-u', action='store_true', help='Pull the managed repositories')
-    parser.add_argument('-build', '-b', nargs='*', help='Build the managed repositories')
-    parser.add_argument('-clean', '-c', action='store_true', help='Clean the managed repositories')
+    parser.add_argument('-process', '-p', nargs='*', help='The processes to run on the managed repositories')
+    parser.add_argument('-build', '-b', nargs='*', help='Build options')
     parser.add_argument('-verbose', '-v', action='store_true', help='Display all log messages')
     
     #try:

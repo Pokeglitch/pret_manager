@@ -2,27 +2,7 @@
 
 This is a tool to help people maintain various [pret disassemblies](https://github.com/pret) and hacks derived from them.
 
-  * **Currently for Gen 1/2 Only**
-
-There are 4 text files which are lists of repositories that this tool can manage.
-  * pret
-    * The four Gen 1/2 pret disassemblies
-  * forks
-    * Hacks made using disassemblies
-  * hacks
-    * Hacks made using binary hacking (and the repo hosts versions)
-  * extra
-    * Other Gen 1 related repositories
-
-Each line refers to a specific repository, with the follow comma-separated values:
-  * URL to github repository
-  * Original disassembly it is based on
-  * RGBDS build version to use for building (optional)
-    * If not provided, it will not attempt to build
-
-Note that the 2nd and 3rd values are only applicable to repositories that are disassemblies.
-
-In addition, you can make a 'custom.txt' for any othe repos you want to manage, and it will not be overwritten by pulls
+**Currently for Gen 1/2 Only**
 
 ## Requirements
 
@@ -31,18 +11,36 @@ The follow programs are needed:
   * git (2.4+)
   * gh (Github CLI)
 
-If Windows:
-  * wsl
-    * within wsl, see Linux reqs
+If Windows, a Linux environment is needed
+  * One of: WSL, Cygwin, w64devkit
+  * Within Linux environment, see Linux reqs
 
 If Linux:
   * make (& dependencies required to build rgbds & pret disassemblies)
+
+
+## GUI
+
+To launch the GUI, call the python script with no arguments
+
+`python .\manage.py`
+
+Optionally, the `<environment>` listed below can be supplied to select the Linux Environment
 
 ## Usage
 
 To run, enter the repository in a shell and enter:
 
-`python manage.py <repositories> <command>`
+`python manage.py <environment> <repositories> <process>`
+
+### Environment
+
+For Windows only, this defines which Linux Environment to use
+
+  * -env, -e
+    * One of: `wsl`, `cygwin`, `w64devkit`
+
+If no environment is supplied, it currently defaults to `wsl`
 
 ### Repositories
 
@@ -63,24 +61,34 @@ This will select what repositories to manage.
   * -exclude-tags, -xt
     * Tags(s) to not manage
 
-If no repositories are provided, it will apply the commands on all repositories
+If no repositories are provided, it will apply the processes on all repositories
 
-### Commands
+### Process
 
-This will dictate what commands will be applied to the managed reopsitories
+This will dictate what processes will be applied to the managed reopsitories
 
-  * -update, -u
-    * Pull (or clone) the managed repositories
-  * -build, -b
+  * -process, -p
+    * The order of processes to apply to the manager repositories
+
+Following this argument can be any of the following (in any order):
+
+  * u
+    * Update - Pull (or clone) the managed repositories
+  * b
     * Build the managed repositories
-    * Additional arguments can be provided to select specific branch/commit
-  * -clean, -c
+  * c
     * Clean the managed repositories
-  * -verbose, -v
-    * Display all log messages
 
+In addition the above, there is also:
 
-If no commands are provided, it will first execute **update** followed by **build**
+  * -build, -b
+    * Arguments for the build process (to select specific branch/commit)
+
+If no commands are provided, it will perform the following:
+  * Update
+  * Clean
+  * Build
+  * Clean
 
 ## Potential Future Work
 
