@@ -3,9 +3,11 @@
 import subprocess, os, re, glob, platform, shutil, argparse, json, sys
 from pathlib import Path
 import gui
+from src.Environment import Environments, Command, Git, Github, Make
 
 build_extensions = ['gb','gbc','pocket','patch','ips']
 metadata_properties = ['Branches','CurrentBranch','RGBDS']
+rgbds_files = ['rgbasm','rgbfix','rgblink','rgbgfx']
 
 def error(msg):
     raise Exception('Error:\t' + msg)
@@ -24,9 +26,8 @@ def get_files(path):
 def get_builds(path):
     return [file for file in Path(path).iterdir() if file.suffix[1:] in build_extensions]
 
-# prepend wsl if platform is windows
-def wsl(commands):
-    return ['wsl'] + commands if platform.system() == 'Windows' else commands
+def get_rgbds(path):
+    return [file for file in Path(path).iterdir() if file.name in rgbds_files]
 
 # remove invalid windows path chars from name
 def legal_name(name):
@@ -272,6 +273,7 @@ class Catalogs:
 
 class PRET_Manager:
     def __init__(self):
+        self.Manager = self
         self.Directory = games_dir
         
         self.All = []
@@ -288,6 +290,10 @@ class PRET_Manager:
         self.doUpdate = False
         self.doBuild = None
         self.doClean = False
+
+        self.path = {
+            'repo' : '.'
+        }
 
     def addList(self, name, list):
         if self.Catalogs.Lists.has(name):
@@ -315,7 +321,7 @@ class PRET_Manager:
     
     def fetch(self):
         self.print('Fetching pret-manager')
-        subprocess.run(['git', 'fetch'], capture_output=True)
+        self.git.fetch(CaptureOutput=True)
 
     def fetch_all(self):
         self.fetch()
@@ -332,7 +338,7 @@ class PRET_Manager:
 
     def update(self):
         self.print('Updating pret-manager')
-        subprocess.run(['git', 'pull'], capture_output=True)
+        self.git.pull()
 
     def init(self):
         self.Catalogs = Catalogs(self)
@@ -353,14 +359,34 @@ class PRET_Manager:
             self.addList(file.split('.')[0], list)
 
     def handle_args(self):
-        # if no args at all, launch the gui
-        # TODO - or, -g (also, what about if only -v?)
-        if len(sys.argv) == 1:
-            return self.init_GUI()
-
         args = parser.parse_args()
 
         self.Verbose = args.verbose
+        if args.verbose:
+            del args.verbose
+
+        if args.env:
+            environment = args.env[0]
+            del args.env
+        else:
+            environment = 'WSL'
+
+        linux_env = environment if platform.system() == 'Windows' else 'shell'
+        main_env = 'windows' if platform.system() == 'Windows' else 'shell'
+
+        self.Environments = {
+            'git' : Environments[main_env],
+            'gh' : Environments[main_env],
+            'tar' : Environments[main_env],
+            'make' : Environments[linux_env],
+            'pwd' : Environments[linux_env]
+        }
+        
+        self.git = Git(self)
+        
+        # if no args launch the gui
+        if not any(vars(args).values()):
+            return self.init_GUI()
 
         # assign defaults if none are submitted
         if args.build is None and not args.update and not args.clean:
@@ -531,6 +557,7 @@ class PRET_Manager:
 class game:
     def __init__(self, manager):
         self.manager = manager
+        self.Manager = manager
 
     def init_GUI(self):
         self.GUI = gui.GameGUI(self.manager.GUI.Content, self)
@@ -568,9 +595,16 @@ class repository(game):
             'builds' : dir + 'builds/'
         }
 
+        self.git = Git(self)
+        self.github = Github(self)
+        self.make = Make(self)
+
         self.Boxart = dir + 'boxart.png'
         if not os.path.exists(self.Boxart):
             self.Boxart = 'assets/images/gb.png'
+
+        self.builds = {}
+        self.releases = {}
 
         self.parse_builds()
         self.parse_releases()
@@ -647,7 +681,6 @@ class repository(game):
                     self.GUI.updateFavorite(self.isFavorite)
 
     def parse_builds(self):
-        self.builds = {}
         if os.path.exists(self.path['builds']):
             for branch in get_dirs(self.path['builds']):
                 for dirname in get_dirs(self.path['builds'] + branch):
@@ -663,7 +696,6 @@ class repository(game):
                         self.print('Invalid build directory name: ' + dirname, True)
 
     def parse_releases(self):
-        self.releases = {}
         if os.path.exists(self.path['releases']):
             for dirname in get_dirs(self.path['releases']):
                 # if the dir name matches the template, then it is a release
@@ -693,26 +725,6 @@ class repository(game):
         if doGUIStatus:
             self.manager.GUI.Process.ProcessSignals.newStatusMessage.emit(msg)
 
-    def run(self, args, capture_output, cwd, shell=None):
-        if not os.path.exists(cwd):
-            cwd = '.'
-
-        if shell:
-            description = "'" + args + "'"
-        else:
-            description = "'" + ' '.join(args) + "'"
-        self.print("Executing " + description)
-        
-        process = subprocess.run(args, capture_output=capture_output, cwd=cwd, shell=None if platform.system() == 'Windows' else shell)
-
-        if process.returncode:
-            # print the error if it hasnt already been been displayed
-            if capture_output:
-                print(process.stderr.decode('utf-8'))
-            self.print('Failed with exit code ' + str(process.returncode) + ' | ' + description)
-
-        return process.stdout.decode('utf-8').split('\n') if capture_output else process
-
     def set_branch(self, branch):
         if branch != self.CurrentBranch:
             self.checkout(branch)
@@ -732,7 +744,7 @@ class repository(game):
     # TODO - use git fetch --all to see if branch commit/date needs to be updated.
     # dont switch if not
     def get_branches(self):
-        branches = self.git('branch', capture_output=True)[:-1]
+        branches = self.git.branch(CaptureOutput=True)[:-1]
 
         new_branches = []
         new_current_branch = None
@@ -781,45 +793,27 @@ class repository(game):
                 self.GUI.Panel.updateBranchDetails()
 
     def get_url(self):
-        return self.git('config','--get','remote.origin.url', capture_output=True)[0]
-
-    def gh(self, *args, capture_output=True):
-        return self.run(['gh'] + [*args], capture_output, '.')
-
-    def git(self, *args, capture_output=False):
-        return self.run(['git'] + [*args], capture_output, self.path['repo'])
+        return self.git.get('remote.origin.url')[0]
 
     def checkout(self, *args):
-        #self.git('clean','-f')
+        #self.git.clean('-f')
         # TODO - handle failed checkout?
         self.print('Switching to ' + ' '.join(args), True)
-        return self.git('checkout', *args)
-
-    def pull(self):
-        return self.git('pull','--all')
-
-    def make(self, *args, capture_output=False, cwd=None, version=None):
-        command = ['make'] + [*args]
-
-        if version is not None:
-            command = ['(', self.manager.RGBDS.use(version), '&&'] + command + [')']
-
-        command = ' '.join(wsl(command))
-        return self.run(command, capture_output, cwd if cwd else self.path['repo'], shell=True)
+        return self.git.checkout(*args)
 
     def clean(self):
         self.print('Cleaning', True)
-        return self.make('clean', capture_output=not self.manager.Verbose)
+        return self.make.clean(CaptureOutput = not self.manager.Verbose)
 
     def fetch(self):
         self.print('Fetching', True)
-        return self.git('fetch', capture_output=not self.manager.Verbose)
+        return self.git.fetch(CaptureOutput = not self.manager.Verbose)
 
     def get_date(self):
-        return self.git('--no-pager','log','-1','--format=%ai', capture_output=True)[0]
+        return self.git.date()
 
     def get_commit(self):
-        return self.git('rev-parse','HEAD', capture_output=True)[0]
+        return self.git.head()
 
     def get_build_info(self, version):
         commit = self.get_commit()
@@ -850,12 +844,12 @@ class repository(game):
 
         if len(args):
             self.print('Switching back', True)
-            self.git('switch','-')
+            self.git.switch('-')
 
 
     def get_releases(self, overwrite=False):
         self.print('Checking releases', True)
-        releases = self.gh('release','list','-R', self.url)
+        releases = self.github.list()
 
         # if any exist, then download
         if len(releases) > 1:
@@ -871,8 +865,7 @@ class repository(game):
 
                     if not os.path.exists(path) or overwrite:
                         self.print('Downloading ' + title, True)
-                        self.gh('release','download', id, '-R', self.url, '-D', path, '-p', '*', '--clobber')
-                        self.gh('release','download', id, '-R', self.url, '-D', path, '-A','zip','--clobber')
+                        self.github.download(id, path)
                         if self.title == 'rgbds':
                             self.releases[id] = name
                         else:
@@ -897,7 +890,7 @@ class repository(game):
 
         self.print("Updating local repository", True)
         if not os.path.exists(self.path['repo']):
-            self.git('clone', self.url, self.path['repo'])
+            self.git.clone()
         else:
             self.print(self.path['repo'] + ' already exists')
 
@@ -905,7 +898,7 @@ class repository(game):
             if url != self.url:
                 self.print("Local repo origin path is \"" + url + "\" \"" + self.url + "\"", True)
 
-            self.pull()
+            self.git.pull()
     
         # check the shortcut
         shortcut = self.path['base'] + self.name + ' Repository.url'
@@ -939,11 +932,11 @@ class repository(game):
                 if name == 'extras':
                     url = url.replace('/kanzure/pokemon-reverse-engineering-tools.git','/pret/pokemon-reverse-engineering-tools.git')
 
-                self.git('submodule','set-url', name, url)
+                self.git.sub_url(name, url)
 
                 submodules[name] = url
 
-            self.git('submodule','update','--init')
+            self.git.sub_update()
 
         for name in submodules:
             dir = self.path['repo'] + '/' + name
@@ -952,11 +945,11 @@ class repository(game):
                 os.rmdir(dir)
 
             if not os.path.exists(dir):
-                self.git('submodule','add','-f', submodules[name], name)
+                self.git.sub_add(submodules[name], name)
 
     def build_rgbds(self, version):
         # if new, successful build, copy any roms to build dir
-        if self.make(version=version).returncode:
+        if self.make.run(input=self.manager.RGBDS.use(version)).returncode:
             self.print('Build failed for: ' + self.build_name, True)
             return False
         else:
@@ -986,7 +979,7 @@ class repository(game):
 
     def find_build(self, *args):
         if len(args):
-            self.git(*(['checkout'] +[*args]))
+            self.git.checkout(*args)
 
         self.rgbds = ''
         releases = [version[1:] for version in reversed(list(self.manager.RGBDS.releases.keys()))]
@@ -1006,9 +999,12 @@ class repository(game):
                 break
 
         if len(args):
-            self.git('switch','-')
+            self.git.switch('-')
 
 class RGBDS(repository):
+    def parse_builds(self, *args):
+        return
+
     def build(self, *versions):
         # If no version provided, then build all
         if not versions:
@@ -1025,51 +1021,83 @@ class RGBDS(repository):
 
             name = self.releases['v' + version]
 
+            # todo - separate for linux/windows
+            build_dir = self.path['builds'] + version + '/' + self.Manager.Environments['make'].Type + '/'
+
             cwd = self.path['releases'] + name
 
-            # TODO - need to check it contains rgbasm...
-            if not len(glob.glob(cwd + '/rgbds')):
-                os.mkdir(cwd + '/rgbds')
-                for tarball in glob.glob(cwd + '/*.tar.gz'):
-                    self.print('Extracting ' + name, True)
+            if self.Manager.Environments['make'].Type == "Linux":
+                # TODO - need to check it contains all rgbds files...
+                if not len(glob.glob(cwd + '/rgbds')):
+                    mkdir(cwd + '/rgbds')
+                    for tarball in glob.glob(cwd + '/*.tar.gz'):
+                        self.print('Extracting ' + name, True)
 
-                    process = subprocess.run(['tar', '-xzvf', tarball, '-C',  cwd + '/rgbds'], capture_output=True) # extract
+                        process = Command('tar', self.Manager.Environments).run('-xzvf "{0}" -C "{1}/rgbds"'.format(tarball, cwd)) # extract
 
-                    if process.returncode:
-                        self.print("Failed to extract " + tarball, True)
-                        return
+                        if process.returncode:
+                            self.print("Failed to extract " + tarball, True)
+                            return
 
-            extraction = glob.glob(cwd + '/**/Makefile', recursive=True)
-            if not len(extraction):
-                self.print("Failed to find Makefile under " + cwd, True)
-                return
-
-            path = extraction[0].replace('Makefile','')
-            if not os.path.exists(path + 'rgbasm'):
-                self.print('Building ' + name, True)
-                process = self.make(cwd=path) # make
-
-                if process.returncode:
-                    self.print("Failed to build " + name, True)
+                # todo - not if using extracted windows binaries...
+                extraction = glob.glob(cwd + '/**/Makefile', recursive=True)
+                if not len(extraction):
+                    self.print("Failed to find Makefile under " + cwd, True)
                     return
 
-            # TODO - copy the built files to builds directory instead of using the extracted release directory?
+                path = extraction[0].replace('Makefile','')
+                
+                # todo - check all files
+                if not os.path.exists(build_dir + 'rgbasm'):# and not os.path.exists(path + 'rgbasm.exe'):
+                    self.print('Building ' + name, True)
+                    process = self.make.run(Directory=path) # make
 
-            # get the absolute path
-            self.builds[version] = self.run(wsl(['pwd']), cwd=path, capture_output=True)[0]
+                    if process.returncode:
+                        self.print("Failed to build " + name, True)
+                        return
+                    
+                    mkdir(build_dir)
+                    files = get_rgbds(path)
+                    if files:
+                        names = [file.name for file in files]
+                        for file, name in zip(files, names):
+                            shutil.copyfile(file, build_dir + name)
+
+                        self.print('Placed rgbds files in ' + build_dir + ': ' + ', '.join(names), True)
+                    else:
+                        self.print('No rgbds files found after build', True)
+                        return False
+            else:
+                # TODO - need to check it contains all rgbds files...
+                if not len(glob.glob(build_dir)):
+                    for zipfile in glob.glob(cwd + '/*win64.zip'):
+                        self.print('Extracting ' + name, True)
+                        mkdir(build_dir)
+                        process = Command('tar', self.Manager.Environments).run('-xf "{0}" -C "{1}"'.format(zipfile, build_dir)) # extract
+
+                        if process.returncode:
+                            self.print("Failed to extract " + zipfile, True)
+                            return
+
+            # todo - need a separate one for linux/windows
+            self.builds[version] =  Command('pwd', self.Manager.Environments, Directory=build_dir, CaptureOutput=True).run()[0]
+            return True
 
     def use(self, version):
         if version not in self.builds:
+            # todo - this should write to gui log
             self.build(version)
 
         # TODO - add way to set python version (can set for this directory only?)
-        return 'PATH="' + self.builds[version] + ':/root/.pyenv/shims:/root/.pyenv/bin:$PATH"'
+        # todo - detect if self.build failed...
+        return 'PATH="' + self.builds[version] + '":/root/.pyenv/shims:/root/.pyenv/bin:$PATH'
 
 pret_manager = PRET_Manager()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog='pret_manager', description='Manage various pret related projects')
     parser.add_argument('-repos', '-r', nargs='+', help='Repo(s) to manage')
+    parser.add_argument('-env', '-e', nargs=1, choices=['wsl','cygwin','w64devkit'], help='Linux Environment for building')
     parser.add_argument('-exclude-repos', '-xr', nargs='+', help='Repo(s) to not manage')
     parser.add_argument('-authors', '-a', nargs='+', help='Author(s) to manage')
     parser.add_argument('-exclude-authors', '-xa', nargs='+', help='Author(s) to not manage')

@@ -2,6 +2,12 @@ import sys, webbrowser, json, re
 
 '''
 TODO:
+- add a settings file for environment, source location for cygwin/w64devkit
+
+- changing git branch should occurs in another process
+
+- dont download rgbds releases until necessary
+
 - Finish the add new list function
 -- qdialog for name, and confirmation if will overwrite
 --- also show confirmation when erasing a list
@@ -14,6 +20,8 @@ TODO:
 
 -- Empty panel shows credits
 
+-- Way to hide ignored games from browser
+
 Game Tile/Panel:
 - Indicate queued, missing, outdated
 
@@ -21,6 +29,7 @@ Styles:
 -- dialog
 
 Have the directory be database (if shortcut, then git, etc)
+- move rgbds to another folder... (tools)
 - folder title is name of game
 - data file in each (for which rgbds, tags, etc)
 -- separate from metadata
@@ -54,6 +63,12 @@ Update README
 
 IPS Patches...
 --------------------------
+Scroll list if the processed game is off screen
+Option to remove from queue after processed
+
+- auto-detect if wsl/cygwin/w64devkit is installed
+-- auto download w64devkit if not ?
+- install missing python, node, & linux packages/libraries
 
 GUI:
 - Catalog/Tile/Queue Sorting:
@@ -108,11 +123,18 @@ New column:
     - different path for rgbds builds
     - default List to display
 
+Safely copy files by first making a backup, or restoring it if corrupt
+
+Option to ignore specific branches, commits, releases, games
+- auto ignore early rgbds versions
+
 Option to change commit to build
+
 Option for specific Make commands to build
 - Need to parse makefile...
 
 Option to build multiple branches within a single 'update'
+
 Associate Authors with a Team
 '''
 
@@ -1136,6 +1158,7 @@ class MainContents(HBox):
         if not self.Window.Process:
             self.GUI.Manager.add_to_queue(games)
             [button.setProcessing(True) for button in self.ProcessButtons]
+            print('aaa')
             self.Window.Process = ExecuteProcess(self)
             threadpool.start(self.Window.Process)
 
