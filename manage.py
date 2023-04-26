@@ -277,8 +277,6 @@ class PRET_Manager:
         self.Directory = games_dir
         
         self.All = []
-        self.Verbose = False
-
         self.GUI = None
         self.App = None
         self.Search = None
@@ -309,24 +307,17 @@ class PRET_Manager:
 
         self.init()
         self.Search = SearchEntry(self)
-        #self.fetch()
     
     def fetch(self):
         self.print('Fetching pret-manager')
         self.git.fetch(CaptureOutput=True)
-
-    def fetch_all(self):
-        self.fetch()
-
-        for game in self.All:
-            game.fetch()
 
     def print(self, msg):
         msg = 'pret-manager:\t' + str(msg)
         print(msg)
 
         if self.GUI:
-            self.GUI.Process.ProcessSignals.newStatusMessage.emit(msg)
+            self.GUI.Process.ProcessSignals.log.emit(msg)
 
     def update(self):
         self.print('Updating pret-manager')
@@ -352,10 +343,6 @@ class PRET_Manager:
 
     def handle_args(self):
         args = parser.parse_args()
-
-        self.Verbose = args.verbose
-        if args.verbose:
-            del args.verbose
 
         if args.env:
             environment = args.env[0]
@@ -683,7 +670,7 @@ class repository(game):
                         for build in get_builds(self.path['builds'] + branch + '/' + dirname):
                             self.builds[branch][dirname][build.name] = build
                     else:
-                        self.print('Invalid build directory name: ' + dirname, True)
+                        self.print('Invalid build directory name: ' + dirname)
 
     def parse_releases(self):
         if os.path.exists(self.path['releases']):
@@ -700,20 +687,14 @@ class repository(game):
                             for rom in roms:
                                 self.releases[dirname][rom.name] = rom
                 else:
-                    self.print('Invalid release directory name: ' + dirname, True)
+                    self.print('Invalid release directory name: ' + dirname)
 
-    def print(self, msg, doPrint=None):
-        doGUIStatus = self.GUI and doPrint
+    def print(self, msg):
+        msg = self.name + ":\t" + str(msg)
+        print(msg)
 
-        if not doPrint:
-            doPrint = self.manager.Verbose
-
-        if doPrint:
-            msg = self.name + ":\t" + str(msg)
-            print(msg)
-
-        if doGUIStatus:
-            self.manager.GUI.Process.ProcessSignals.newStatusMessage.emit(msg)
+        if self.GUI:
+            self.manager.GUI.Process.ProcessSignals.log.emit(msg)
 
     def set_branch(self, branch):
         if branch != self.CurrentBranch:
@@ -788,16 +769,18 @@ class repository(game):
     def checkout(self, *args):
         #self.git.clean('-f')
         # TODO - handle failed checkout?
-        self.print('Switching to ' + ' '.join(args), True)
-        return self.git.checkout(*args)
+        self.print('Switching to ' + ' '.join(args))
+        result = self.git.checkout(*args)
+        self.print('Switched to ' + ' '.join(args))
+        return result
 
     def clean(self):
-        self.print('Cleaning', True)
-        return self.make.clean(CaptureOutput = not self.manager.Verbose)
+        self.print('Cleaning')
+        return self.make.clean()
 
     def fetch(self):
-        self.print('Fetching', True)
-        return self.git.fetch(CaptureOutput = not self.manager.Verbose)
+        self.print('Fetching')
+        return self.git.fetch()
 
     def get_date(self):
         return self.git.date()
@@ -825,20 +808,20 @@ class repository(game):
 
         # only build if commit not already built
         if os.path.exists(self.build_dir):
-            self.print('Commit has already been built: ' + self.build_name, True)
+            self.print('Commit has already been built: ' + self.build_name)
         # if rgbds version is known, switch to and make:
         elif version:
             if version != "None": # custom can have "None" to skip building
-                self.print('Building with ' + version, True)
+                self.print('Building with ' + version)
                 self.build_rgbds(version)
 
         if len(args):
-            self.print('Switching back', True)
+            self.print('Switching back')
             self.git.switch('-')
 
 
     def get_releases(self, overwrite=False):
-        self.print('Checking releases', True)
+        self.print('Checking releases')
         releases = self.github.list()
 
         # if any exist, then download
@@ -854,7 +837,7 @@ class repository(game):
                     path = self.path['releases'] + name
 
                     if not os.path.exists(path) or overwrite:
-                        self.print('Downloading ' + title, True)
+                        self.print('Downloading ' + title)
                         self.github.download(id, path)
                         if self.title == 'rgbds':
                             self.releases[id] = name
@@ -865,28 +848,23 @@ class repository(game):
                                 self.releases[name] = {}
                                 for rom in roms:
                                     self.releases[name][rom.name] = rom
-
-                    else:
-                        self.print('Skipping ' + path)
             
             if newRelease and self.GUI:
                 self.manager.GUI.Process.ProcessSignals.doRelease.emit(self)
 
         else:
-            self.print('No releases found', True)
+            self.print('No releases found')
          
     def update(self):
         mkdir(self.path['base'])
 
-        self.print("Updating local repository", True)
+        self.print("Updating local repository")
         if not os.path.exists(self.path['repo']):
             self.git.clone()
         else:
-            self.print(self.path['repo'] + ' already exists')
-
             url = self.get_url()
             if url != self.url:
-                self.print("Local repo origin path is \"" + url + "\" \"" + self.url + "\"", True)
+                self.print("Local repo origin path is \"" + url + "\" \"" + self.url + "\"")
 
             self.git.pull()
     
@@ -940,7 +918,7 @@ class repository(game):
     def build_rgbds(self, version):
         # if new, successful build, copy any roms to build dir
         if self.make.run(input=self.manager.RGBDS.use(version)).returncode:
-            self.print('Build failed for: ' + self.build_name, True)
+            self.print('Build failed for: ' + self.build_name)
             return False
         else:
             mkdir(self.path['builds'], self.build_dir)
@@ -950,7 +928,7 @@ class repository(game):
                 for rom, name in zip(roms, names):
                     shutil.copyfile(rom, self.build_dir + name)
 
-                self.print('Placed rom(s) in ' + self.CurrentBranch + '/' + self.build_name + ': ' + ', '.join(names), True)
+                self.print('Placed rom(s) in ' + self.CurrentBranch + '/' + self.build_name + ': ' + ', '.join(names))
                 
                 if self.CurrentBranch not in self.builds:
                     self.builds[self.CurrentBranch] = {}
@@ -964,7 +942,7 @@ class repository(game):
 
                 return True
             else:
-                self.print('No roms found after build', True)
+                self.print('No roms found after build')
                 return False
 
     def find_build(self, *args):
@@ -1021,29 +999,29 @@ class RGBDS(repository):
                 if not len(glob.glob(cwd + '/rgbds')):
                     mkdir(cwd + '/rgbds')
                     for tarball in glob.glob(cwd + '/*.tar.gz'):
-                        self.print('Extracting ' + name, True)
+                        self.print('Extracting ' + name)
 
                         process = Command('tar', self.Manager.Environments).run('-xzvf "{0}" -C "{1}/rgbds"'.format(tarball, cwd)) # extract
 
                         if process.returncode:
-                            self.print("Failed to extract " + tarball, True)
+                            self.print("Failed to extract " + tarball)
                             return
 
                 # todo - not if using extracted windows binaries...
                 extraction = glob.glob(cwd + '/**/Makefile', recursive=True)
                 if not len(extraction):
-                    self.print("Failed to find Makefile under " + cwd, True)
+                    self.print("Failed to find Makefile under " + cwd)
                     return
 
                 path = extraction[0].replace('Makefile','')
                 
                 # todo - check all files
                 if not os.path.exists(build_dir + 'rgbasm'):# and not os.path.exists(path + 'rgbasm.exe'):
-                    self.print('Building ' + name, True)
+                    self.print('Building ' + name)
                     process = self.make.run(Directory=path) # make
 
                     if process.returncode:
-                        self.print("Failed to build " + name, True)
+                        self.print("Failed to build " + name)
                         return
                     
                     mkdir(build_dir)
@@ -1053,20 +1031,20 @@ class RGBDS(repository):
                         for file, name in zip(files, names):
                             shutil.copyfile(file, build_dir + name)
 
-                        self.print('Placed rgbds files in ' + build_dir + ': ' + ', '.join(names), True)
+                        self.print('Placed rgbds files in ' + build_dir + ': ' + ', '.join(names))
                     else:
-                        self.print('No rgbds files found after build', True)
+                        self.print('No rgbds files found after build')
                         return False
             else:
                 # TODO - need to check it contains all rgbds files...
                 if not len(glob.glob(build_dir)):
                     for zipfile in glob.glob(cwd + '/*win64.zip'):
-                        self.print('Extracting ' + name, True)
+                        self.print('Extracting ' + name)
                         mkdir(build_dir)
                         process = Command('tar', self.Manager.Environments).run('-xf "{0}" -C "{1}"'.format(zipfile, build_dir)) # extract
 
                         if process.returncode:
-                            self.print("Failed to extract " + zipfile, True)
+                            self.print("Failed to extract " + zipfile)
                             return
 
             # todo - need a separate one for linux/windows
@@ -1095,7 +1073,6 @@ if __name__ == '__main__':
     parser.add_argument('-exclude-tags', '-xt', nargs='+', help='Tags(s) to not manage')
     parser.add_argument('-process', '-p', nargs='*', help='The processes to run on the managed repositories')
     parser.add_argument('-build', '-b', nargs='*', help='Build options')
-    parser.add_argument('-verbose', '-v', action='store_true', help='Display all log messages')
     
     #try:
     if True:  

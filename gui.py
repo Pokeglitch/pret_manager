@@ -2,14 +2,14 @@ import sys, webbrowser, json, re
 
 '''
 TODO:
-- changing git branch should occurs in another process
-
-- process order toggles should not directly modify pret_manager
--- since it would affect the current running process
-
 - Finish the add new list function
 -- qdialog for name, and confirmation if will overwrite
 --- also show confirmation when erasing a list
+
+Styles:
+-- dialog
+
+
 
 - Finish all base lists
 -- 'Library' for games with builds/releases with rom
@@ -17,18 +17,19 @@ TODO:
 -- 'Missing' for game not downloaded
 -- Update Outdated list after fetching
 
-- Empty panel shows settings & about
+
+
+Game Tile/Panel:
+- Indicate queued, missing, outdated
+
+
+
+Empty Panel shows settings & about
 - button to check for updates to pret_manager 
 - Settings:
     - environment
     - source location for cygwin/w64devkit
     - also for default process options
-
-Game Tile/Panel:
-- Indicate queued, missing, outdated
-
-Styles:
--- dialog
 
 Set the icon for the taskbar:
 - https://stackoverflow.com/questions/67599432/setting-the-same-icon-as-application-icon-in-task-bar-for-pyqt5-application
@@ -47,7 +48,6 @@ Set the icon for the taskbar:
     — Rebalanced
 
 CLI:
-- remove verbose
 - use -l to filter by list
 - use -s for search option
 - use the same 'filter' function that the GUI current uses...
@@ -57,6 +57,8 @@ Update README
 
 IPS Patches...
 --------------------------
+Fix polished crystal building
+
 Add predefined processes to run (i.e. only pull/build pret & pokeglitch)
 
 - Way to hide ignored games from browser
@@ -483,9 +485,7 @@ class GamePanel(VBox):
         
     def handleBranchSelected(self, branch):
         if not self.ignoreComboboxChanges and branch != self.GameGUI.Game.CurrentBranch:
-            # todo - should be in separate process
-            self.GameGUI.Game.set_branch(branch)
-            self.updateBranchCommitDate()
+            self.GUI.switchBranch(self.GameGUI.Game, branch)
 
             # todo - if it failed, change selection back to previous branch
 
@@ -1105,22 +1105,40 @@ class ProcessSignals(QObject):
     doBuild = pyqtSignal(object)
     doRelease = pyqtSignal(object)
     finished = pyqtSignal()
-    newStatusMessage = pyqtSignal(str)
+    log = pyqtSignal(str)
 
-class ExecuteProcess(QRunnable):
+class ManagerProcess(QRunnable):
     def __init__(self, GUI):
         super().__init__()
         self.GUI = GUI
-        self.Processes = self.GUI.Process.Options.compile()
         self.ProcessSignals = ProcessSignals()
+        self.ProcessSignals.log.connect(GUI.addStatus)
+        self.ProcessSignals.finished.connect(GUI.processFinished)
+
+    def finish(self):
+        self.ProcessSignals.finished.emit()
+
+class SwitchBranch(ManagerProcess):
+    def __init__(self, GUI, game, branch):
+        super().__init__(GUI)
+        self.Game = game
+        self.Branch = branch
+        self.ProcessSignals.finished.connect(game.GUI.Panel.updateBranchCommitDate)
+
+    def run(self):
+        self.Game.set_branch(self.Branch)
+        self.finish()
+
+class ExecuteProcess(ManagerProcess):
+    def __init__(self, GUI):
+        super().__init__(GUI)
+        self.Processes = self.GUI.Process.Options.compile()
         self.ProcessSignals.doBuild.connect(GUI.handleBuildSignal)
         self.ProcessSignals.doRelease.connect(GUI.handleReleaseSignal)
-        self.ProcessSignals.finished.connect(GUI.processFinished)
-        self.ProcessSignals.newStatusMessage.connect(GUI.addStatus)
 
     def run(self):
         self.GUI.Manager.run(self.Processes)
-        self.ProcessSignals.finished.emit()
+        self.finish()
 
 
 class MainContents(HBox):
@@ -1157,6 +1175,12 @@ class MainContents(HBox):
                 f.write(json.dumps(data))
 
             self.Manager.addList(name, data)
+
+    def switchBranch(self, game, branch):
+        if not self.Window.Process:
+            [button.setProcessing(True) for button in self.ProcessButtons]
+            self.Window.Process = SwitchBranch(self, game, branch)
+            threadpool.start(self.Window.Process)
 
     def startProcess(self, games):
         if not self.Window.Process:
