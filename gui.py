@@ -17,8 +17,6 @@ Styles:
 -- 'Missing' for game not downloaded
 -- Update Outdated list after fetching
 
-
-
 Game Tile/Panel:
 - Indicate queued, missing, outdated
 
@@ -115,6 +113,8 @@ Way to create/handle Groups of Tags (i.e. Gen1, Gen2, TCG)
 - tag can be a list, or an object
 -- if object, the sub tags will be the exact same array at the real tag
 --- can have nested subtags
+
+Delete dirs that were created for a process that later failed
 
 Multiple Themes
 

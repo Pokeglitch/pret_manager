@@ -1,4 +1,4 @@
-import os, subprocess
+import os, subprocess, platform
 
 def addToInput(options, *inputs):
     if "input" in options:
@@ -7,6 +7,9 @@ def addToInput(options, *inputs):
         options["input"] = ';'.join(inputs)
 
 class Environment:
+    def __init__(self, type):
+        self.Type = type
+
     def path(self, path):
         return path.replace('\\','/')
     
@@ -19,26 +22,21 @@ class Environment:
             return process
 
 class AppEnvironment(Environment):
-    def __init__(self, app):
+    def __init__(self, app, type):
+        super().__init__(type)
         self.App = app
-        self.Type = 'Linux'
 
     def run(self, command, options):
         addToInput(options, command)
         return super().run(self.App, options)
  
-class Shell(AppEnvironment):
-    def __init__(self):
-        super().__init__('sh')
+class Linux(AppEnvironment):
+    def __init__(self, app):
+        super().__init__(app, 'linux')
 
-class WSL(AppEnvironment):
-    def __init__(self):
-        super().__init__('wsl')
-
-class WindowsAppEnvironment(AppEnvironment):
-    def __init__(self, *args):
-        super().__init__(*args)
-        self.Type = 'Windows'
+class Windows(AppEnvironment):
+    def __init__(self, app):
+        super().__init__(app, windows_bit)
 
     def path(self, path):
         return super().path(os.path.abspath(path))
@@ -49,7 +47,7 @@ class WindowsAppEnvironment(AppEnvironment):
 
 # TODO - customizable cygwin installation directory
 # todo - option to build or use windows binaries
-class Cygwin(WindowsAppEnvironment):
+class Cygwin(Windows):
     def __init__(self):
         super().__init__('c:/cygwin64/bin/bash.exe --login')
 
@@ -57,7 +55,7 @@ class Cygwin(WindowsAppEnvironment):
         return super().path(path).replace('C:/','/cygdrive/c/')
 
 # TODO - customizable w64devkit installation directory
-class w64devkit(WindowsAppEnvironment):
+class w64devkit(Windows):
     def __init__(self):
         super().__init__('C:/w64devkit/w64devkit.exe')
 
@@ -153,16 +151,19 @@ class Make(GameCommand):
     def clean(self, *args, **options):
         return self.run('clean', *args, **options)
     
-    def disasm(self, *args, **options):
-        return self.run()
-    
-    def rgbds(self, *args, **options):
-        return self.run()
+if platform.system() == 'Windows':
+    import ctypes
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pokeglitch.pretmanager')
+    main_env = 'windows'
+    windows_bit = 'win32' if ctypes.sizeof(ctypes.c_voidp) == 4 else 'win64'
+else:
+    main_env = 'linux'
+    windows_bit = None
 
 Environments = {
-    "windows" : Environment(),
-    "shell" : Shell(),
-    "wsl" : WSL(),
+    "windows" : Environment(windows_bit),
+    "linux" : Linux('sh'),
+    "wsl" : Linux('wsl'),
     "cygwin" : Cygwin(),
     'w64devkit' : w64devkit()
 }
