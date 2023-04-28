@@ -42,6 +42,7 @@ Update README
 
 IPS Patches...
 --------------------------
+add local/custom repositories
 update rgbds dropdowns after updating...
 
 Option to only list releases, and user can select which to download

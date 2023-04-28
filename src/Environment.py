@@ -68,6 +68,9 @@ class Command:
         self.set_parameter("CaptureOutput", kwargs, False)
         self.set_parameter("Directory", kwargs, '.')
 
+    def path(self, path):
+        return self.Environments[self.Command].path(path)
+
     def set_parameter(self, key, kwargs, default):
         setattr(self, key, kwargs[key] if key in kwargs else default)
 
@@ -99,23 +102,25 @@ class Github(Command):
     def list(self):
         return self.run('release list -R {0}'.format(self.Game.url))
 
-    def download(self, id, path):
+    def download(self, id, destination):
         # view assets
         assets = json.loads(self.run('release view --json assets {0} -R {1}'.format(id, self.Game.url))[0])["assets"]
+        
+        destination = self.path(destination)
 
         if assets:
-            self.run('release download {0} -R {1} -D "{2}" -p "*" --clobber'.format(id, self.Game.url, path))
+            self.run('release download {0} -R {1} -D "{2}" -p "*" --clobber'.format(id, self.Game.url, destination))
         else:
             # todo - add option to build
-            self.run('release download {0} -R {1} -D "{2}" -A zip --clobber'.format(id, self.Game.url, path))
+            self.run('release download {0} -R {1} -D "{2}" -A zip --clobber'.format(id, self.Game.url, destination))
 
 class Git(GameCommand):
     def __init__(self, game):
         super().__init__('git', game)
 
     def clone(self, *args, **options):
-        print('clone {0} "{1}"'.format(self.Game.url, self.Game.path['repo']))
-        return self.run('clone {0} "{1}"'.format(self.Game.url, self.Game.path['repo']), *args, Directory='.', **options)
+        path = self.path(self.Game.path['repo'])
+        return self.run('clone {0} "{1}"'.format(self.Game.url, path), *args, Directory='.', **options)
 
     def branch(self, *args, **options):
         return self.run('branch -a', *args, **options)
@@ -160,6 +165,20 @@ class Make(GameCommand):
     def clean(self, *args, **options):
         return self.run('clean', *args, **options)
     
+class Tar(Command):
+    def __init__(self, *args):
+        super().__init__('tar', *args)
+
+    def tarball(self, tarball, destination):
+        tarball = self.path(tarball)
+        destination = self.path(destination)
+        return self.run('-xzvf "{0}" -C "{1}"'.format(tarball, destination)).returncode
+
+    def zipball(self, zipball, destination):
+        zipball = self.path(zipball)
+        destination = self.path(destination)
+        return self.run('-xf "{0}" -C "{1}"'.format(zipball, destination)).returncode
+
 if platform.system() == 'Windows':
     import ctypes
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pokeglitch.pretmanager')

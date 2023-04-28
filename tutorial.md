@@ -14,7 +14,7 @@ Interactively login with:
 
 See here for more: https://cli.github.com/manual/gh_auth_login
 
-**NOTE: gh will NOT work if working on separate drives**
+If you have issues with gh crashing, try installing in the linux environment and changing the settings
 
 
 git clone the pret-manager repository:

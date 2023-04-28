@@ -960,7 +960,8 @@ class repository():
 
     def build_rgbds(self, version):
         # if new, successful build, copy any roms to build dir
-        if self.make.run(input=self.manager.RGBDS.use('v' + version)).returncode:
+        input = self.manager.RGBDS.use('v' + version)
+        if not input or self.make.run(input=input).returncode:
             self.print('Build failed for: ' + self.build_name)
             return False
         else:
@@ -1038,7 +1039,8 @@ class RGBDS(repository):
 
         # If the version is still not a release, then its invalid
         if version not in self.releases:
-            error('Invalid RGBDS version: ' + version)
+            self.print('Invalid RGBDS version: ' + version)
+            return False
 
         name = self.releases[version]
 
@@ -1056,7 +1058,7 @@ class RGBDS(repository):
                 for tarball in glob.glob(cwd + '/*.tar.gz'):
                     self.print('Extracting ' + name)
 
-                    if Command('tar', self.Manager.Environments).run('-xzvf "{0}" -C "{1}"'.format(tarball, extraction_dir)).returncode:
+                    if Tar(self.Manager.Environments).tarball(tarball, extraction_dir):
                         self.print("Failed to extract " + tarball)
                         return False
 
@@ -1089,7 +1091,7 @@ class RGBDS(repository):
                 mkdir(extraction_dir)
                 for zipfile in glob.glob(cwd + '/*' + type + '.zip'):
                     self.print('Extracting ' + name)
-                    if Command('tar', self.Manager.Environments).run('-xf "{0}" -C "{1}"'.format(zipfile, extraction_dir)).returncode:
+                    if Tar(self.Manager.Environments).zipball(zipfile, extraction_dir):
                         self.print("Failed to extract " + zipfile)
                         return False
 
@@ -1112,11 +1114,12 @@ class RGBDS(repository):
         return True
 
     def use(self, version):
-        if version not in self.builds:
+        if version not in self.builds[self.Manager.Environments['make'].Type]:
             self.print('Building ' + version)
 
             if not self.build(version):
-                error('Version {0} is not available'.format(version))
+                self.print('Version {0} is not available'.format(version))
+                return ''
 
         return 'PATH="' + self.builds[self.Manager.Environments['make'].Type][version] + '":/root/.pyenv/shims:/root/.pyenv/bin:$PATH'
 
