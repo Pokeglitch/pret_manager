@@ -1,4 +1,4 @@
-import os, subprocess, platform
+import os, subprocess, platform, json
 
 def addToInput(options, *inputs):
     if "input" in options:
@@ -100,8 +100,14 @@ class Github(Command):
         return self.run('release list -R {0}'.format(self.Game.url))
 
     def download(self, id, path):
-        self.run('release download {0} -R {1} -D "{2}" -p * --clobber'.format(id, self.Game.url, path))
-        self.run('release download {0} -R {1} -D "{2}" -A zip --clobber'.format(id, self.Game.url, path))
+        # view assets
+        assets = json.loads(self.run('release view --json assets {0} -R {1}'.format(id, self.Game.url))[0])["assets"]
+
+        if assets:
+            self.run('release download {0} -R {1} -D "{2}" -p * --clobber'.format(id, self.Game.url, path))
+        else:
+            # todo - add option to build
+            self.run('release download {0} -R {1} -D "{2}" -A zip --clobber'.format(id, self.Game.url, path))
 
 class Git(GameCommand):
     def __init__(self, game):

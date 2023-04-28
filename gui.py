@@ -4,7 +4,6 @@ import sys, webbrowser, json, re
 TODO:
 - Finish all base lists
 -- 'Library' for games with builds/releases with rom
--- 'Unbuilt' for games without builds/releases with rom
 -- 'Missing' for game not downloaded
 -- refresh Outdated list after fetching
 -- handle when a new list has same name as a base list
@@ -49,6 +48,8 @@ IPS Patches...
 handle lists with same name as built in lists
 hande importing corrupt lists
 collect roms/patches from 'releases'
+
+Way to build archives in releases
 
 Fix polished crystal building
 

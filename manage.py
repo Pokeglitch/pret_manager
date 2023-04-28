@@ -6,8 +6,9 @@ import gui
 from src.Environment import *
 
 
-build_extensions = ['gb','gbc','pocket','patch','ips']
-metadata_properties = ['Branches','CurrentBranch','RGBDS']
+build_extensions = ['gb','gbc','pocket','patch']
+release_extensions = build_extensions + ['ips','bps','bsp','zip']
+metadata_properties = ['Branches','CurrentBranch','RGBDS','Outdated']
 rgbds_files = ['rgbasm','rgbfix','rgblink','rgbgfx']
 
 def error(msg):
@@ -23,6 +24,9 @@ def get_dirs(path):
 
 def get_files(path):
     return next(os.walk(path))[2]
+
+def get_releases(path):
+    return [file for file in Path(path).iterdir() if file.suffix[1:] in release_extensions]
 
 def get_builds(path):
     return [file for file in Path(path).iterdir() if file.suffix[1:] in build_extensions]
@@ -176,7 +180,7 @@ class ListEntry(CatalogEntry):
             self.Manager.GUI.Content.Tiles.refresh()
 
     def write(self):
-        if self.Name not in ["Missing","Outdated","Search"]:
+        if self.Name not in ["Library","Missing","Outdated","Search"]:
             with open(list_dir + self.Name + '.json', 'w') as f:
                 f.write(json.dumps(self.GameStructure))
 
@@ -282,7 +286,7 @@ class PRET_Manager:
         self.App = None
         self.Search = None
 
-        self.BaseLists = ["Favorites", "Excluding", "Outdated", "Missing"]
+        self.BaseLists = ["Library", "Favorites", "Excluding", "Outdated", "Missing"]
 
         self.Queue = []
 
@@ -333,7 +337,9 @@ class PRET_Manager:
         for name in self.BaseLists:
             self.addList(name, [])
 
-        self.Catalogs.Lists.get(name).addGames([game for game in self.All if game.Missing])
+        self.Catalogs.Lists.get("Library").addGames([game for game in self.All if game.hasBuild])
+        self.Catalogs.Lists.get("Outdated").addGames([game for game in self.All if game.Outdated])
+        self.Catalogs.Lists.get("Missing").addGames([game for game in self.All if game.Missing])
 
         # Load lists
         for file in get_files(list_dir):
@@ -430,6 +436,8 @@ class PRET_Manager:
                         repo.fetch()
                     elif process == 'u':
                         repo.update()
+
+                    repo.updateMetaData()
 
                 self.print('Finished Processing ' + repo.name)
                 if repo.GUI:
@@ -574,14 +582,16 @@ class repository():
         if not os.path.exists(self.Boxart):
             self.Boxart = 'assets/images/gb.png'
 
-        self.parse_builds()
-        self.parse_releases()
-
         self.Missing = not os.path.exists(self.path['repo'])
+        self.hasBuild = False
+        self.Outdated = False
         self.isExcluding = False
         self.isFavorite = False
 
         self.readMetaData()
+
+        self.parse_builds()
+        self.parse_releases()
 
         if self.manager.GUI and self.author != 'gbdev':
             self.init_GUI()
@@ -658,12 +668,17 @@ class repository():
                 for dirname in get_dirs(self.path['builds'] + branch):
                     # if the dir name matches the template, then it is a build
                     if re.match(r'^\d{4}-\d{2}-\d{2} [a-fA-F\d]{8} \([^)]+\)$',dirname):
-                        if branch not in self.builds:
-                            self.builds[branch] = {}
+                        builds = get_builds(self.path['builds'] + branch + '/' + dirname)
+                        # if builds exist in the directory:
+                        if builds:
+                            if branch not in self.builds:
+                                self.builds[branch] = {}
 
-                        self.builds[branch][dirname] = {}
-                        for build in get_builds(self.path['builds'] + branch + '/' + dirname):
-                            self.builds[branch][dirname][build.name] = build
+                            self.builds[branch][dirname] = {}
+                            for build in builds:
+                                self.builds[branch][dirname][build.name] = build
+
+                            self.hasBuild = True
                     else:
                         self.print('Invalid build directory name: ' + dirname)
 
@@ -677,11 +692,12 @@ class repository():
                     if self.title == 'rgbds':
                         self.releases[match.group(1)] = dirname
                     else:
-                        roms = get_builds(self.path['releases'] + dirname)
+                        roms = get_releases(self.path['releases'] + dirname)
                         if roms:
                             self.releases[dirname] = {}
                             for rom in roms:
                                 self.releases[dirname][rom.name] = rom
+                            self.hasBuild = True
                 else:
                     self.print('Invalid release directory name: ' + dirname)
 
@@ -833,18 +849,24 @@ class repository():
                     path = self.path['releases'] + name
 
                     if not os.path.exists(path) or overwrite:
+                        mkdir(path)
                         self.print('Downloading ' + title)
                         self.github.download(id, path)
                         if self.title == 'rgbds':
                             self.releases[id] = name
                         else:
-                            roms = get_builds(path)
+                            roms = get_releases(path)
                             if roms:
                                 newRelease = True
                                 self.releases[name] = {}
                                 for rom in roms:
                                     self.releases[name][rom.name] = rom
-            
+                                    
+                            if not self.hasBuild:
+                                self.hasBuild = True
+                                self.manager.Catalogs.Lists.get('Library').addGames([self])
+
+
             if newRelease and self.GUI:
                 self.manager.GUI.Process.ProcessSignals.doRelease.emit(self)
 
@@ -873,11 +895,12 @@ class repository():
         self.get_branches()
         self.get_releases()
         self.get_submodules()
-        self.updateMetaData()
 
         if self.Missing:
             self.manager.Catalogs.Lists.get('Missing').removeGames([self])
             self.Missing = False
+
+        self.updateMetaData()
 
     def get_submodules(self):
         submodules = {}
@@ -935,6 +958,10 @@ class repository():
 
                 if self.GUI:
                     self.manager.GUI.Process.ProcessSignals.doBuild.emit(self)
+
+                if not self.hasBuild:
+                    self.hasBuild = True
+                    self.manager.Catalogs.Lists.get('Library').addGames([self])
 
                 return True
             else:
