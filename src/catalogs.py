@@ -70,6 +70,7 @@ class CatalogEntryGUI(HBox):
         self.RemoveFromExcluding = RemoveFromExcluding(self)
 
         self.ProcessAction = ProcessAction(self)
+        self.NewList = NewList(self)
 
         self.addTo(parent)
 
@@ -117,6 +118,9 @@ class CatalogEntryGUI(HBox):
 
     def removeFromExcludingHandler(self):
         self.GUI.Manager.Catalogs.Lists.get('Excluding').removeGames(self.getData())
+
+    def saveList(self):
+        self.GUI.saveList(self.getData())
 
 class ListEntryGUI(CatalogEntryGUI):
     def __init__(self, *args):

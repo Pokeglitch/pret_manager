@@ -2,20 +2,12 @@ import sys, webbrowser, json, re
 
 '''
 TODO:
-- Finish the add new list function
--- qdialog for name, and confirmation if will overwrite
---- also show confirmation when erasing a list
-
-Styles:
--- dialog
-
-
-
 - Finish all base lists
 -- 'Library' for games with builds/releases with rom
 -- 'Unbuilt' for games without builds/releases with rom
 -- 'Missing' for game not downloaded
--- Update Outdated list after fetching
+-- refresh Outdated list after fetching
+-- handle when a new list has same name as a base list
 
 Game Tile/Panel:
 - Indicate queued, missing, outdated
@@ -29,8 +21,7 @@ Empty Panel shows settings & about
     - source location for cygwin/w64devkit
     - also for default process options
 
-Set the icon for the taskbar:
-- https://stackoverflow.com/questions/67599432/setting-the-same-icon-as-application-icon-in-task-bar-for-pyqt5-application
+    
 
 - Finish additional tags, artwork:
     — Quality of Life
@@ -55,6 +46,10 @@ Update README
 
 IPS Patches...
 --------------------------
+handle lists with same name as built in lists
+hande importing corrupt lists
+collect roms/patches from 'releases'
+
 Fix polished crystal building
 
 Add predefined processes to run (i.e. only pull/build pret & pokeglitch)
@@ -115,6 +110,8 @@ Way to create/handle Groups of Tags (i.e. Gen1, Gen2, TCG)
 --- can have nested subtags
 
 Delete dirs that were created for a process that later failed
+
+Option to build RGBDS with cygwin?
 
 Multiple Themes
 
@@ -514,6 +511,7 @@ class GameGUI(QWidget):
         self.RemoveFromExcluding = RemoveFromExcluding(self)
 
         self.ProcessAction = ProcessAction(self)
+        self.NewList = NewList(self)
 
         self.isQueued = False
         
@@ -581,6 +579,9 @@ class GameGUI(QWidget):
 
     def toggleExcludingHandler(self):
         self.GUI.Manager.Catalogs.Lists.get('Excluding').toggleGames([self.Game])
+        
+    def saveList(self):
+        self.GUI.saveList([self.Game])
 
 class QueueContextMenu(ContextMenu):
     def __init__(self, parent, event):
@@ -667,6 +668,8 @@ class Queue(VBox):
         self.ClearAction = ClearQueue(self)
         self.ProcessAction = ProcessAction(self)
 
+        self.NewList = NewList(self)
+
         self.updateIsEmpty()
 
         self.addTo(GUI.Col1, 1)
@@ -711,9 +714,8 @@ class Queue(VBox):
         if self.List:
             self.GUI.startProcess(self.getData())
 
-    def saveList(self, event):
-        if self.List:
-            self.GUI.saveList(self.getData())
+    def saveList(self):
+        self.GUI.saveList(self.getData())
     
     def getData(self):
         return [gameGUI.Game for gameGUI in self.List]
@@ -813,7 +815,7 @@ class Tiles(VBox):
         self.RemoveFromExcluding = RemoveFromExcluding(self)
         self.ClearAction = ClearBrowser(self)
         self.ProcessAction = ProcessAction(self)
-
+        self.NewList = NewList(self)
         self.addTo(GUI.Col2, 2)
 
     def reset(self):
@@ -901,9 +903,8 @@ class Tiles(VBox):
                 if game.GUI.Tile.Parent != self.Content:
                     game.GUI.Tile.addTo(self.Content)
 
-    def saveList(self, event):
-        if event.button() == Qt.LeftButton and self.All_Games:
-            self.GUI.saveList(self.All_Games)
+    def saveList(self):
+        self.GUI.saveList(self.All_Games)
 
     def removeList(self, list, type):
         lists = getattr(self, type + '_Lists')
@@ -1168,6 +1169,8 @@ class MainContents(HBox):
         self.addTo(window.Widget)
 
     def saveList(self, list):
+        SaveListDialog(self, list)
+        return
         fileName, ext = QFileDialog.getSaveFileName(self, 'Save List As', 'data/lists','*.json')
         if fileName:
             name = fileName.split('/')[-1].split('.')[0]
@@ -1207,6 +1210,8 @@ class MainContents(HBox):
     def addStatus(self, msg):
         self.Process.Body.addStatusMessage(msg)
 
+    def print(self, msg):
+        self.Process.Body.addStatusMessage('pret-manager:\t' + msg)
 
 class PRET_Manager_GUI(QMainWindow):
     def __init__(self, manager):

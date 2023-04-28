@@ -5,6 +5,11 @@ QMainWindow {
     min-width:1400px;
 }
 
+QDialog, QDialog > QLabel {
+    background-color: #252526;
+    color: #ffffff;
+}
+
 QScrollArea * {
     padding: 5;
 }
@@ -116,11 +121,11 @@ CatalogsModeIcon[mode=And][active=true]{
     background-color: #8b6f19;
 }
 
-CatalogsModeIcon[mode=Not]{
+CatalogsModeIcon[mode=Not], *[bg=red] {
     background-color: #7b3131;
 }
 
-CatalogsModeIcon[mode=Not]:hover{
+CatalogsModeIcon[mode=Not]:hover, *[bg=red]:hover {
     background-color: #9f3f3f;
 }
 
@@ -278,11 +283,11 @@ GameQueue[active="true"]:hover, CatalogEntryGUI[mode="New"]:hover, GameTile[acti
     background-color: #4C4C54;
 }
 
-CatalogEntryGUI[mode="Or"] {
+CatalogEntryGUI[mode="Or"], *[bg=green] {
     background-color: #274e13;
 }
 
-CatalogEntryGUI[mode="Or"]:hover {
+CatalogEntryGUI[mode="Or"]:hover, *[bg=green]:hover {
     background-color: #315c1b;
 }
 

@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QObject, QUrl, QThreadPool, QRunnable, QMargins, QPoint, QRect, QSize
-from PyQt5.QtWidgets import QAction, QMenu, QSlider, QStackedWidget, QLineEdit, QSplashScreen, QComboBox, QHeaderView, QTreeWidgetItem, QFileDialog, QTreeWidget, QApplication, QStyleOption, QStyle, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
+from PyQt5.QtWidgets import QDialog, QAction, QMenu, QSlider, QStackedWidget, QLineEdit, QSplashScreen, QComboBox, QHeaderView, QTreeWidgetItem, QFileDialog, QTreeWidget, QApplication, QStyleOption, QStyle, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
 from PyQt5.QtGui import QPixmap, QDesktopServices, QIcon, QPainter
-import time
+import time, json
 
 threadpool = QThreadPool()
 
@@ -288,9 +288,7 @@ class AddGameToListMenu(QMenu):
         for list in lists:
             self.addAction( AddGameToList(parent, list))
 
-        # todo - handle new list
-        # qdialog to input name, confirmation if already exists
-        self.addAction("New List")
+        self.addAction(parent.NewList)
 
 class RemoveGameFromListMenu(QMenu):
     def __init__(self, parent ,lists):
@@ -308,8 +306,6 @@ class RemoveGameFromList(Action):
     def __init__(self, parent, list):
         super().__init__(parent, list.Name, lambda: list.removeGames([parent.Game]) )
 
-
-
 class AddListToListMenu(QMenu):
     def __init__(self, parent ,lists):
         super().__init__("Add To List", parent)
@@ -317,9 +313,7 @@ class AddListToListMenu(QMenu):
         for list in lists:
             self.addAction( AddListToList(parent, list))
 
-        # todo - handle new list
-        # qdialog to input name, confirmation if already exists
-        self.addAction("New List")
+        self.addAction(parent.NewList)
 
 class RemoveListFromListMenu(QMenu):
     def __init__(self, parent ,lists):
@@ -336,6 +330,10 @@ class RemoveListFromList(Action):
     def __init__(self, parent, list):
         super().__init__(parent, list.Name, lambda: list.removeGames(parent.getData()) )
 
+class NewList(Action):
+    def __init__(self, parent):
+        super().__init__(parent, 'New List', parent.saveList )
+
 class EraseList(Action):
     def __init__(self, parent):
         super().__init__(parent, 'Erase List', parent.erase)
@@ -351,7 +349,102 @@ class ClearQueue(Action):
 class ProcessAction(Action):
     def __init__(self, parent):
         super().__init__(parent, 'Process', parent.process)
-
 class MenuIcon(Icon):
     def __init__(self, parent):
         super().__init__(parent, 'assets/images/menu.png', 35)
+
+class SaveListDialog(QDialog):
+    log = pyqtSignal(str)
+
+    def __init__(self, GUI, list):
+        super().__init__(None, Qt.WindowCloseButtonHint)
+
+        self.List = list
+        self.setWindowTitle('Save List')
+
+        self.GUI = GUI
+        self.Container = VBox(GUI)
+        
+        self.log.connect(GUI.print)
+        
+        self.ListName = QLineEdit()
+        self.ListName.setPlaceholderText("List Name")
+        self.ListName.textChanged.connect(self.onTextChanged)
+        self.ListName.returnPressed.connect(self.accept)
+
+        self.Buttons = HBox(GUI)
+        self.Save = Button(self.Buttons, 'Save', self.accept)
+        self.Cancel = Button(self.Buttons, 'Cancel', lambda e: self.reject() )
+
+        self.Save.setProperty('bg','green')
+        self.Save.updateStyle()
+        self.Cancel.setProperty('bg','red')
+        self.Cancel.updateStyle()
+
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.ListName)
+        self.layout.addWidget(self.Buttons)
+        self.setLayout(self.layout)
+        
+        with open('./assets/style.qss') as f:
+            self.setStyleSheet(f.read())
+
+        self.exec()
+
+    def keyPressEvent(self, e):
+        if e.key() == Qt.Key.Key_Escape:
+            self.reject()
+        elif e.key() == Qt.Key.Key_Enter:
+            self.accept()
+
+    def onTextChanged(self, text):
+        self.Save.setDisabled(not text)
+
+    def accept(self, e=None):
+        name = self.ListName.text()
+        if not name:
+            return
+        
+        if self.GUI.Manager.Catalogs.Lists.has(name):
+            if not OverwriteMessage(self.GUI, name).exec():
+                return
+
+        data = listToDict(self.List)
+
+        path = 'data/lists/{0}.json'.format(name)
+        with open(path, 'w') as f:
+            f.write(json.dumps(data))
+
+        self.GUI.Manager.addList(name, data)
+        self.log.emit('Saved List to ' + path)
+        super().accept()
+
+class OverwriteMessage(QDialog):
+    def __init__(self, GUI, name):
+        super().__init__(None, Qt.WindowCloseButtonHint)
+        self.setWindowTitle("Overwrite")
+
+        self.Message = QLabel(name + " Already Exists. Proceed?")
+
+        self.Buttons = HBox(GUI)
+        self.Overwrite = Button(self.Buttons, 'Overwrite', lambda e: self.accept() )
+        self.Cancel = Button(self.Buttons, 'Cancel', lambda e: self.reject() )
+
+        self.Overwrite.setProperty('bg','green')
+        self.Overwrite.updateStyle()
+        self.Cancel.setProperty('bg','red')
+        self.Cancel.updateStyle()
+
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.Message)
+        self.layout.addWidget(self.Buttons)
+        self.setLayout(self.layout)
+        
+        with open('./assets/style.qss') as f:
+            self.setStyleSheet(f.read())
+
+    def keyPressEvent(self, e):
+        if e.key() == Qt.Key.Key_Escape or e.key() == Qt.Key.Key_N:
+            self.reject()
+        elif e.key() == Qt.Key.Key_Return or e.key() == Qt.Key.Key_Y:
+            self.accept()
