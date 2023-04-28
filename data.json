@@ -430,6 +430,12 @@
       "tags": ["red", "disasm"]
     }
   },
+  "ViWalls": {
+    "pureRGB-FakeMime": {
+      "rgbds": "0.6.1",
+      "tags": ["red", "disasm"]
+    }
+  },
   "ZoomTen": {
     "pokelostsilver": {
       "rgbds": "0.6.0-rc2",

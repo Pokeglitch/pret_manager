@@ -735,18 +735,21 @@ class repository():
 
         for line in branches:
             split = line.split(' ')
-            name = split[-1]
+            name = split[-1].split('/')[-1]
             # set current branch as first index
             if split[0] == '*':
                 new_current_branch = name
 
-            new_branches.append(name)
+            if name not in new_branches:
+                new_branches.append(name)
 
         # arrange alphanetically
         new_branches.sort()
 
         new_branch_details = {}
         last_branch = None
+        # todo - this can be done with ls-remote....
+        
         for branch in new_branches:
             if branch != new_current_branch:
                 self.checkout(branch)
@@ -790,9 +793,30 @@ class repository():
         self.print('Cleaning')
         return self.make.clean()
 
+    # todo - outdated should be attached to each branch?
     def fetch(self):
-        self.print('Fetching')
-        return self.git.fetch()
+        heads = self.git.compare()
+        outdated = False
+        for head in heads:
+            # skip empty lines
+            if head:
+                head = head.split('\t')
+                commit = head[0]
+                branch = head[1].split('/')[-1]
+
+                if branch in self.Branches:
+                    if self.Branches[branch]['LastCommit'] != commit:
+                        outdated = True
+                else:
+                    # todo - add to branches?
+                    outdated = True
+
+        if outdated and not self.Outdated:
+            self.Outdated = True
+            self.manager.Catalogs.Lists.get('Outdated').addGames([self])
+
+        #self.print('Fetching')
+        #return self.git.fetch()
 
     def get_date(self):
         return self.git.date()

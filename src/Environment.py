@@ -104,7 +104,7 @@ class Github(Command):
         assets = json.loads(self.run('release view --json assets {0} -R {1}'.format(id, self.Game.url))[0])["assets"]
 
         if assets:
-            self.run('release download {0} -R {1} -D "{2}" -p * --clobber'.format(id, self.Game.url, path))
+            self.run('release download {0} -R {1} -D "{2}" -p "*" --clobber'.format(id, self.Game.url, path))
         else:
             # todo - add option to build
             self.run('release download {0} -R {1} -D "{2}" -A zip --clobber'.format(id, self.Game.url, path))
@@ -118,7 +118,7 @@ class Git(GameCommand):
         return self.run('clone {0} "{1}"'.format(self.Game.url, self.Game.path['repo']), *args, Directory='.', **options)
 
     def branch(self, *args, **options):
-        return self.run('branch', *args, **options)
+        return self.run('branch -a', *args, **options)
 
     def pull(self, *args, **options):
         return self.run('pull --all', *args, **options)
@@ -128,6 +128,9 @@ class Git(GameCommand):
 
     def checkout(self, *args, **options):
         return self.run('checkout', *args, **options)
+
+    def compare(self, *args, **options):
+        return self.run('ls-remote --heads', *args, CaptureOutput=True, **options)
 
     def get(self, *args, **options):
         return self.run('config --get', *args, CaptureOutput=True, **options)

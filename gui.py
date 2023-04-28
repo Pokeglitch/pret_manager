@@ -2,11 +2,8 @@ import sys, webbrowser, json, re
 
 '''
 TODO:
-- Finish all base lists
--- 'Library' for games with builds/releases with rom
--- 'Missing' for game not downloaded
+- If game is missing, reset the metadata & make sure gui is correct
 -- refresh Outdated list after fetching
--- handle when a new list has same name as a base list
 
 Game Tile/Panel:
 - Indicate queued, missing, outdated
@@ -45,6 +42,10 @@ Update README
 
 IPS Patches...
 --------------------------
+update rgbds dropdowns after updating...
+
+Option to only list releases, and user can select which to download
+
 handle lists with same name as built in lists
 hande importing corrupt lists
 collect roms/patches from 'releases'
