@@ -109,10 +109,10 @@ class Github(Command):
         destination = self.path(destination)
 
         if assets:
-            self.run('release download {0} -R {1} -D "{2}" -p "*" --clobber'.format(id, self.Game.url, destination))
+            self.run('release download {0} -R {1} -D "{2}" -p "*"'.format(id, self.Game.url, destination))
         else:
             # todo - add option to build
-            self.run('release download {0} -R {1} -D "{2}" -A zip --clobber'.format(id, self.Game.url, destination))
+            self.run('release download {0} -R {1} -D "{2}" -A zip'.format(id, self.Game.url, destination))
 
 class Git(GameCommand):
     def __init__(self, game):

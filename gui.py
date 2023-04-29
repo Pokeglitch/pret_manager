@@ -2,13 +2,13 @@ import sys, webbrowser, json, re
 
 '''
 TODO:
+remove unecessary branch switching
+
 - If game is missing, reset the metadata & make sure gui is correct
 -- refresh Outdated list after fetching
 
 Game Tile/Panel:
 - Indicate queued, missing, outdated
-
-
 
 Empty Panel shows settings & about
 - button to check for updates to pret_manager 
@@ -42,6 +42,7 @@ Update README
 
 IPS Patches...
 --------------------------
+better error handling
 add local/custom repositories
 update rgbds dropdowns after updating...
 

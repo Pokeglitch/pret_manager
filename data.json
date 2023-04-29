@@ -786,6 +786,12 @@
     "pokecrystal-r": {
       "rgbds": "0.6.0-rc2",
       "tags": ["crystal", "disasm"]
+    },
+    "pokegold-r": {
+      "tags": ["gold","silver","disasm"]
+    },
+    "pokejp" : {
+      "tags": ["red", "disasm"]
     }
   },
   "tysonrss": {

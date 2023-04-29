@@ -37,3 +37,5 @@ in taht folder, run the pip commands
 
 if python opens the windows store, type `py`, else:
 https://stackoverflow.com/questions/58754860/cmd-opens-windows-store-when-i-type-python
+
+Type opening powershell as administrator if receiving permission errors

@@ -924,6 +924,11 @@ class repository():
             self.manager.Catalogs.Lists.get('Missing').removeGames([self])
             self.Missing = False
 
+
+        if self.Outdated:
+            self.Outdated = False
+            self.manager.Catalogs.Lists.get('Outdated').removeGames([self])
+
         self.updateMetaData()
 
     def get_submodules(self):
