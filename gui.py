@@ -2,6 +2,9 @@ import sys, webbrowser, json, re
 
 '''
 TODO:
+show all rgbds options even if they arent downloaded...
+button to clear filter
+fix link to rom when adding to gui after building
 remove unecessary branch switching
 
 - If game is missing, reset the metadata & make sure gui is correct
@@ -9,6 +12,8 @@ remove unecessary branch switching
 
 Game Tile/Panel:
 - Indicate queued, missing, outdated
+- click on author in panel to select in browser
+- show lists a game is in on the panel
 
 Empty Panel shows settings & about
 - button to check for updates to pret_manager 
@@ -42,8 +47,12 @@ Update README
 
 IPS Patches...
 --------------------------
+
 'tar' in linux wont extract a zip file
 -- only permit 'tar' to be used with wsl, otherwise it uses main
+
+fallback plan when gh isnt available
+- simply add the info to data.json?
 
 add local/custom repositories
 update rgbds dropdowns after updating...

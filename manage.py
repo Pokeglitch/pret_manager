@@ -1059,7 +1059,7 @@ class repository():
 
                 self.builds[self.CurrentBranch][self.build_name] = {}
                 for file in files:
-                    self.builds[self.CurrentBranch][self.build_name][file.name] = file
+                    self.builds[self.CurrentBranch][self.build_name][file.name] = self.build_dir + file.name
 
                 if self.GUI:
                     self.manager.GUI.Process.ProcessSignals.doBuild.emit(self)
