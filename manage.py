@@ -4,7 +4,7 @@ import subprocess, os, re, glob, platform, shutil, argparse, json, sys
 from pathlib import Path
 import gui
 from src.Environment import *
-
+from src.Files import *
 
 build_extensions = ['gb','gbc','pocket','patch']
 release_extensions = build_extensions + ['ips','bps','bsp','zip']
@@ -13,14 +13,6 @@ rgbds_files = ['rgbasm','rgbfix','rgblink','rgbgfx']
 
 def error(msg):
     raise Exception('Error:\t' + msg)
-
-def mkdir(*dirs):
-    for dir in dirs:
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-
-def get_dirs(path):
-    return next(os.walk(path))[1]
 
 def get_files(path):
     return next(os.walk(path))[2]
@@ -75,8 +67,12 @@ class AuthorEntry(CatalogEntry):
     def __init__(self, *args):
         super().__init__(*args)
 
-        # TODO - only when the game is getting built...
-        mkdir(games_dir + self.Name)
+        author_dir = games_dir + self.Name
+        # if the author directory exists, but is empty, remove
+        if os.path.exists(author_dir) and not get_dirs(author_dir):
+            self.Manager.print('No games found for Author: ' + self.Name)
+            self.Manager.print('Removing directory: ' + author_dir)
+            rmdir(author_dir)
 
     def getGame(self, title):
         return self.GameStructure[title]
@@ -322,7 +318,10 @@ class PRET_Manager:
         print(msg)
 
         if self.GUI:
-            self.GUI.Process.ProcessSignals.log.emit(msg)
+            if self.GUI.Process:
+                self.GUI.Process.ProcessSignals.log.emit(msg)
+            else:
+                self.GUI.Content.addStatus(msg)
 
     def update(self):
         self.print('Updating pret-manager')
@@ -363,8 +362,7 @@ class PRET_Manager:
             'git' : Environments[main_env],
             'gh' : Environments[main_env],
             'tar' : Environments[main_env],
-            'make' : Environments[linux_env],
-            'pwd' : Environments[linux_env]
+            'make' : Environments[linux_env]
         }
         
         self.git = Git(self)
@@ -665,10 +663,12 @@ class repository():
         self.builds = {}
         if os.path.exists(self.path['builds']):
             for branch in get_dirs(self.path['builds']):
-                for dirname in get_dirs(self.path['builds'] + branch):
+                branch_dir = self.path['builds'] + branch
+                for dirname in get_dirs(branch_dir):
+                    build_path = branch_dir + '/' + dirname
                     # if the dir name matches the template, then it is a build
                     if re.match(r'^\d{4}-\d{2}-\d{2} [a-fA-F\d]{8} \([^)]+\)$',dirname):
-                        builds = get_builds(self.path['builds'] + branch + '/' + dirname)
+                        builds = get_builds(build_path)
                         # if builds exist in the directory:
                         if builds:
                             if branch not in self.builds:
@@ -679,34 +679,72 @@ class repository():
                                 self.builds[branch][dirname][build.name] = build
 
                             self.hasBuild = True
+                        else:
+                            self.print('Missing valid build files in pre-existing directory: ' + branch + '/' + dirname)
+                            self.print('Removing directory: ' + build_path)
+                            rmdir(build_path)
                     else:
                         self.print('Invalid build directory name: ' + dirname)
+                        self.print('Removing directory: ' + build_path)
+                        rmdir(build_path)
+
+                # if the branch directory is empty, then delete
+                if not get_dirs(branch_dir):
+                    self.print('Branch directory has no builds: ' + branch)
+                    self.print('Removing directory: ' + branch_dir)
+                    rmdir(branch_dir)
+            
+            # if the builds directory is empty, then delete
+            if not get_dirs(self.path['builds']):
+                self.print('Build directory is empty. Removing: ' + self.path['builds'])
+                rmdir(self.path['builds'])
 
     def parse_releases(self):
         self.releases = {}
         if os.path.exists(self.path['releases']):
             for dirname in get_dirs(self.path['releases']):
+                release_dir = self.path['releases'] + dirname
+                
                 # if the dir name matches the template, then it is a release
                 match = re.match(r'^\d{4}-\d{2}-\d{2} - .* \((.*)\)$', dirname)
                 if match:
+                    release_name = match.group(1)
                     if self.title == 'rgbds':
-                        self.releases[match.group(1)] = dirname
+                        files = get_all_files(release_dir)
+                        if files:
+                            self.releases[release_name] = dirname
                     else:
-                        roms = get_releases(self.path['releases'] + dirname)
-                        if roms:
+                        files = get_releases(release_dir)
+                        if files:
                             self.releases[dirname] = {}
-                            for rom in roms:
-                                self.releases[dirname][rom.name] = rom
-                            self.hasBuild = True
+                            for file in files:
+                                self.releases[dirname][file.name] = file
+
+                    if files:
+                        self.hasBuild = True
+                    else:
+                        self.print('Missing release files in directory: ' + release_name)
+                        self.print('Removing directory: ' + release_dir)
+                        rmdir(release_dir)
                 else:
                     self.print('Invalid release directory name: ' + dirname)
+                    self.print('Removing directory: ' + release_dir)
+                    rmdir(release_dir)
+
+            # if the releases directory is empty, then delete
+            if not get_dirs(self.path['releases']):
+                self.print('Release directory is empty. Removing: ' + self.path['releases'])
+                rmdir(self.path['releases'])
 
     def print(self, msg):
         msg = self.name + ":\t" + str(msg)
         print(msg)
 
         if self.Manager.GUI:
-            self.Manager.GUI.Process.ProcessSignals.log.emit(msg)
+            if self.Manager.GUI.Process:
+                self.Manager.GUI.Process.ProcessSignals.log.emit(msg)
+            else:
+                self.Manager.GUI.Content.addStatus(msg)
 
     def set_branch(self, branch):
         if branch != self.CurrentBranch:
@@ -784,7 +822,7 @@ class repository():
     def checkout(self, *args):
         #self.git.clean('-f')
         # TODO - handle failed checkout?
-        self.print('Switching to ' + ' '.join(args))
+        self.print('Switching to branch/commit: ' + ' '.join(args))
         result = self.git.checkout(*args)
         self.print('Switched to ' + ' '.join(args))
         return result
@@ -828,7 +866,6 @@ class repository():
         commit = self.get_commit()
         date = self.get_date()
         self.build_name = date[:10] + ' ' + commit[:8] + ' (' + version + ')'
-        mkdir(self.path['builds'], self.path['builds'] + self.CurrentBranch)
         self.build_dir = self.path['builds'] + self.CurrentBranch + '/' + self.build_name + '/'
 
     def build(self, *args):
@@ -842,62 +879,103 @@ class repository():
         version = self.RGBDS or self.rgbds
         self.get_build_info(version)
 
+        # if the build directory exists but doesnt contain valid files, then remove
+        if os.path.exists(self.build_dir) and not get_builds(self.build_dir):
+            self.print('Missing valid build files in pre-existing directory: ' + self.build_name)
+            self.print('Removing directory: ' + self.build_dir)
+            rmdir(self.build_dir)
+
         # only build if commit not already built
         if os.path.exists(self.build_dir):
             self.print('Commit has already been built: ' + self.build_name)
-        # if rgbds version is known, switch to and make:
-        elif version:
-            if version != "None": # custom can have "None" to skip building
-                self.print('Building with RGBDS v' + version)
-                self.build_rgbds(version)
+        # if rgbds version is known and configured, switch to and make:
+        elif version and version != "None": 
+            self.print('Building with RGBDS v' + version)
+            self.build_rgbds(version)
 
         if len(args):
-            self.print('Switching back')
+            self.print('Switching back to previous branch/commit')
             self.git.switch('-')
 
+    def get_releases(self, release_id=None):
+        release_found = False
 
-    def get_releases(self, overwrite=False):
         self.print('Checking releases')
+        # todo - handle failure to list releases?
         releases = self.github.list()
 
         # if any exist, then download
         if len(releases) > 1:
-            newRelease = False
             for release in releases:
                 # ignore empty lines
                 if release:
+                    release_valid = True
+
                     [title, isLatest, id, datetime] = release.split('\t')
+
+                    # skip if this not the targeted release
+                    if release_id and release_id != id:
+                        continue
 
                     date = datetime.split('T')[0]
                     name = legal_name(date + ' - ' + title + ' (' + id + ')')
-                    path = self.path['releases'] + name
+                    release_dir = self.path['releases'] + name
 
-                    if not os.path.exists(path) or overwrite:
-                        mkdir(path)
-                        self.print('Downloading ' + title)
-                        self.github.download(id, path)
+                    # if the release directory exists and doesnt contain valid files, then remove
+                    if os.path.exists(release_dir):
                         if self.title == 'rgbds':
-                            self.releases[id] = name
+                            files = get_all_files(release_dir)
                         else:
-                            roms = get_releases(path)
-                            if roms:
-                                newRelease = True
+                            files = get_releases(release_dir)
+
+                        if not files:
+                            self.print('Missing release files in pre-existing directory: ' + name)
+                            self.print('Removing directory: ' + release_dir)
+                            rmdir(release_dir)
+                
+                    # if the release diretory doesnt exist, then download
+                    if not os.path.exists(release_dir):
+                        temp_dir = temp_mkdir(release_dir)
+                        self.print('Downloading release: ' + title)
+                        self.github.download(id, release_dir)
+
+                        if self.title == 'rgbds':
+                            files = get_all_files(release_dir)
+                            if files:
+                                self.releases[id] = name
+                            else:
+                                release_valid = False
+                            
+                        else:
+                            files = get_releases(release_dir)
+                            if files:
                                 self.releases[name] = {}
-                                for rom in roms:
-                                    self.releases[name][rom.name] = rom
-                                    
-                            if not self.hasBuild:
-                                self.hasBuild = True
-                                self.manager.Catalogs.Lists.get('Library').addGames([self])
+                                for file in files:
+                                    self.releases[name][file.name] = file
+                            else:
+                                release_valid = False
 
+                        if release_valid:
+                            release_found = True
+                        else:
+                            self.print('Release does not have valid content: ' + name)
+                            self.print('Removing directory: ' + release_dir)
+                            rmdir(temp_dir)
 
-            if newRelease and self.GUI:
-                self.manager.GUI.Process.ProcessSignals.doRelease.emit(self)
+            if release_found:
+                if self.GUI:
+                    self.manager.GUI.Process.ProcessSignals.doRelease.emit(self)
+                
+                if not self.hasBuild:
+                    self.hasBuild = True
+                    self.manager.Catalogs.Lists.get('Library').addGames([self])
 
         else:
             self.print('No releases found')
+        
+        return release_found
          
-    def update(self):
+    def update(self, release_id=None):
         mkdir(self.path['base'])
 
         self.print("Updating local repository")
@@ -917,19 +995,20 @@ class repository():
                 f.write('[InternetShortcut]\nURL=' + self.url + '\n')
 
         self.get_branches()
-        self.get_releases()
+        releases_found = self.get_releases(release_id=release_id)
         self.get_submodules()
 
         if self.Missing:
             self.manager.Catalogs.Lists.get('Missing').removeGames([self])
             self.Missing = False
 
-
         if self.Outdated:
             self.Outdated = False
             self.manager.Catalogs.Lists.get('Outdated').removeGames([self])
 
         self.updateMetaData()
+
+        return releases_found
 
     def get_submodules(self):
         submodules = {}
@@ -957,34 +1036,30 @@ class repository():
         for name in submodules:
             dir = self.path['repo'] + '/' + name
             # if it exists, and is empty, then remove
-            if os.path.exists(dir) and not os.listdir(dir):
-                os.rmdir(dir)
+            if os.path.exists(dir) and is_empty(dir):
+                rmdir(dir)
 
             if not os.path.exists(dir):
                 self.git.sub_add(submodules[name], name)
 
     def build_rgbds(self, version):
         # if new, successful build, copy any roms to build dir
-        input = self.manager.RGBDS.use('v' + version)
-        if not input or self.make.run(input=input).returncode:
+        rgbds_dir = self.manager.RGBDS.use('v' + version)
+        if not rgbds_dir or self.make.run(input='PATH="' + rgbds_dir + '":/root/.pyenv/shims:/root/.pyenv/bin:$PATH').returncode:
             self.print('Build failed for: ' + self.build_name)
             return False
         else:
-            mkdir(self.path['builds'], self.build_dir)
-            roms = get_builds(self.path['repo'])
-            if roms:
-                names = [rom.name for rom in roms]
-                for rom, name in zip(roms, names):
-                    shutil.copyfile(rom, self.build_dir + name)
-
-                self.print('Placed rom(s) in ' + self.CurrentBranch + '/' + self.build_name + ': ' + ', '.join(names))
+            files = get_builds(self.path['repo'])
+            if files:
+                names = copy(files, self.build_dir)
+                self.print('Placed build file(s) in ' + self.CurrentBranch + '/' + self.build_name + ': ' + ', '.join(names))
                 
                 if self.CurrentBranch not in self.builds:
                     self.builds[self.CurrentBranch] = {}
 
                 self.builds[self.CurrentBranch][self.build_name] = {}
-                for rom in roms:
-                    self.builds[self.CurrentBranch][self.build_name][rom.name] = rom
+                for file in files:
+                    self.builds[self.CurrentBranch][self.build_name][file.name] = file
 
                 if self.GUI:
                     self.manager.GUI.Process.ProcessSignals.doBuild.emit(self)
@@ -995,7 +1070,7 @@ class repository():
 
                 return True
             else:
-                self.print('No roms found after build')
+                self.print('No valid files found after build')
                 return False
 
     def find_build(self, *args):
@@ -1034,99 +1109,125 @@ class RGBDS(repository):
             for version in get_dirs(self.path['builds']):
                 version_dir = self.path['builds'] + version + '/'
                 for type in get_dirs(version_dir):
-                    self.builds[type][version] = version_dir + type
+                    build_dir = version_dir + type
+                    # if the bulid dir doesnt have the expected files, then delete
+                    if get_all_files(build_dir):
+                        self.builds[type][version] = build_dir
+                    else:
+                        self.print('Missing valid build files in pre-existing directory: ' + version + '/' + type)
+                        self.print('Removing directory: ' + build_dir)
+                        rmdir(build_dir)
+
+                if not get_dirs(version_dir):
+                    self.print('Version directory has no builds: ' + version)
+                    self.print('Removing directory: ' + version_dir)
+                    rmdir(version_dir)
+
+            if not get_dirs(self.path['builds']):
+                self.print('Build directory is empty. Removing: ' + self.path['builds'])
+                rmdir(self.path['builds'])
+
 
     def build(self, version):
         # If the version is not in the list of releases, then update
         if version not in self.releases:
-            # todo - only download required release, return true/false
-            self.update()
+            self.print('RGBDS version not found: ' + version)
 
-        # If the version is still not a release, then its invalid
-        if version not in self.releases:
-            self.print('Invalid RGBDS version: ' + version)
-            return False
-
-        name = self.releases[version]
-
-        type = self.Manager.Environments['make'].Type
-        build_dir = self.path['builds'] + version + '/' + type + '/'
-
-        cwd = self.path['releases'] + name
-        extraction_dir = cwd + '/' + type
-
-        if type == "linux":
-            # if the extration dir doesnt exist, then extract
-            if not len(glob.glob(extraction_dir)):
-                mkdir(extraction_dir)
-                # should only be one...
-                for tarball in glob.glob(cwd + '/*.tar.gz'):
-                    self.print('Extracting ' + name)
-
-                    if Tar(self.Manager.Environments).tarball(tarball, extraction_dir):
-                        self.print("Failed to extract " + tarball)
-                        return False
-
-            # directory depth is not consistent, so find where the makefile is
-            extraction = glob.glob(cwd + '/**/Makefile', recursive=True)
-            if not len(extraction):
-                self.print("Failed to find Makefile under " + cwd)
+            # update and get the specific release
+            if not self.update(version):
+                self.print('RGBDS version still not found: ' + version)
                 return False
 
-            # simply remove the makefile to get the directory
-            path = extraction[0].replace('Makefile','')
+        name = self.releases[version]
+        type = self.Manager.Environments['make'].Type
+        build_dir = self.path['builds'] + version + '/' + type + '/'
+        release_dir = self.path['releases'] + name
+        extraction_dir = release_dir + '/' + type
+
+        if type == "linux":
+            extension = '.tar.gz'
+            keyfile = 'Makefile'
+        else:
+            extension = type + '.zip'
+            keyfile = 'rgbasm.exe'
+
+        extraction_dir_path = find(extraction_dir)
+        
+        # if the extraction directory exists, check for the key file
+        if extraction_dir_path:
+            keyfile_path = find(extraction_dir + '/**/' + keyfile, recursive=True)
+
+            # if the keyfile is not found, delete the directory so it will re-extract
+            if not keyfile_path:
+                self.print('Missing keyfile in pre-extracted directory: ' + keyfile)
+                self.print('Removing directory: ' + extraction_dir)
+                rmdir(extraction_dir)
+                extraction_dir_path = []
+        
+        # if the extraction dir doesnt exist, then extract
+        if not extraction_dir_path:
+            archives = find(release_dir + '/*' + extension)
+
+            if not archives:
+                self.print("Asset not found with extension: " + extension)
+                # TODO - remove dir and redownload release?
+                return False
+
+            archive_names = [path.split('/')[-1] for path in archives]
             
+            if len(archives) > 1:
+                self.print('Multiple archives found: ' + ', '.join(archive_names) )
+
+            self.print('Extracting ' + name + ' from ' + archive_names[0])
+
+            if not Tar(self.Manager.Environments).extract(archives[0], extraction_dir):
+                self.print("Failed to extract " + archives[0])
+                return False
+
+            # If the extraction was successful, check for the keyfile
+            keyfile_path = find(extraction_dir + '/**/' + keyfile, recursive=True)
+
+            # if the keyfile is not found, delete the directory so it will re-extract
+            if not keyfile_path:
+                self.print('Missing keyfile in extraction directory: ' + keyfile)
+                self.print('Removing directory: ' + extraction_dir)
+                rmdir(extraction_dir)
+                # TODO - redownload release?
+                return False
+
+        # get the directory containing the keyfile
+        keyfile_dir = dir_only(keyfile_path[0])
+
+        if type == "linux":
             self.print('Building ' + name)
 
-            if self.make.run(Directory=path).returncode:
+            if self.make.run(Directory=keyfile_dir).returncode:
                 self.print("Failed to build " + name)
                 return False
             
-            mkdir(build_dir)
-            files = get_rgbds(path)
-            if files:
-                names = [file.name for file in files]
-                for file, name in zip(files, names):
-                    shutil.copyfile(file, build_dir + name)
-            else:
-                self.print('No rgbds files found after build')
+            files = get_rgbds(keyfile_dir)
+            if not files:
+                self.print('No RGBDS files found after build')
                 return False
         else:
-            if not len(glob.glob(extraction_dir)):
-                mkdir(extraction_dir)
-                for zipfile in glob.glob(cwd + '/*' + type + '.zip'):
-                    self.print('Extracting ' + name)
-                    if Tar(self.Manager.Environments).zipball(zipfile, extraction_dir):
-                        self.print("Failed to extract " + zipfile)
-                        return False
+            files = get_all_files(keyfile_dir)
 
-            # directory depth is not consistent, so find where rgbasm.exe is
-            extraction = glob.glob(cwd + '/**/rgbasm.exe', recursive=True)
-            if not len(extraction):
-                self.print("Failed to find rgbasm.exe under " + cwd)
-                return False
-
-            # simply remove the file name to get the directory
-            path = extraction[0].replace('rgbasm.exe','')
-
-            mkdir(build_dir)
-            for file in get_files(path):
-                shutil.copyfile(path + file, build_dir + file)
-
+        copy(files, build_dir)
         self.print('Placed RGBDS ' + version + ' files into ' + build_dir)
-
-        self.builds[type][version] =  Command('pwd', self.Manager.Environments, Directory=build_dir, CaptureOutput=True).run()[0]
+        self.builds[type][version] =  build_dir
         return True
 
     def use(self, version):
-        if version not in self.builds[self.Manager.Environments['make'].Type]:
-            self.print('Building ' + version)
+        environment = self.Manager.Environments['make']
+        if version not in self.builds[environment.Type]:
+            self.print('RGBDS version not found: ' + version)
+            self.print('Building RGBDS version: ' + version)
 
             if not self.build(version):
                 self.print('Version {0} is not available'.format(version))
                 return ''
-
-        return 'PATH="' + self.builds[self.Manager.Environments['make'].Type][version] + '":/root/.pyenv/shims:/root/.pyenv/bin:$PATH'
+        
+        return environment.path(self.builds[environment.Type][version])
 
 pret_manager = PRET_Manager()
 

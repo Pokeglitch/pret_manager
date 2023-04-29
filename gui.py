@@ -42,7 +42,9 @@ Update README
 
 IPS Patches...
 --------------------------
-better error handling
+'tar' in linux wont extract a zip file
+-- only permit 'tar' to be used with wsl, otherwise it uses main
+
 add local/custom repositories
 update rgbds dropdowns after updating...
 
@@ -60,8 +62,6 @@ Add predefined processes to run (i.e. only pull/build pret & pokeglitch)
 
 - Way to hide ignored games from browser
 -- i.e. auto NOT the excluding list...
-
-- dont download rgbds releases until necessary
 
 Scroll list if the processed game is off screen
 Option to remove from queue after processed
@@ -112,8 +112,6 @@ Way to create/handle Groups of Tags (i.e. Gen1, Gen2, TCG)
 - tag can be a list, or an object
 -- if object, the sub tags will be the exact same array at the real tag
 --- can have nested subtags
-
-Delete dirs that were created for a process that later failed
 
 Option to build RGBDS with cygwin?
 

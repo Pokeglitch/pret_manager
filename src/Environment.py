@@ -1,4 +1,5 @@
 import os, subprocess, platform, json
+from src.Files import *
 
 def addToInput(options, *inputs):
     if "input" in options:
@@ -11,7 +12,7 @@ class Environment:
         self.Type = type
 
     def path(self, path):
-        return path.replace('\\','/')
+        return clean_path(path)
     
     def run(self, command, options):
         process = subprocess.run(command, **options)
@@ -26,6 +27,9 @@ class AppEnvironment(Environment):
         super().__init__(type)
         self.App = app
 
+    def path(self, path):
+        return super().path(os.path.abspath(path))
+
     def run(self, command, options):
         addToInput(options, command)
         return super().run(self.App, options)
@@ -33,14 +37,18 @@ class AppEnvironment(Environment):
 class Linux(AppEnvironment):
     def __init__(self, app):
         super().__init__(app, 'linux')
+    
+class WSL(Linux):
+    def __init__(self):
+        super().__init__('wsl')
+
+    def path(self, path):
+        return re.sub(r'^([^:]+):/',lambda p: '/mnt/{0}/'.format(p.group(1).lower()), super().path(path))
 
 class Windows(AppEnvironment):
     def __init__(self, app):
         super().__init__(app, windows_bit)
 
-    def path(self, path):
-        return super().path(os.path.abspath(path))
-    
     def run(self, command, options):
         addToInput(options, 'cd "' + self.path(options['cwd']) + '"')
         return super().run(command, options)
@@ -52,7 +60,7 @@ class Cygwin(Windows):
         super().__init__('c:/cygwin64/bin/bash.exe --login')
 
     def path(self, path):
-        return super().path(path).replace('C:/','/cygdrive/c/')
+        return re.sub(r'^([^:]+):/',lambda p: '/cygdrive/{0}/'.format(p.group(1).lower()), super().path(path))
 
 # TODO - customizable w64devkit installation directory
 class w64devkit(Windows):
@@ -169,15 +177,21 @@ class Tar(Command):
     def __init__(self, *args):
         super().__init__('tar', *args)
 
-    def tarball(self, tarball, destination):
-        tarball = self.path(tarball)
-        destination = self.path(destination)
-        return self.run('-xzvf "{0}" -C "{1}"'.format(tarball, destination)).returncode
+    def extract(self, archive, destination):
+        # todo - for wsl, this needs to happen after??
+        temp_path = temp_mkdir(destination)
 
-    def zipball(self, zipball, destination):
-        zipball = self.path(zipball)
+        archive = self.path(archive)
         destination = self.path(destination)
-        return self.run('-xf "{0}" -C "{1}"'.format(zipball, destination)).returncode
+        flags = '-xzvf' if archive.endswith('.tar.gz') else '-xf'
+
+        process = self.run('{0} "{1}" -C "{2}"'.format(flags, archive, destination))
+        result = not process.returncode
+
+        if not result:
+            rmdir(temp_path)
+
+        return result
 
 if platform.system() == 'Windows':
     import ctypes
@@ -191,7 +205,7 @@ else:
 Environments = {
     "windows" : Environment(windows_bit),
     "linux" : Linux('sh'),
-    "wsl" : Linux('wsl'),
+    "wsl" : WSL(),
     "cygwin" : Cygwin(),
     'w64devkit' : w64devkit()
 }
