@@ -4,8 +4,9 @@ import sys, webbrowser, json, re
 TODO:
 do more testing on branch tracking...
 - why does it fail to switch for purergb?
-- show on branch dropdown which are not tracked/out dated
-- way to remove branch from tracking
+--- better clean/reset methods...
+- show on branch dropdown which are not tracked / out dated
+--- way to remove branch from tracking
 
 show all rgbds options even if they arent downloaded
 
@@ -13,6 +14,9 @@ show all rgbds options even if they arent downloaded
 -- refresh Outdated list after fetching
 
 Game Tile/Panel:
+- fix entering of box art
+-- make bg color light gray for missing boxarts...
+- Show Title
 - Indicate queued, missing, outdated
 - click on author in panel to select in browser
 - show lists a game is in on the panel
@@ -20,10 +24,11 @@ Game Tile/Panel:
 --------
 
 dont permit erasing of base lists
+- separate on gui from custom ones?
+(and make sure it doesnt get confused with custom ones)
 
 button to clear filter
 button to close panel
-
 
 Empty Panel shows settings & about
 - button to check for updates to pret_manager 
@@ -104,6 +109,7 @@ Lists:
 
 Games:
 - give games keywords, which are different from tags and only used in search
+- also a custom description field, which can be used in search
 
 - way to delete a game from disk
 -- will keep builds and releases
@@ -120,9 +126,12 @@ Games:
 - Panel:
 -- can open/close multiple panels
 ---------
+Tree view of all forks
+- since some forked shinpokomon, crystal16 etc
+- or, just a deriviate count for each...
+
 Extra functionality:
 - And invert filter (for all tiles, for easy 'excluding')
-- Add Search Filter (can use glob patterns?)
 
 Way to create/handle Groups of Tags (i.e. Gen1, Gen2, TCG)
 - tag can be a list, or an object
@@ -676,7 +685,7 @@ class Queue(VBox):
         
         self.Footer = HBox(GUI)
         self.Process = Button(self.Footer, 'Process', self.processButton)
-        self.GUI.addProcessButton(self.Process)
+        self.GUI.Window.Processing.connect(self.Process.setProcessing)
         self.Footer.addTo(self)
 
         self.AddToFavorites = AddToFavorites(self)
@@ -1122,29 +1131,21 @@ class Panel(VBox):
     def applyPatch(self, event):
         pass
 
-class ProcessSignals(QObject):
-    doBuild = pyqtSignal(object)
-    doRelease = pyqtSignal(object)
-    finished = pyqtSignal()
-    log = pyqtSignal(str)
-
 class ManagerProcess(QRunnable):
     def __init__(self, GUI):
         super().__init__()
         self.GUI = GUI
-        self.ProcessSignals = ProcessSignals()
-        self.ProcessSignals.log.connect(GUI.addStatus)
-        self.ProcessSignals.finished.connect(GUI.processFinished)
+        self.Window = GUI.Window
+        self.Window.Processing.emit(True)
 
     def finish(self):
-        self.ProcessSignals.finished.emit()
+        self.Window.Processing.emit(False)
 
 class SwitchBranch(ManagerProcess):
     def __init__(self, GUI, game, branch):
         super().__init__(GUI)
         self.Game = game
         self.Branch = branch
-        self.ProcessSignals.finished.connect(game.GUI.Panel.updateBranchCommitDate)
 
     def run(self):
         self.Game.set_branch(self.Branch)
@@ -1154,8 +1155,6 @@ class ExecuteProcess(ManagerProcess):
     def __init__(self, GUI):
         super().__init__(GUI)
         self.Processes = self.GUI.Process.Options.compile()
-        self.ProcessSignals.doBuild.connect(GUI.handleBuildSignal)
-        self.ProcessSignals.doRelease.connect(GUI.handleReleaseSignal)
 
     def run(self):
         self.GUI.Manager.run(self.Processes)
@@ -1184,20 +1183,16 @@ class MainContents(HBox):
 
         self.Panel = Panel(self)
 
+        self.Window.Logger.connect(self.addStatus)
+        self.Window.Build.connect(self.handleBuildSignal)
+        self.Window.Release.connect(self.handleReleaseSignal)
+        self.Window.Branch.connect(self.handleBranchSignal)
+        self.Window.Processing.connect(self.onProcessing)
+
         self.addTo(window.Widget)
 
     def saveList(self, list):
         SaveListDialog(self, list)
-        return
-        fileName, ext = QFileDialog.getSaveFileName(self, 'Save List As', 'data/lists','*.json')
-        if fileName:
-            name = fileName.split('/')[-1].split('.')[0]
-
-            data = listToDict(list)
-            with open(fileName,'w') as f:
-                f.write(json.dumps(data))
-
-            self.Manager.addList(name, data)
 
     def switchBranch(self, game, branch):
         if not self.Window.Process:
@@ -1208,22 +1203,21 @@ class MainContents(HBox):
     def startProcess(self, games):
         if not self.Window.Process:
             self.GUI.Manager.add_to_queue(games)
-            [button.setProcessing(True) for button in self.ProcessButtons]
             self.Window.Process = ExecuteProcess(self)
             threadpool.start(self.Window.Process)
 
-    def processFinished(self):
-        self.Window.Process = None
-        [button.setProcessing(False) for button in self.ProcessButtons]
+    def onProcessing(self, isBusy):
+        if not isBusy:
+            self.Window.Process = None
+
+    def handleBranchSignal(self, game):
+        game.GUI.Panel.updateBranchCommitDate()
 
     def handleBuildSignal(self, game):
         game.GUI.Panel.drawBuilds()
 
     def handleReleaseSignal(self, game):
         game.GUI.Panel.drawReleases()
-
-    def addProcessButton(self, button):
-        self.ProcessButtons.append(button)
 
     def addStatus(self, msg):
         self.Process.Body.addStatusMessage(msg)
@@ -1232,6 +1226,12 @@ class MainContents(HBox):
         self.Process.Body.addStatusMessage('pret-manager:\t' + msg)
 
 class PRET_Manager_GUI(QMainWindow):
+    Logger = pyqtSignal(str)
+    Release = pyqtSignal(object)
+    Build = pyqtSignal(object)
+    Branch = pyqtSignal(object)
+    Processing = pyqtSignal(bool)
+
     def __init__(self, manager):
         super().__init__()
         self.Process = None

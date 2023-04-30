@@ -369,10 +369,7 @@ class PRET_Manager:
         print(msg)
 
         if self.GUI:
-            if self.GUI.Process:
-                self.GUI.Process.ProcessSignals.log.emit(msg)
-            else:
-                self.GUI.Content.addStatus(msg)
+            self.GUI.Logger.emit(msg)
 
     def update(self):
         self.print('Updating pret-manager')
@@ -815,16 +812,16 @@ class repository():
         print(msg)
 
         if self.Manager.GUI:
-            if self.Manager.GUI.Process:
-                self.Manager.GUI.Process.ProcessSignals.log.emit(msg)
-            else:
-                self.Manager.GUI.Content.addStatus(msg)
+            self.Manager.GUI.Logger.emit(msg)
 
     def set_branch(self, branch):
         if branch != self.CurrentBranch:
             self.switch(branch)
             # TODO - handle if failed
             self.updateMetaData()
+            
+            if self.Manager.GUI:
+                self.Manager.GUI.Branch.emit(self)
 
     def set_RGBDS(self, RGBDS):
         if RGBDS != self.RGBDS:
@@ -880,6 +877,8 @@ class repository():
         if "LastCommit" not in self.Branches[branch] or lastCommit != self.Branches[branch]["LastCommit"]:
             self.Branches[branch]["LastCommit"] = lastCommit
             self.Branches[branch]["LastUpdate"] = lastUpdate
+
+        self.CurrentBranch = branch
 
     def clean(self):
         self.print('Cleaning')
@@ -1025,7 +1024,7 @@ class repository():
 
             if release_found:
                 if self.GUI:
-                    self.manager.GUI.Process.ProcessSignals.doRelease.emit(self)
+                    self.manager.GUI.Release.emit(self)
                 
                 if not self.hasBuild:
                     self.hasBuild = True
@@ -1128,7 +1127,7 @@ class repository():
                     self.builds[self.CurrentBranch][self.build_name][file.name] = self.build_dir + file.name
 
                 if self.GUI:
-                    self.manager.GUI.Process.ProcessSignals.doBuild.emit(self)
+                    self.manager.GUI.Build.emit(self)
 
                 if not self.hasBuild:
                     self.hasBuild = True
