@@ -288,7 +288,7 @@ class AddGameToListMenu(QMenu):
         for list in lists:
             self.addAction( AddGameToList(parent, list))
 
-        self.addAction(parent.NewList)
+        self.addAction(parent.GameGUI.NewList)
 
 class RemoveGameFromListMenu(QMenu):
     def __init__(self, parent ,lists):
@@ -299,12 +299,12 @@ class RemoveGameFromListMenu(QMenu):
 
 class AddGameToList(Action):
     def __init__(self, parent, list):
-        super().__init__(parent, list.Name, lambda: list.addGames([parent.Game]) )
+        super().__init__(parent, list.Name, lambda: list.addGames([parent.GameGUI.Game]) )
 
 
 class RemoveGameFromList(Action):
     def __init__(self, parent, list):
-        super().__init__(parent, list.Name, lambda: list.removeGames([parent.Game]) )
+        super().__init__(parent, list.Name, lambda: list.removeGames([parent.GameGUI.Game]) )
 
 class AddListToListMenu(QMenu):
     def __init__(self, parent ,lists):
@@ -361,6 +361,7 @@ class SaveListDialog(QDialog):
 
         self.List = list
         self.setWindowTitle('Save List')
+        self.setWindowIcon(QIcon('assets/images/icon.png'))
 
         self.GUI = GUI
         self.Container = VBox(GUI)
@@ -423,6 +424,7 @@ class OverwriteMessage(QDialog):
     def __init__(self, GUI, name):
         super().__init__(None, Qt.WindowCloseButtonHint)
         self.setWindowTitle("Overwrite")
+        self.setWindowIcon(QIcon('assets/images/icon.png'))
 
         self.Message = QLabel(name + " Already Exists. Proceed?")
 

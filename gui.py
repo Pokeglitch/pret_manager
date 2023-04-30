@@ -208,10 +208,10 @@ class GameBaseContextMenu(ContextMenu):
                 else:
                     addLists.append(list)
 
-        self.addMenu( AddGameToListMenu(gui, addLists) )
+        self.addMenu( AddGameToListMenu(parent, addLists) )
 
         if removeLists:
-            self.addMenu( RemoveGameFromListMenu(gui, removeLists) )
+            self.addMenu( RemoveGameFromListMenu(parent, removeLists) )
 
         if not gui.GUI.Window.Process:
             self.addAction( gui.ProcessAction )
