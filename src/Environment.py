@@ -140,8 +140,8 @@ class Git(GameCommand):
     def fetch(self, *args, **options):
         return self.run('fetch', *args, **options)
 
-    def checkout(self, *args, **options):
-        return self.run('checkout', *args, **options)
+    def switch(self, *args, **options):
+        return self.run('switch', *args, **options)
 
     def compare(self, *args, **options):
         return self.run('ls-remote --heads', *args, CaptureOutput=True, **options)

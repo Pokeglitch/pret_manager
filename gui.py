@@ -2,10 +2,12 @@ import sys, webbrowser, json, re
 
 '''
 TODO:
-remove unecessary branch switching
+do more testing on branch tracking...
+- why does it fail to switch for purergb?
+- show on branch dropdown which are not tracked/out dated
+- way to remove branch from tracking
 
-show all rgbds options even if they arent downloaded...
-button to clear filter
+show all rgbds options even if they arent downloaded
 
 - If game is missing, reset the metadata & make sure gui is correct
 -- refresh Outdated list after fetching
@@ -15,25 +17,20 @@ Game Tile/Panel:
 - click on author in panel to select in browser
 - show lists a game is in on the panel
 
+--------
+
+dont permit erasing of base lists
+
+button to clear filter
+button to close panel
+
+
 Empty Panel shows settings & about
 - button to check for updates to pret_manager 
 - Settings:
     - environment
     - source location for cygwin/w64devkit
     - also for default process options
-
-- Finish additional tags, artwork:
-    — Quality of Life
-    — New Region
-    — New Story
-    — Debug
-    — Translation
-    — Speedrun
-    — Fakemon
-    — Retyped
-    — Challenge
-    — Randomizer
-    — Rebalanced
 
 CLI:
 - use -l to filter by list
@@ -42,9 +39,10 @@ CLI:
 -- -a, -ao, -aa, -an, etc
 
 Update README
-
-IPS Patches...
 --------------------------
+finish artwork/tags
+IPS Patches
+
 some makefiles require rgbds to be in a folder in the repo
 - bw3g
 
@@ -61,7 +59,7 @@ Option for auto-refresh on open
 -- only permit 'tar' to be used with wsl, otherwise it uses main
 
 fallback plan when gh isnt available
-- simply add the info to data.json?
+- simply add the details to data.json, and download via http
 
 add local/custom repositories
 update rgbds dropdowns after updating...
@@ -483,8 +481,8 @@ class GamePanel(VBox):
     def updateBranchCommitDate(self):
         if self.GameGUI.Game.CurrentBranch:
             data = self.GameGUI.Game.Branches[self.GameGUI.Game.CurrentBranch]
-            self.Commit.Right.setText(data['LastCommit'][:8])
-            self.LastUpdate.Right.setText(data['LastUpdate'][:19])
+            self.Commit.Right.setText(data['LastCommit'][:8] if 'LastCommit' in data else '-')
+            self.LastUpdate.Right.setText(data['LastUpdate'][:19] if 'LastUpdate' in data else '-')
         else:
             self.Commit.Right.setText('-')
             self.LastUpdate.Right.setText('-')

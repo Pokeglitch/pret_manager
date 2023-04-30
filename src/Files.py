@@ -15,7 +15,7 @@ def find(pattern, **opts):
     paths = glob.glob(pattern, **opts)
     return [clean_path(path) for path in paths]
 
-def copy(files, destination):
+def copy_files(files, destination):
     mkdir(destination)
     names = [file.name for file in files]
     for file, name in zip(files, names):

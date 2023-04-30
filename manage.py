@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import subprocess, os, re, glob, platform, shutil, argparse, json, sys
+import copy, subprocess, os, re, glob, platform, shutil, argparse, json, sys
 from pathlib import Path
 import gui
 from src.Environment import *
@@ -8,7 +8,7 @@ from src.Files import *
 
 build_extensions = ['gb','gbc','pocket','patch']
 release_extensions = build_extensions + ['ips','bps','bsp','zip']
-metadata_properties = ['Branches','CurrentBranch','RGBDS','Outdated']
+metadata_properties = ['Branches','CurrentBranch','RGBDS']
 rgbds_files = ['rgbasm','rgbfix','rgblink','rgbgfx']
 
 def error(msg):
@@ -419,8 +419,8 @@ class PRET_Manager:
         if args.process:
             processes = ''
             for process in args.process:
-                if re.search(r'[^ubc]',process):
-                    error('Only u, b, and c are valid process arguments. Received: ' + process)
+                if re.search(r'[^ubcr]',process):
+                    error('Only r, u, b, and c are valid process arguments. Received: ' + process)
                 processes += process
         else:
             processes = 'ucbc'
@@ -630,6 +630,7 @@ class repository():
 
         self.readMetaData()
 
+        self.parse_branches()
         self.parse_builds()
         self.parse_releases()
 
@@ -643,25 +644,39 @@ class repository():
         path = self.path['base'] + 'metadata.json'
         if os.path.exists(path):
             with open(path, 'r') as f:
-                self.MetaData = json.loads(f.read())
+                data = json.loads(f.read())
+
+            self.MetaData = {}
+            for prop in metadata_properties:
+                if prop in data:
+                    self.MetaData[prop] = data[prop]
+        else:
+            self.Outdated = True
 
         for prop in metadata_properties:
             self.getMetaDataProperty(prop)
 
     def getMetaDataProperty(self, name):
         if name in self.MetaData:
-            setattr(self, name, self.MetaData[name])
+            value = copy.deepcopy(self.MetaData[name])
+            setattr(self, name, value)
 
     def updateMetaData(self):
         metadataChanged = [self.updateMetaDataProperty(prop) for prop in metadata_properties]
 
         if any(metadataChanged):
+            mkdir(self.path['base'])
             with open(self.path['base'] + 'metadata.json', 'w') as f:
-                f.write(json.dumps(self.MetaData))
+                f.write(json.dumps(self.MetaData, indent=4))
 
     def updateMetaDataProperty(self, name):
-        value = getattr(self, name)
-        if name not in self.MetaData or value != self.MetaData[name]:
+        value = copy.deepcopy( getattr(self, name) )
+
+        if name not in self.MetaData:
+            self.MetaData[name] = value
+            return True
+
+        if value != self.MetaData[name]:
             if value:
                 self.MetaData[name] = value
                 return True
@@ -701,6 +716,23 @@ class repository():
                 if self.GUI:
                     self.GUI.updateFavorite(self.isFavorite)
 
+    def parse_branches(self):
+        if self.Branches:
+            for branchName in self.Branches:
+                if self.check_branch_outdated(branchName):
+                    self.Outdated = True
+        else:
+            self.Outdated = True
+
+    # only track branchs that exist locally
+    def check_branch_outdated(self, branchName):
+        branch = self.Branches[branchName]
+
+        if "LastRemoteCommit" in branch and "LastCommit" in branch:
+            return branch["LastRemoteCommit"] != branch["LastCommit"]
+
+        return False
+ 
     def parse_builds(self):
         self.builds = {}
         if os.path.exists(self.path['builds']):
@@ -790,9 +822,8 @@ class repository():
 
     def set_branch(self, branch):
         if branch != self.CurrentBranch:
-            self.checkout(branch)
+            self.switch(branch)
             # TODO - handle if failed
-            self.CurrentBranch = branch
             self.updateMetaData()
 
     def set_RGBDS(self, RGBDS):
@@ -804,70 +835,51 @@ class repository():
             self.RGBDS = RGBDS
             self.updateMetaData()
 
-    # TODO - use git fetch --all to see if branch commit/date needs to be updated.
-    # dont switch if not
-    def get_branches(self):
-        branches = self.git.branch(CaptureOutput=True)[:-1]
+    def pull(self):
+        self.git.pull()
+        self.get_current_branch_info()
 
-        new_branches = []
-        new_current_branch = None
-        doUpdate = False
+    def update_branches(self):
+        starting_branch = self.CurrentBranch
 
-        for line in branches:
-            split = line.split(' ')
-            name = split[-1].split('/')[-1]
-            # set current branch as first index
-            if split[0] == '*':
-                new_current_branch = name
+        if self.check_branch_outdated(starting_branch):
+            self.pull()
 
-            if name not in new_branches:
-                new_branches.append(name)
-
-        # arrange alphanetically
-        new_branches.sort()
-
-        new_branch_details = {}
-        last_branch = None
-        # todo - this can be done with ls-remote....
+        for branchName in self.Branches:
+            if self.check_branch_outdated(branchName):
+                self.switch(branchName)
+                self.pull()
         
-        for branch in new_branches:
-            if branch != new_current_branch:
-                self.checkout(branch)
-            lastUpdate = self.get_date()
-            lastCommit = self.get_commit()
+        if self.CurrentBranch != starting_branch:
+            self.switch(starting_branch)
 
-            new_branch_details[branch] = {
-                "LastUpdate" : lastUpdate,
-                "LastCommit" : lastCommit
-            }
-
-            if branch not in self.Branches or lastCommit != self.Branches[branch]["LastCommit"]:
-                doUpdate = True
-
-            last_branch = branch
-
-        # return back to start branch
-        if new_current_branch != last_branch:
-            self.checkout(new_current_branch)
-
-        # if the branches changed, then update
-        if doUpdate or len(new_branch_details.keys()) != len(self.Branches.keys()) or self.CurrentBranch != new_current_branch:
-            self.Branches = new_branch_details
-            self.CurrentBranch = new_current_branch
-            
-            if self.GUI:
-                self.GUI.Panel.updateBranchDetails()
+        if self.GUI:
+            self.GUI.Panel.updateBranchDetails()
 
     def get_url(self):
         return self.git.get('remote.origin.url')[0]
 
-    def checkout(self, *args):
-        #self.git.clean('-f')
-        # TODO - handle failed checkout?
+    def switch(self, *args):
         self.print('Switching to branch/commit: ' + ' '.join(args))
-        result = self.git.checkout(*args)
+        self.git.run('clean -f')
+        self.git.run('reset --hard')
+        result = self.git.switch(*args)
+        # TODO - handle failed switch?
         self.print('Switched to ' + ' '.join(args))
+        self.get_current_branch_info()
         return result
+    
+    def get_current_branch_info(self):
+        branch = self.git.run('rev-parse --abbrev-ref HEAD', CaptureOutput=True)[0]
+        lastUpdate = self.get_date()
+        lastCommit = self.get_commit()
+
+        if branch not in self.Branches:
+            self.Branches[branch] = {}
+            
+        if "LastCommit" not in self.Branches[branch] or lastCommit != self.Branches[branch]["LastCommit"]:
+            self.Branches[branch]["LastCommit"] = lastCommit
+            self.Branches[branch]["LastUpdate"] = lastUpdate
 
     def clean(self):
         self.print('Cleaning')
@@ -877,28 +889,33 @@ class repository():
         self.print('Fetching')
         return self.git.fetch()
 
-    # todo - outdated should be attached to each branch?
+    # will get remote branch information
     def refresh(self):
-        heads = self.git.compare()
         outdated = False
-        for head in heads:
-            # skip empty lines
-            if head:
-                head = head.split('\t')
-                commit = head[0]
-                branch = head[1].split('/')[-1]
 
-                if branch in self.Branches:
-                    if self.Branches[branch]['LastCommit'] != commit:
+        if not os.path.exists(self.path["repo"]):
+            outdated = True
+        else:
+            heads = self.git.compare()
+
+            for head in heads:
+                # skip empty lines
+                if head:
+                    head = head.split('\t')
+                    commit = head[0]
+                    branch = head[1].split('/')[-1]
+
+                    if branch not in self.Branches:
+                        self.Branches[branch] = {}
+                    
+                    self.Branches[branch]['LastRemoteCommit'] = commit
+
+                    if 'LastCommit' not in self.Branches[branch] or self.Branches[branch]['LastCommit'] != commit:
                         outdated = True
-                else:
-                    # todo - add to branches?
-                    outdated = True
 
         if outdated and not self.Outdated:
             self.Outdated = True
             self.manager.Catalogs.Lists.get('Outdated').addGames([self])
-
 
     def get_date(self):
         return self.git.date()
@@ -918,7 +935,7 @@ class repository():
             self.update()
 
         if len(args):
-            self.checkout(*args)
+            self.switch(*args)
 
         version = self.RGBDS or self.rgbds
         self.get_build_info(version)
@@ -1025,12 +1042,17 @@ class repository():
         self.print("Updating local repository")
         if not os.path.exists(self.path['repo']):
             self.git.clone()
+            self.get_current_branch_info()
+            self.refresh()
+            if self.GUI:
+                self.GUI.Panel.updateBranchDetails()
         else:
             url = self.get_url()
             if url != self.url:
                 self.print("Local repo origin path is \"" + url + "\" \"" + self.url + "\"")
-
-            self.git.pull()
+            self.refresh()
+            if self.Outdated:
+                self.update_branches()
     
         # check the shortcut
         shortcut = self.path['base'] + self.name + ' Repository.url'
@@ -1038,7 +1060,6 @@ class repository():
             with open(shortcut,'w') as f:
                 f.write('[InternetShortcut]\nURL=' + self.url + '\n')
 
-        self.get_branches()
         releases_found = self.get_releases(release_id=release_id)
         self.get_submodules()
 
@@ -1046,6 +1067,7 @@ class repository():
             self.manager.Catalogs.Lists.get('Missing').removeGames([self])
             self.Missing = False
 
+        # todo - only if branch is tracked...
         if self.Outdated:
             self.Outdated = False
             self.manager.Catalogs.Lists.get('Outdated').removeGames([self])
@@ -1095,7 +1117,7 @@ class repository():
         else:
             files = get_builds(self.path['repo'])
             if files:
-                names = copy(files, self.build_dir)
+                names = copy_files(files, self.build_dir)
                 self.print('Placed build file(s) in ' + self.CurrentBranch + '/' + self.build_name + ': ' + ', '.join(names))
                 
                 if self.CurrentBranch not in self.builds:
@@ -1119,7 +1141,7 @@ class repository():
 
     def find_build(self, *args):
         if len(args):
-            self.git.checkout(*args)
+            self.git.switch(*args)
 
         self.rgbds = ''
         releases = [version[1:] for version in reversed(list(self.manager.RGBDS.releases.keys()))]
@@ -1256,7 +1278,7 @@ class RGBDS(repository):
         else:
             files = get_all_files(keyfile_dir)
 
-        copy(files, build_dir)
+        copy_files(files, build_dir)
         self.print('Placed RGBDS ' + version + ' files into ' + build_dir)
         self.builds[type][version] =  build_dir
         return True
