@@ -45,6 +45,9 @@ Update README
 
 IPS Patches...
 --------------------------
+some makefiles require rgbds to be in a folder in the repo
+- bw3g
+
 git reset --hard before pulling
 - test with purergb
 
