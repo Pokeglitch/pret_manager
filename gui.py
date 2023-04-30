@@ -49,6 +49,8 @@ IPS Patches...
 git reset --hard before pulling
 - test with purergb
 
+option to kill process
+
 Right click dropdown should have option for each specific process in addition to 'all'
 
 Option for auto-refresh on open

@@ -1,5 +1,15 @@
-import re, os, shutil, glob
+import re, os, shutil, glob, json
 from pathlib import Path
+
+def read_json(path):
+    output = {}
+    try:
+        with open(path, 'r') as f:
+            output = json.loads(f.read())
+    except Exception as e:
+        print(e)
+
+    return output
 
 def find(pattern, **opts):
     paths = glob.glob(pattern, **opts)

@@ -275,32 +275,50 @@ class Catalogs:
 class Settings:
     def __init__(self, manager):
         self.Manager = manager
-        self.Base = {}
-        self.Active = {}
         # load base settings
-        self.load('assets/settings.json', True)
+        self.loadBase()
         self.reset()
         # try to load user settings
         self.load('data/settings.json')
 
-    # todo - handle when setting is a dict
-    def load(self, path, isBase = True):
+    def loadBase(self):
+        self.Base = {}
+        self.load('assets/settings.json', True)
+
+    def load(self, path, isBase=False):
         if os.path.exists(path):
-            # todo - error handling, validation
-            with open(path, 'r') as f:
-                text = f.read()
-                content = json.loads(text)
+            target = self.Base if isBase else self.Active
+            source = read_json(path)
+            self.store_values(target, source, isBase)
+
+    def store_values(self, target, source, isBase, fullname=''):
+        for key, value in source.items():
+            self.store_value(target, key, value, isBase, fullname)
+
+    # todo - complete validation
+    def store_value(self, target, key, value, isBase, fullname):
+        fullname += key
+        if not isBase:
+            if key not in target:
+                self.Manager.print('Invalid Settings key: ' + fullname)
+                return
             
-            for key, value in content.items():
-                if isBase:
-                    self.Base[key] = value
-                elif key in self.Base:
-                    self.Active[key] = value
+            if type(value) != type(target[key]):
+                self.Manager.print('Invalid Settings value for "' + fullname + '". Expected: ' + str(type(target[key])) + ', Received: ' + str(type(value)))
+                return
+
+        if isinstance(value, dict):
+            if key not in target:
+                target[key] = {}
+            
+            fullname += '.'
+            self.store_values(target[key], value, isBase, fullname)
+        else:
+            target[key] = value
 
     def reset(self):
         self.Active = {}
-        for key, value in self.Base.items():
-            self.Active[key] = value
+        self.store_values(self.Active, self.Base, True)
 
 class PRET_Manager:
     def __init__(self):

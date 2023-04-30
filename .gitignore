@@ -1,5 +1,5 @@
 ~missing/
 __pycache__/
-data/lists/*
+data/
 games/
 metadata.json
