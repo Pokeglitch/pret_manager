@@ -472,8 +472,8 @@ class PRET_Manager:
                         repo.build(*build_options)
                     elif process == 'c':
                         repo.clean()
-                    elif process == 'f':
-                        repo.fetch()
+                    elif process == 'r':
+                        repo.refresh()
                     elif process == 'u':
                         repo.update()
 
@@ -873,8 +873,12 @@ class repository():
         self.print('Cleaning')
         return self.make.clean()
 
-    # todo - outdated should be attached to each branch?
     def fetch(self):
+        self.print('Fetching')
+        return self.git.fetch()
+
+    # todo - outdated should be attached to each branch?
+    def refresh(self):
         heads = self.git.compare()
         outdated = False
         for head in heads:
@@ -895,8 +899,6 @@ class repository():
             self.Outdated = True
             self.manager.Catalogs.Lists.get('Outdated').addGames([self])
 
-        #self.print('Fetching')
-        #return self.git.fetch()
 
     def get_date(self):
         return self.git.date()

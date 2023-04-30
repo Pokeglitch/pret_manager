@@ -2,9 +2,10 @@ import sys, webbrowser, json, re
 
 '''
 TODO:
+remove unecessary branch switching
+
 show all rgbds options even if they arent downloaded...
 button to clear filter
-remove unecessary branch switching
 
 - If game is missing, reset the metadata & make sure gui is correct
 -- refresh Outdated list after fetching
@@ -20,8 +21,6 @@ Empty Panel shows settings & about
     - environment
     - source location for cygwin/w64devkit
     - also for default process options
-
-    
 
 - Finish additional tags, artwork:
     — Quality of Life

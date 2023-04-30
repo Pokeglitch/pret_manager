@@ -301,7 +301,6 @@ class AddGameToList(Action):
     def __init__(self, parent, list):
         super().__init__(parent, list.Name, lambda: list.addGames([parent.GameGUI.Game]) )
 
-
 class RemoveGameFromList(Action):
     def __init__(self, parent, list):
         super().__init__(parent, list.Name, lambda: list.removeGames([parent.GameGUI.Game]) )

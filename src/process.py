@@ -68,29 +68,23 @@ class ProcessTitle(HBox):
 class ProcessOptions(VBox):
     def __init__(self, parent):
         super().__init__(parent.GUI)
-        
-        # todo - pull from settings
-        self.doFetch = False
-        self.doUpdate = True
-        self.doCleanBefore = True
-        self.doBuild = True
-        self.doCleanAfter = True 
 
         self.Title = ProcessTitle(self)
 
-        # todo - get default values from settings
-        self.Fetch = ProcessToggleField(self, 'Fetch', False)
-        self.Update = ProcessToggleField(self, 'Update', True)
-        self.CleanBefore = ProcessToggleField(self, 'Clean', True)
-        self.Build = ProcessToggleField(self, 'Build', True)
-        self.CleanAfter = ProcessToggleField(self, 'Clean', True)
+        settings = self.GUI.Manager.Settings.Active["Process"]
+
+        self.Refresh = ProcessToggleField(self, 'Refresh', settings["Refresh"])
+        self.Update = ProcessToggleField(self, 'Update', settings["Update"])
+        self.CleanBefore = ProcessToggleField(self, 'Clean', settings["CleanBefore"])
+        self.Build = ProcessToggleField(self, 'Build', settings["Build"])
+        self.CleanAfter = ProcessToggleField(self, 'Clean', settings["CleanAfter"])
 
         self.addTo(parent, 1)
 
     def compile(self):
         processes = ''
-        if self.Fetch.value():
-            processes += 'f'
+        if self.Refresh.value():
+            processes += 'r'
         
         if self.Update.value():
             processes += 'u'
@@ -105,21 +99,6 @@ class ProcessOptions(VBox):
             processes += 'c'
 
         return processes
-
-    def toggleUpdate(self, value):
-        self.doUpdate = value
-
-    def toggleFetch(self, value):
-        self.doFetch = value
-
-    def toggleBuild(self, value):
-        self.doBuild = value
-
-    def toggleCleanBefore(self, value):
-        self.doCleanBefore = value
-
-    def toggleCleanAfter(self, value):
-        self.doCleanAfter = value
 
 class ProcessStatusContent(VBox):
     def __init__(self, parent):
