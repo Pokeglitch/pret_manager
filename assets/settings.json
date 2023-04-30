@@ -10,9 +10,9 @@
         "cygwin" : "c:/cygwin64/bin/bash.exe",
         "w64devkit" : "C:/w64devkit/w64devkit.exe",
         "git" : "main",
-        "gh" : "wsl",
+        "gh" : "main",
         "tar" : "main",
         "make" : "linux",
-        "linux" : "cygwin"
+        "linux" : "wsl"
     }
 }
