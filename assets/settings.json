@@ -1,0 +1,18 @@
+{
+    "Process" : {
+        "Refresh" : false,
+        "Update" : true,
+        "CleanBefore" : true,
+        "Build" : true,
+        "CleanAfter" : true
+    },
+    "Environment" : {
+        "cygwin" : "c:/cygwin64/bin/bash.exe",
+        "w64devkit" : "C:/w64devkit/w64devkit.exe",
+        "git" : "main",
+        "gh" : "wsl",
+        "tar" : "main",
+        "make" : "linux",
+        "linux" : "cygwin"
+    }
+}

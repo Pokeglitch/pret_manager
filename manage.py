@@ -272,6 +272,36 @@ class Catalogs:
         self.Authors = AuthorCatalog(self)
         self.Tags = TagCatalog(self)
 
+class Settings:
+    def __init__(self, manager):
+        self.Manager = manager
+        self.Base = {}
+        self.Active = {}
+        # load base settings
+        self.load('assets/settings.json', True)
+        self.reset()
+        # try to load user settings
+        self.load('data/settings.json')
+
+    # todo - handle when setting is a dict
+    def load(self, path, isBase = True):
+        if os.path.exists(path):
+            # todo - error handling, validation
+            with open(path, 'r') as f:
+                text = f.read()
+                content = json.loads(text)
+            
+            for key, value in content.items():
+                if isBase:
+                    self.Base[key] = value
+                elif key in self.Base:
+                    self.Active[key] = value
+
+    def reset(self):
+        self.Active = {}
+        for key, value in self.Base.items():
+            self.Active[key] = value
+
 class PRET_Manager:
     def __init__(self):
         self.Manager = self
@@ -289,6 +319,9 @@ class PRET_Manager:
         self.path = {
             'repo' : '.'
         }
+
+        self.Settings = Settings(self)
+        self.Environments = Environments(self)
 
     def addList(self, name, list):
         if self.Catalogs.Lists.has(name):
@@ -356,15 +389,6 @@ class PRET_Manager:
         else:
             environment = 'wsl'
 
-        linux_env = main_env if main_env == 'linux' else environment
-
-        self.Environments = {
-            'git' : Environments[main_env],
-            'gh' : Environments[main_env],
-            'tar' : Environments[main_env],
-            'make' : Environments[linux_env]
-        }
-        
         self.git = Git(self)
         
         # if no args launch the gui
@@ -1139,7 +1163,7 @@ class RGBDS(repository):
                 return False
 
         name = self.releases[version]
-        type = self.Manager.Environments['make'].Type
+        type = self.Manager.Environments.get('make').Type
         build_dir = self.path['builds'] + version + '/' + type + '/'
         release_dir = self.path['releases'] + name
         extraction_dir = release_dir + '/' + type
@@ -1218,7 +1242,7 @@ class RGBDS(repository):
         return True
 
     def use(self, version):
-        environment = self.Manager.Environments['make']
+        environment = self.Manager.Environments.get('make')
         if version not in self.builds[environment.Type]:
             self.print('RGBDS version not found: ' + version)
             self.print('Building RGBDS version: ' + version)

@@ -4,7 +4,6 @@ import sys, webbrowser, json, re
 TODO:
 show all rgbds options even if they arent downloaded...
 button to clear filter
-fix link to rom when adding to gui after building
 remove unecessary branch switching
 
 - If game is missing, reset the metadata & make sure gui is correct
@@ -47,6 +46,12 @@ Update README
 
 IPS Patches...
 --------------------------
+git reset --hard before pulling
+- test with purergb
+
+Right click dropdown should have option for each specific process in addition to 'all'
+
+Option for auto-refresh on open
 
 'tar' in linux wont extract a zip file
 -- only permit 'tar' to be used with wsl, otherwise it uses main

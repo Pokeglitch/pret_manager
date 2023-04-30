@@ -8,7 +8,8 @@ def addToInput(options, *inputs):
         options["input"] = ';'.join(inputs)
 
 class Environment:
-    def __init__(self, type):
+    def __init__(self, environments, type):
+        self.Environments = environments
         self.Type = type
 
     def path(self, path):
@@ -23,8 +24,8 @@ class Environment:
             return process
 
 class AppEnvironment(Environment):
-    def __init__(self, app, type):
-        super().__init__(type)
+    def __init__(self, environments, app, type):
+        super().__init__(environments, type)
         self.App = app
 
     def path(self, path):
@@ -35,19 +36,19 @@ class AppEnvironment(Environment):
         return super().run(self.App, options)
  
 class Linux(AppEnvironment):
-    def __init__(self, app):
-        super().__init__(app, 'linux')
+    def __init__(self, environments, app):
+        super().__init__(environments, app, 'linux')
     
 class WSL(Linux):
-    def __init__(self):
-        super().__init__('wsl')
+    def __init__(self, environments):
+        super().__init__(environments, 'wsl')
 
     def path(self, path):
         return re.sub(r'^([^:]+):/',lambda p: '/mnt/{0}/'.format(p.group(1).lower()), super().path(path))
 
 class Windows(AppEnvironment):
-    def __init__(self, app):
-        super().__init__(app, windows_bit)
+    def __init__(self, environments, app):
+        super().__init__(environments, app, environments.WindowsBit)
 
     def run(self, command, options):
         addToInput(options, 'cd "' + self.path(options['cwd']) + '"')
@@ -56,16 +57,16 @@ class Windows(AppEnvironment):
 # TODO - customizable cygwin installation directory
 # todo - option to build or use windows binaries
 class Cygwin(Windows):
-    def __init__(self):
-        super().__init__('c:/cygwin64/bin/bash.exe --login')
+    def __init__(self, environments):
+        super().__init__(environments, 'c:/cygwin64/bin/bash.exe --login')
 
     def path(self, path):
         return re.sub(r'^([^:]+):/',lambda p: '/cygdrive/{0}/'.format(p.group(1).lower()), super().path(path))
 
 # TODO - customizable w64devkit installation directory
 class w64devkit(Windows):
-    def __init__(self):
-        super().__init__('C:/w64devkit/w64devkit.exe')
+    def __init__(self, environments):
+        super().__init__(environments, 'C:/w64devkit/w64devkit.exe')
 
 class Command:
     def __init__(self, command, environments, **kwargs):
@@ -77,7 +78,7 @@ class Command:
         self.set_parameter("Directory", kwargs, '.')
 
     def path(self, path):
-        return self.Environments[self.Command].path(path)
+        return self.Environments.get(self.Command).path(path)
 
     def set_parameter(self, key, kwargs, default):
         setattr(self, key, kwargs[key] if key in kwargs else default)
@@ -95,7 +96,7 @@ class Command:
         if 'input' in kwargs:
             parameters['input']  = kwargs['input'] 
 
-        return self.Environments[self.Command].run(self.Command + ' ' + ' '.join(args), parameters)
+        return self.Environments.get(self.Command).run(self.Command + ' ' + ' '.join(args), parameters)
 
 class GameCommand(Command):
     def __init__(self, command, game, **options):
@@ -193,19 +194,37 @@ class Tar(Command):
 
         return result
 
-if platform.system() == 'Windows':
-    import ctypes
-    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pokeglitch.pretmanager')
-    main_env = 'windows'
-    windows_bit = 'win32' if ctypes.sizeof(ctypes.c_voidp) == 4 else 'win64'
-else:
-    main_env = 'linux'
-    windows_bit = None
+class Environments:
+    def __init__(self, manager):
+        self.Manager = manager
 
-Environments = {
-    "windows" : Environment(windows_bit),
-    "linux" : Linux('sh'),
-    "wsl" : WSL(),
-    "cygwin" : Cygwin(),
-    'w64devkit' : w64devkit()
-}
+        if platform.system() == 'Windows':
+            import ctypes
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pokeglitch.pretmanager')
+            self.Main = 'windows'
+            self.WindowsBit = 'win32' if ctypes.sizeof(ctypes.c_voidp) == 4 else 'win64'
+        else:
+            self.Main = 'linux'
+            self.WindowsBit = None
+
+        self.Map = {
+            "windows" : Environment(self, self.WindowsBit),
+            "linux" : Linux(self, 'sh'),
+            "wsl" : WSL(self),
+            "cygwin" : Cygwin(self),
+            'w64devkit' : w64devkit(self)
+        }
+
+    def get(self, command):
+        # if main environment is linux, then all commands use Linux environment
+        if self.Main == 'linux':
+            return self.Map['linux']
+
+        id = self.Manager.Settings.Active["Environment"][command]
+
+        if id == "main":
+            id = self.Main
+        elif id == "linux":
+            id = self.Manager.Settings.Active["Environment"][id]
+
+        return self.Map[id]
