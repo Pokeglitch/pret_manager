@@ -1,845 +1,1632 @@
 {
-  "pret": {
-    "pokered": {
-      "title" : "Pokemon Red",
-      "rgbds": "0.6.1",
-      "tags": ["official","disasm","red","blue","debug","vc-patch"]
-    },
-    "pokeyellow": {
-      "title" : "Pokemon Yellow",
-      "rgbds": "0.6.1",
-      "tags": ["official","disasm","yellow","debug","vc-patch"]
-    },
-    "pokegold": {
-      "title" : "Pokemon Gold",
-      "rgbds": "0.6.1",
-      "tags": ["official","disasm","gold","silver","debug","vc-patch"]
-    },
-    "pokecrystal": {
-      "title" : "Pokemon Crystal",
-      "rgbds": "0.6.1",
-      "tags": ["official","disasm","crystal","debug","vc-patch"]
-    },
-    "poketcg": {
-      "title" : "Trading Card Game",
-      "rgbds": "0.6.1",
-      "tags": ["official","disasm","tcg1"]
-    },
-    "poketcg2": {
-      "title" : "Trading Card Game 2",
-      "tags": ["official","disasm","tcg2"]
-    },
-    "pokegold-spaceworld": {
-      "title" : "Gold Spaceworld",
-      "tags": ["official","disasm","gold","debug","spaceworld"]
-    }
-  },
   "8bitZeta": {
     "modern-ancient-engine": {
+      "title": "Modern Ancient Engine",
       "rgbds": "0.6.1",
-      "tags": ["crystal", "disasm"]
+      "tags": [
+        "crystal",
+        "disasm",
+        "Base",
+        "Work in Progress"
+      ],
+      "basis": "pret/pokecrystal",
+      "description": "Ancient Engine rebased onto current pokecrystal"
     }
   },
   "AGiLE-EaGLE1994": {
     "pokebetared": {
+      "title": "Beta Red",
       "rgbds": "0.5.2",
-      "tags": ["red", "disasm"]
+      "tags": [
+        "red",
+        "disasm"
+      ],
+      "basis": "dannye/pokered-crysaudio"
+    }
+  },
+  "Aegide": {
+    "custom-fusion-sprites": {
+      "tags": [
+        "extras"
+      ]
     }
   },
   "AmateurPanda92": {
     "pokemon-rby-dx": {
+      "title": "RBY DX",
       "rgbds": "0.4.1",
-      "tags": ["yellow", "disasm"]
+      "tags": [
+        "yellow",
+        "disasm"
+      ]
     }
   },
   "AndrewC101": {
     "PokemonTrueRed": {
-      "tags": ["red", "disasm"]
+      "title": "True Red",
+      "tags": [
+        "red",
+        "disasm"
+      ]
     }
   },
   "AtmaBuster": {
     "crystalleaf": {
+      "title": "Crystal Leaf",
       "rgbds": "0.6.0-rc2",
-      "tags": ["crystal", "disasm"]
+      "tags": [
+        "crystal",
+        "disasm",
+        "Quality of Life",
+        "Complete"
+      ],
+      "basis": "pret/pokecrystal",
+      "description": "A hack of Pokemon Crystal with Red and Leaf (from Pokemon FireRed & LeafGreen) as the player character."
     },
     "pokeplat-gen2": {
+      "title": "Platinum Gen 2",
       "rgbds": "0.4.1",
-      "tags": ["crystal", "disasm"]
+      "tags": [
+        "crystal",
+        "disasm",
+        "Work in Progress",
+        "Remake",
+        "New Region",
+        "New Story"
+      ],
+      "basis": "TastySnax12/pokecrystal16-493-plus",
+      "description": "Generation 2 demake of Pokemon Platinum"
     },
     "pokeplat-gen2-old": {
-      "tags": ["crystal", "disasm"]
+      "title": "Platinum Gen 2 (old)",
+      "tags": [
+        "crystal",
+        "disasm",
+        "Work in Progress",
+        "Remake",
+        "New Region",
+        "New Story"
+      ],
+      "basis": "TastySnax12/pokecrystal16-493-plus",
+      "description": "Generation 2 demake of Pokemon Platinum"
     }
   },
   "Ax461": {
     "pokeblack": {
+      "title": "Black",
       "rgbds": "0.5.2",
-      "tags": ["red", "disasm"]
+      "tags": [
+        "red",
+        "disasm",
+        "Remake",
+        "Complete"
+      ],
+      "basis": "pret/pokered",
+      "description": "Remake of the Pokemon Black creepypasta."
     }
   },
   "AzureKeys": {
     "BW3G": {
-      "tags": ["crystal", "disasm"]
+      "title": "Black and White 3: Genesis",
+      "tags": [
+        "crystal",
+        "disasm",
+        "New Region",
+        "New Story"
+      ]
+    }
+  },
+  "BestPig": {
+    "pokered-gbc-pocket": {
+      "title": "Red & Blue GBC Pocket",
+      "rgbds": "0.5.2",
+      "tags": [
+        "red",
+        "disasm"
+      ]
     }
   },
   "BloodlessNS": {
     "ancientruby": {
+      "title": "Ancient Ruby",
       "rgbds": "0.3.10",
-      "tags": ["crystal", "disasm"]
+      "tags": [
+        "crystal",
+        "disasm",
+        "New Region",
+        "New Story",
+        "Remake",
+        "Work in Progress"
+      ],
+      "basis": "pret/pokecrystal"
     }
   },
   "CameruptQDX": {
     "PF-Roaming-Red": {
+      "title": "Factory Adventure",
       "rgbds": "0.4.1",
-      "tags": ["red", "disasm"]
-    }
-  },
-  "CrossVR": {
-    "pokecrystal-restored": {
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "Dabomstew": {
-    "pokecrystal-speedchoice": {
-      "rgbds": "0.6.0-rc2",
-      "tags": ["crystal", "disasm"]
-    },
-    "pokered-speedchoice": {
-      "tags": ["red", "disasm"]
-    },
-    "pokecrystal-speedchoice-legacy": {
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "DarkSideHunterX": {
-    "pokepink": {
-      "rgbds": "0.4.1",
-      "tags": ["yellow", "disasm"]
-    }
-  },
-  "Dracrius": {
-    "pocketrgb-en": {
-      "rgbds": "0.6.1",
-      "tags": ["red", "disasm"]
-    }
-  },
-  "Eshasunrise": {
-    "Retyped-Red": {
-      "rgbds": "0.5.2",
-      "tags": ["red", "disasm"]
-    }
-  },
-  "Fotomac": {
-    "Pokemon-Tri-Color-Nostalgia-Series": {
-      "tags": ["red", "disasm"]
-    },
-    "pokered-e": {
-      "tags": ["crystal", "disasm"]
-    },
-    "nostalgia-red": {
-      "rgbds": "0.3.1",
-      "tags": ["red", "disasm"]
-    },
-    "nostalgia-red-gbc": {
-      "tags": ["red", "disasm"]
-    },
-    "nostalgia-yellow": {
-      "rgbds": "0.3.0",
-      "tags": ["yellow", "disasm"]
-    }
-  },
-  "FrenchOrange": {
-    "pokezelda": {
-      "rgbds": "0.6.1",
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "Idain": {
-    "Another-PKMN-Crystal-Remaster": {
-      "rgbds": "0.6.1",
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "JustRegularLuna": {
-    "RedPlusPlus": {
-      "rgbds": "0.5.2",
-      "tags": ["red", "disasm"]
-    },
-    "pokecopper": {
-      "rgbds": "0.6.1",
-      "tags": ["gold", "disasm"]
-    },
-    "rpp-backup": {
-      "rgbds": "0.6.1",
-      "tags": ["red", "disasm"]
-    }
-  },
-  "KDLPro": {
-    "Redv2.0": {
-      "rgbds": "0.6.1",
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "Kamy41": {
-    "Pokered-Pro": {
-      "rgbds": "0.5.2",
-      "tags": ["red", "disasm"]
-    }
-  },
-  "LIJI32": {
-    "pokeadom": {
-      "tags": ["red", "disasm"]
-    }
-  },
-  "MajorAgnostic": {
-    "Pokemon-Crystal-Ultimate": {
-      "rgbds": "0.6.1",
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "MineRobber9000": {
-    "pokered-nuzlocke": {
-      "rgbds": "0.4.1",
-      "tags": ["red", "disasm"]
-    },
-    "pokereddebug": {
-      "rgbds": "0.4.1",
-      "tags": ["red", "disasm"]
-    }
-  },
-  "Monkiikong": {
-    "Pokemon-Crystal-Plus": {
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "MoriyaFaith": {
-    "neocrystal": {
-      "rgbds": "0.6.1",
-      "tags": ["crystal", "disasm"]
-    },
-    "neocrystalDX": {
-      "rgbds": "0.6.0-rc2",
-      "tags": ["crystal", "disasm"]
-    },
-    "pokejp": {
-      "rgbds": "0.4.1",
-      "tags": ["red", "disasm"]
-    }
-  },
-  "NekrobaDA": {
-    "Pokemon_Crystal_Cross": {
-      "rgbds": "0.4.2",
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "PeteyMcFly": {
-    "Pokemon_Super_Crystal": {
-      "rgbds": "0.4.1",
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "PiaCarrot": {
-    "ancient-engine": {
-      "rgbds": "0.5.2",
-      "tags": ["crystal", "disasm"]
-    },
-    "ancientplatinum": {
-      "rgbds": "0.5.2",
-      "tags": ["crystal", "disasm"]
-    },
-    "pokeorange": {
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "PlagueVonKarma": {
-    "kep-hack": {
-      "rgbds": "0.6.1",
-      "tags": ["red", "disasm"]
-    }
-  },
-  "PlaguedHikikomori": {
-    "Plaguemon": {
-      "tags": ["red", "disasm"]
-    }
-  },
-  "Pokeglitch": {
-    "poketre2": {
-      "rgbds": "0.6.1",
-      "tags": ["red", "disasm","analogue"]
-    }
-  },
-  "Raguzero": {
-    "Midele-Crystal-v1.4b-FINAL": {
-      "rgbds": "0.3.5",
-      "tags": ["crystal", "disasm"]
-    },
-    "Midele-Red-v1.3h-FINAL-": {
-      "tags": ["red", "disasm"]
-    }
-  },
-  "Rangi42": {
-    "polishedcrystal": {
-      "rgbds": "0.6.1",
-      "tags": ["crystal", "disasm"]
-    },
-    "redstarbluestar": {
-      "rgbds": "0.5.2",
-      "tags": ["red", "disasm"]
-    },
-    "bronze2": {
-      "rgbds": "0.2.5",
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "Reminiscon": {
-    "Pokemon-Ruthless-Red": {
-      "rgbds": "0.5.2",
-      "tags": ["red", "disasm"]
-    }
-  },
-  "RenaKunisaki": {
-    "pokered": {
-      "tags": ["red", "disasm"]
-    }
-  },
-  "Salsbar": {
-    "unovared": {
-      "rgbds": "0.3.10",
-      "tags": ["red", "disasm"]
-    }
-  },
-  "SeasickShore": {
-    "capumon": {
-      "rgbds": "0.6.1",
-      "tags": ["red", "disasm"]
-    },
-    "protogs": {
-      "tags": ["gold", "disasm"]
-    }
-  },
-  "SnydOfficial": {
-    "pokeedm": {
-      "tags": ["red", "disasm"]
-    }
-  },
-  "Sotomura": {
-    "pokecrystalred": {
-      "rgbds": "0.6.1",
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "SoupPotato": {
-    "Sourcrystal": {
-      "rgbds": "0.6.1",
-      "tags": ["crystal", "disasm"]
-    },
-    "pokecrystal_SpriteBase": {
-      "tags": ["crystal", "disasm"]
-    },
-    "gold97": {
-      "rgbds": "0.5.2",
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "Soviet5lo": {
-    "proto_crystal_custom": {
-      "rgbds": "0.3.10",
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "SteppoBlazer": {
-    "pokesparkyellow": {
-      "tags": ["yellow", "disasm"]
-    }
-  },
-  "Superegz": {
-    "Pokemon-Perfect-Crystal": {
-      "rgbds": "0.2.5",
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "TAz00": {
-    "pokered-magikarp-edition": {
-      "rgbds": "0.6.1",
-      "tags": ["red", "disasm"]
-    }
-  },
-  "TheScarletSword": {
-    "pokereddeluxe": {
-      "tags": ["red", "disasm"]
-    }
-  },
-  "TheSeaTree": {
-    "pokeperidot": {
-      "rgbds": "0.4.1",
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "TomJinW": {
-    "PKMN_GSCHS": {
-      "tags": ["gold", "disasm"]
-    }
-  },
-  "TrainerTaiga": {
-    "PokemonDarkVoid": {
-      "rgbds": "0.4.1",
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "TwitchPlaysPokemon": {
-    "chattycrystal": {
-      "rgbds": "0.6.1",
-      "tags": ["crystal", "disasm"]
-    },
-    "pokechattyyellow": {
-      "tags": ["yellow", "disasm"]
-    },
-    "pokerbg": {
-      "rgbds": "0.5.2",
-      "tags": ["red", "disasm"]
-    },
-    "pokergb-authentic": {
-      "rgbds": "0.5.2",
-      "tags": ["red", "disasm"]
-    },
-    "chattycrystal-randomized": {
-      "rgbds": "0.6.1",
-      "tags": ["crystal", "disasm"]
-    },
-    "pokecrystal-randofused": {
-      "rgbds": "0.4.2",
-      "tags": ["crystal", "disasm"]
-    },
-    "pokedualredblue": {
-      "rgbds": "0.4.1",
-      "tags": ["red", "disasm"]
-    },
-    "pokemonAnniversaryRed": {
-      "tags": ["red", "disasm"]
-    },
-    "tpp_burning_red": {
-      "tags": ["red", "disasm"]
-    },
-    "tppcrystal251pub": {
-      "rgbds": "0.2.5",
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "Vortyne": {
-    "pureRGB": {
-      "rgbds": "0.6.1",
-      "tags": ["red", "disasm"]
-    }
-  },
-  "ViWalls": {
-    "pureRGB-FakeMime": {
-      "rgbds": "0.6.1",
-      "tags": ["red", "disasm"]
-    }
-  },
-  "ZoomTen": {
-    "pokelostsilver": {
-      "rgbds": "0.6.0-rc2",
-      "tags": ["gold", "disasm"]
-    }
-  },
-  "aaaaaa123456789": {
-    "pokecrystal16": {
-      "rgbds": "0.5.2",
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "aforward9600": {
-    "JohtoLegends": {
-      "rgbds": "0.5.2",
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "athendrix": {
-    "pokecrystalplus": {
-      "rgbds": "0.6.0-rc2",
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "averykatko": {
-    "poccathyrsas": {
-      "tags": ["red", "disasm"]
-    }
-  },
-  "danielah05": {
-    "buried-pokered": {
-      "rgbds": "0.6.1",
-      "tags": ["red", "disasm"]
-    }
-  },
-  "dannye": {
-    "pokered-crysaudio": {
-      "rgbds": "0.6.1",
-      "tags": ["red", "disasm"]
-    },
-    "pokered-gbc": {
-      "rgbds": "0.6.1",
-      "tags": ["red", "disasm"]
-    },
-    "pokered-gen-II": {
-      "rgbds": "0.6.1",
-      "tags": ["red", "disasm"]
-    },
-    "pokered-prototype": {
-      "tags": ["red", "disasm"]
-    },
-    "pokeyellow-crysaudio": {
-      "rgbds": "0.6.1",
-      "tags": ["yellow", "disasm"]
-    },
-    "CrystalComplete": {
-      "tags": ["crystal", "disasm"]
-    },
-    "pokeyellow-gen-II": {
-      "rgbds": "0.6.1",
-      "tags": ["red", "disasm"]
-    }
-  },
-  "gofastlily": {
-    "gen-1-minimum-battles": {
-      "rgbds": "0.6.1",
-      "tags": ["yellow", "disasm"]
-    }
-  },
-  "huderlem": {
-    "maize": {
-      "tags": ["red", "disasm"]
-    },
-    "pokered_battle_factory": {
-      "rgbds": "0.3.10",
-      "tags": ["red", "disasm"]
-    }
-  },
-  "hyperdriveguy": {
-    "deseret-crystal": {
-      "rgbds": "0.6.1",
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "i0brendan0": {
-    "pokecrystal2": {
-      "rgbds": "0.3.5",
-      "tags": ["crystal", "disasm"]
-    },
-    "pokecrystal2-new": {
-      "rgbds": "0.3.10",
-      "tags": ["crystal", "disasm"]
-    },
-    "pokeyellow-clefairy": {
-      "rgbds": "0.4.1",
-      "tags": ["yellow", "disasm"]
-    }
-  },
-  "jojobear13": {
-    "shinpokered": {
-      "rgbds": "0.5.2",
-      "tags": ["red", "disasm"]
-    }
-  },
-  "kennethblite": {
-    "nuzlocke_PokeRed": {
-      "tags": ["red", "disasm"]
-    }
-  },
-  "longlostsoul": {
-    "EvoYellow": {
-      "rgbds": "0.2.5",
-      "tags": ["yellow", "disasm"]
-    }
-  },
-  "luckytyphlosion": {
-    "pokered-chaos": {
-      "rgbds": "0.3.0",
-      "tags": ["red", "disasm"]
-    },
-    "pokered_fastmenu": {
-      "tags": ["red", "disasm"]
-    },
-    "pokecathode": {
-      "rgbds": "0.3.10",
-      "tags": ["crystal", "disasm"]
-    },
-    "pokered-256kb": {
-      "rgbds": "0.3.0",
-      "tags": ["red", "disasm"]
-    },
-    "pokered-animorphs": {
-      "tags": ["red", "disasm"]
-    },
-    "pokered-challenge": {
-      "tags": ["red", "disasm"]
-    },
-    "pokered-hombone": {
-      "rgbds": "0.3.0",
-      "tags": ["red", "disasm"]
-    },
-    "pokered-jp": {
-      "tags": ["red", "disasm"]
-    },
-    "pokered-troll": {
-      "rgbds": "0.4.1",
-      "tags": ["red", "disasm"]
-    },
-    "pokered_fastBGupdate": {
-      "tags": ["red", "disasm"]
-    },
-    "CrystalClearPasswords": {
-      "tags": "extras"
-    },
-    "gs-ace-helper": {
-      "rgbds": "0.5.2",
-      "tags": ["extras"]
-    }
-  },
-  "lvl-3-g": {
-    "Gold97SGB": {
-      "rgbds": "0.4.0",
-      "tags": ["gold", "disasm"]
-    }
-  },
-  "mahoushoujorose": {
-    "pkmnplusgreen": {
-      "tags": ["red", "disasm"]
-    }
-  },
-  "nmhermalin": {
-    "crystalprime": {
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "oatspear": {
-    "crystal50": {
-      "rgbds": "0.6.0-rc2",
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "opiter09": {
-    "ASM-Machina": {
-      "rgbds": "0.5.2",
-      "tags": ["red", "disasm"]
-    }
-  },
-  "piclarv": {
-    "pokelavender": {
-      "tags": ["red", "disasm"]
-    }
-  },
-  "pkmncoraldev": {
-    "polishedcoral": {
-      "rgbds": "0.6.1",
-      "tags": ["crystal", "disasm"]
-    },
-    "pokecoral": {
-      "rgbds": "0.2.5",
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "pokeachromicdevs": {
-    "pokeoctober": {
-      "rgbds": "0.4.1",
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "surskitty": {
-    "crystalis": {
-      "rgbds": "0.4.2",
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "susieqt": {
-    "pokesus": {
-      "rgbds": "0.6.1",
-      "tags": ["gold", "disasm"]
-    }
-  },
-  "tshadowknight": {
-    "Pokemon-Roaming-Red": {
-      "rgbds": "0.4.1",
-      "tags": ["red", "disasm"]
-    },
-    "proto_crystal": {
-      "rgbds": "0.3.5",
-      "tags": ["crystal", "disasm"]
-    },
-    "Pokemon-Roaming-Red-Tajiri": {
-      "rgbds": "0.4.1",
-      "tags": ["red", "disasm"]
-    }
-  },
-  "vulcandth": {
-    "pokedarkgs": {
-      "rgbds": "0.6.1",
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "wisejustin": {
-    "Red-Blue-Remastered": {
-      "rgbds": "0.2.5",
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "wolfboyft": {
-    "pokehalls": {
-      "rgbds": "0.2.5",
-      "tags": ["crystal", "disasm"]
-    },
-    "pokestygian": {
-      "rgbds": "0.2.5",
-      "tags": ["crystal", "disasm"]
-    }
-  },
-  "wrulfy": {
-    "carminered": {
-      "tags": ["red", "disasm"]
-    }
-  },
-  "Sanqui": {
-    "pokered-randomizer": {
-      "tags": ["red", "disasm"]
-    }
-  },
-  "froggestspirit": {
-    "CrystalComplete": {
-      "tags": ["crystal", "disasm"]
+      "tags": [
+        "red",
+        "disasm",
+        "New Story",
+        "Complete",
+        "Fakemon"
+      ],
+      "basis": "tshadowknight/Pokemon-Roaming-Red",
+      "description": "Open world Pokemon Red ROM hack, featuring fan-made Pokemon from the Pokemon Factory of the 90s and early 00s."
+    }
+  },
+  "CardinalSys": {
+    "PokemonRedBlueMultiplayer": {
+      "title": "Red & Blue Multiplayer ",
+      "tags": [
+        "extras"
+      ]
     }
   },
   "ChristopherOBerry": {
     "pokeslow": {
+      "title": "Slow",
       "rgbds": "0.5.2",
-      "tags": ["red", "disasm"]
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    }
+  },
+  "Color-Printer": {
+    "pkmn-route-rando": {
+      "tags": [
+        "extras"
+      ]
+    }
+  },
+  "CrossVR": {
+    "pokecrystal-restored": {
+      "title": "Crystal Restored",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    }
+  },
+  "Dabomstew": {
+    "pokecrystal-speedchoice": {
+      "title": "Crystal Speedchoice",
+      "rgbds": "0.6.0-rc2",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    },
+    "pokered-speedchoice": {
+      "title": "Red Speedchoice",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    },
+    "pokecrystal-speedchoice-legacy": {
+      "title": "Crystal Speedchoice Legacy",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    }
+  },
+  "DarkSideHunterX": {
+    "pokepink": {
+      "title": "Pink",
+      "rgbds": "0.4.1",
+      "tags": [
+        "yellow",
+        "disasm",
+        "Asset Swap",
+        "Work in Progress"
+      ],
+      "basis": "pret/pokeyellow"
+    }
+  },
+  "Dracrius": {
+    "pocketrgb-en": {
+      "title": "Pocket RGB",
+      "rgbds": "0.6.1",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    }
+  },
+  "Eshasunrise": {
+    "Retyped-Red": {
+      "title": "Retyped Red",
+      "rgbds": "0.5.2",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    }
+  },
+  "Fotomac": {
+    "Pokemon-Tri-Color-Nostalgia-Series": {
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    },
+    "pokered-e": {
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    },
+    "nostalgia-red": {
+      "rgbds": "0.3.1",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    },
+    "nostalgia-red-gbc": {},
+    "nostalgia-yellow": {
+      "rgbds": "0.3.0",
+      "tags": [
+        "yellow",
+        "disasm"
+      ]
+    }
+  },
+  "FrenchOrange": {
+    "pokezelda": {
+      "title": "Crystal Zelda Edition",
+      "rgbds": "0.6.1",
+      "tags": [
+        "crystal",
+        "disassembly",
+        "Enhancement",
+        "Asset Swap"
+      ]
     }
   },
   "IL01DI": {
     "PlayAsRed": {
       "rgbds": "0.5.2",
-      "tags": ["red", "disasm"]
+      "tags": [
+        "red",
+        "disasm"
+      ]
     }
   },
-  "UnderscorePoY": {
-    "pokered-custom-starter": {
-      "rgbds": "0.5.2",
-      "tags": ["red", "disasm"]
+  "ISSOtm": {
+    "crystal-clear-ace": {
+      "tags": [
+        "extras"
+      ]
     }
   },
-  "copperkiddx": {
-    "pokemonwarp": {
-      "rgbds": "0.4.1",
-      "tags": ["red", "disasm"]
-    }
-  },
-  "erosunica": {
-    "pokered-vwf": {
+  "Idain": {
+    "Another-PKMN-Crystal-Remaster": {
       "rgbds": "0.6.1",
-      "tags": ["red", "disasm"]
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
     }
   },
-  "j-emilsson": {
-    "pokemon-reddest": {
+  "JustRegularLuna": {
+    "RedPlusPlus": {
+      "title": "Red++",
       "rgbds": "0.5.2",
-      "tags": ["red", "disasm"]
-    }
-  },
-  "lucasyoungers": {
-    "pokered-remastered": {
-      "rgbds": "0.6.1",
-      "tags": ["red", "disasm"]
-    }
-  },
-  "strager": {
-    "pokered-bugfree": {
-      "rgbds": "0.3.0",
-      "tags": ["red", "disasm"]
-    }
-  },
-  "waicalibre": {
-    "pokered-eo": {
-      "rgbds": "0.5.2",
-      "tags": ["red", "disasm"]
-    }
-  },
-  "xCrystal": {
-    "pokecrystal-randofuser": {
-      "rgbds": "0.2.5",
-      "tags": ["crystal", "disasm"]
+      "tags": [
+        "red",
+        "disasm"
+      ]
     },
-    "pokecrystal_challenge_cup": {
-      "tags": ["crystal", "disasm"]
+    "pokecopper": {
+      "rgbds": "0.6.1",
+      "tags": [
+        "gold",
+        "disasm"
+      ]
+    },
+    "rpp-backup": {
+      "title": "Red++ v3",
+      "rgbds": "0.6.1",
+      "tags": [
+        "red",
+        "disasm"
+      ]
     }
   },
-  "BestPig": {
-    "pokered-gbc-pocket": {
+  "KDLPro": {
+    "Redv2.0": {
+      "rgbds": "0.6.1",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    }
+  },
+  "Kamy41": {
+    "Pokered-Pro": {
       "rgbds": "0.5.2",
-      "tags": ["red", "disasm"]
+      "tags": [
+        "red",
+        "disasm"
+      ]
     }
   },
   "KrustyKong": {
     "pokecrystal-battletower-enhanced": {
       "rgbds": "0.4.1",
-      "tags": ["crystal", "disasm"]
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    }
+  },
+  "LIJI32": {
+    "pokeadom": {
+      "title": "Red (in Hebrew)",
+      "tags": [
+        "red",
+        "disasm",
+        "Translation"
+      ],
+      "basis": "pret/pokered"
+    }
+  },
+  "MajorAgnostic": {
+    "Pokemon-Crystal-Ultimate": {
+      "rgbds": "0.6.1",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
     }
   },
   "Masaru2": {
     "pokecrystal-r": {
       "rgbds": "0.6.0-rc2",
-      "tags": ["crystal", "disasm"]
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
     },
     "pokegold-r": {
-      "tags": ["gold","silver","disasm"]
+      "tags": [
+        "gold",
+        "silver",
+        "disasm"
+      ]
     },
-    "pokejp" : {
-      "tags": ["red", "disasm"]
+    "pokejp": {
+      "tags": [
+        "red",
+        "disasm"
+      ]
     }
   },
-  "tysonrss": {
-    "Pokemon-Red-DX": {
-      "tags": "binary"
+  "MineRobber9000": {
+    "pokered-nuzlocke": {
+      "rgbds": "0.4.1",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    },
+    "pokereddebug": {
+      "rgbds": "0.4.1",
+      "tags": [
+        "red",
+        "disasm",
+        "debug"
+      ]
     }
   },
-  "abhmul": {
-    "pokemon-silver-hardened": {
-      "tags": "binary"
+  "Monkiikong": {
+    "Pokemon-Crystal-Plus": {
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
     }
   },
-  "Aegide": {
-    "custom-fusion-sprites": {
-      "tags": "extras"
-    }
-  },
-  "Color-Printer": {
-    "pkmn-route-rando": {
-      "tags": "extras"
-    }
-  },
-  "theresamai": {
-    "pokemon_battle_ASM": {
-      "tags": "extras"
-    }
-  },
-  "CardinalSys": {
-    "PokemonRedBlueMultiplayer": {
-      "tags": "extras"
+  "MoriyaFaith": {
+    "neocrystal": {
+      "rgbds": "0.6.1",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    },
+    "neocrystalDX": {
+      "rgbds": "0.6.0-rc2",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    },
+    "pokejp": {
+      "rgbds": "0.4.1",
+      "tags": [
+        "red",
+        "disasm"
+      ]
     }
   },
   "MrCheeze": {
     "pokered-self-replicator": {
-      "tags": "extras"
+      "tags": [
+        "extras"
+      ]
     }
   },
-  "ISSOtm": {
-    "crystal-clear-ace": {
-      "tags": "extras"
+  "NekrobaDA": {
+    "Pokemon_Crystal_Cross": {
+      "rgbds": "0.4.2",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    }
+  },
+  "PeteyMcFly": {
+    "Pokemon_Super_Crystal": {
+      "rgbds": "0.4.1",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    }
+  },
+  "PiaCarrot": {
+    "ancient-engine": {
+      "rgbds": "0.5.2",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    },
+    "ancientplatinum": {
+      "title": "Ancient Platinum",
+      "rgbds": "0.5.2",
+      "tags": [
+        "crystal",
+        "disasm",
+        "Remake",
+        "New Region",
+        "New Story"
+      ]
+    },
+    "pokeorange": {
+      "title": "Orange",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    }
+  },
+  "PlagueVonKarma": {
+    "kep-hack": {
+      "title": "Kanto Expansion Pak",
+      "rgbds": "0.6.1",
+      "tags": [
+        "red",
+        "disasm",
+        "Quality of Life"
+      ]
+    }
+  },
+  "PlaguedHikikomori": {
+    "Plaguemon": {
+      "title": "Plaguemon: Lost Diaries"
+    }
+  },
+  "Pokeglitch": {
+    "poketre2": {
+      "title": "Team Rocket Edition 2",
+      "rgbds": "0.6.1",
+      "tags": [
+        "red",
+        "disasm",
+        "analogue"
+      ]
+    }
+  },
+  "Raguzero": {
+    "Midele-Crystal-v1.4b-FINAL": {
+      "rgbds": "0.3.5",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    },
+    "Midele-Red-v1.3h-FINAL-": {
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    }
+  },
+  "Rangi42": {
+    "polishedcrystal": {
+      "title": "Polished Crystal",
+      "rgbds": "0.6.1",
+      "tags": [
+        "crystal",
+        "disasm"
+      ],
+      "basis": "pret/pokecrystal"
+    },
+    "redstarbluestar": {
+      "title": "Red \u2605 & Blue \u2605",
+      "rgbds": "0.5.2",
+      "tags": [
+        "red",
+        "disasm"
+      ],
+      "basis": "pret/pokered"
+    },
+    "bronze2": {
+      "rgbds": "0.2.5"
+    }
+  },
+  "Reminiscon": {
+    "Pokemon-Ruthless-Red": {
+      "rgbds": "0.5.2",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    }
+  },
+  "RenaKunisaki": {
+    "pokered": {
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    }
+  },
+  "Salsbar": {
+    "unovared": {
+      "rgbds": "0.3.10",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    }
+  },
+  "Sanqui": {
+    "pokered-randomizer": {
+      "title": "Red Randomizer",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    }
+  },
+  "SeasickShore": {
+    "capumon": {
+      "title": "Capsule Monsters",
+      "rgbds": "0.6.1",
+      "tags": [
+        "red",
+        "disasm",
+        "Asset Swap"
+      ],
+      "basis": "pret/pokered"
+    },
+    "protogs": {
+      "title": "Gold & Silver Proto",
+      "tags": [
+        "gold",
+        "silver",
+        "disasm",
+        "Asset Swap"
+      ],
+      "basis": "pret/pokegold"
     }
   },
   "SheerSt": {
     "pokewilds": {
-      "tags": "extras"
+      "tags": [
+        "extras"
+      ]
+    }
+  },
+  "SnydOfficial": {
+    "pokeedm": {
+      "title": "EDM",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    }
+  },
+  "Sotomura": {
+    "pokecrystalred": {
+      "rgbds": "0.6.1",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    }
+  },
+  "SoupPotato": {
+    "Sourcrystal": {
+      "title": "Sour Crystal",
+      "rgbds": "0.6.1",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    },
+    "pokecrystal_SpriteBase": {
+      "tags": [
+        "crystal",
+        "disasm",
+        "Base"
+      ]
+    },
+    "gold97": {
+      "title": "Gold & Silver 97 Reforged",
+      "rgbds": "0.5.2",
+      "tags": [
+        "crystal",
+        "disasm",
+        "New Region",
+        "New Story",
+        "Complete"
+      ],
+      "basis": "lvl-3-g/gold97_upload"
+    }
+  },
+  "Soviet5lo": {
+    "proto_crystal_custom": {
+      "rgbds": "0.3.10",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    }
+  },
+  "SteppoBlazer": {
+    "pokesparkyellow": {
+      "tags": [
+        "yellow",
+        "disasm"
+      ]
+    }
+  },
+  "Superegz": {
+    "Pokemon-Perfect-Crystal": {
+      "rgbds": "0.2.5",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    }
+  },
+  "TAz00": {
+    "pokered-magikarp-edition": {
+      "rgbds": "0.6.1",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    }
+  },
+  "TastySnax12": {
+    "pokecrystal16-493-plus": {
+      "title": "Crystal 16-bit 493+",
+      "tags": [
+        "crystal",
+        "disasm",
+        "Enhancement",
+        "Base"
+      ],
+      "basis": "aaaaaa123456789/pokecrystal-16"
+    }
+  },
+  "TheScarletSword": {
+    "pokereddeluxe": {
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    }
+  },
+  "TheSeaTree": {
+    "pokeperidot": {
+      "rgbds": "0.4.1",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    }
+  },
+  "TomJinW": {
+    "PKMN_GSCHS": {
+      "title": "Gold & Silver (in Chinese)",
+      "tags": [
+        "gold",
+        "silver",
+        "binary",
+        "Translation",
+        "Complete"
+      ]
+    }
+  },
+  "TrainerTaiga": {
+    "PokemonDarkVoid": {
+      "title": "Dark Void",
+      "rgbds": "0.4.1",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    }
+  },
+  "TwitchPlaysPokemon": {
+    "chattycrystal": {
+      "rgbds": "0.6.1",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    },
+    "pokechattyyellow": {
+      "tags": [
+        "yellow",
+        "disasm"
+      ]
+    },
+    "pokerbg": {
+      "rgbds": "0.5.2",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    },
+    "pokergb-authentic": {
+      "rgbds": "0.5.2",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    },
+    "chattycrystal-randomized": {
+      "rgbds": "0.6.1",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    },
+    "pokecrystal-randofused": {
+      "rgbds": "0.4.2",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    },
+    "pokedualredblue": {
+      "rgbds": "0.4.1",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    },
+    "pokemonAnniversaryRed": {
+      "title": "Anniversary Red",
+      "tags": [
+        "red",
+        "disasm",
+        "Complete"
+      ]
+    },
+    "tpp_burning_red": {
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    },
+    "tppcrystal251pub": {
+      "title": "Crystal 251",
+      "rgbds": "0.2.5",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    }
+  },
+  "UnderscorePoY": {
+    "pokered-custom-starter": {
+      "rgbds": "0.5.2",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    }
+  },
+  "ViWalls": {
+    "pureRGB-FakeMime": {
+      "title": "Pure RGB (Fake Beta Pokemon)",
+      "rgbds": "0.6.1",
+      "tags": [
+        "red",
+        "green",
+        "blue",
+        "disasm",
+        "Quality of Life",
+        "Enhancement"
+      ],
+      "basis": "Vortyne/pureRGB"
+    }
+  },
+  "Vortyne": {
+    "pureRGB": {
+      "title": "Pure RGB",
+      "rgbds": "0.6.1",
+      "tags": [
+        "red",
+        "green",
+        "blue",
+        "disasm",
+        "Quality of Life"
+      ]
+    }
+  },
+  "ZoomTen": {
+    "gold98-walking-sim": {
+      "title": "Gold 1998 Walking Simulator",
+      "tags": [
+        "gold",
+        "silver",
+        "disasm",
+        "Proof of Concept",
+        "Asset Swap"
+      ],
+      "basis": "ZoomTen/pokegold-mapless",
+      "description": "Pokemon Gold with all maps replaced with the prototype backup maps from October 6, 1998. All events are removed."
+    },
+    "pokegold-mapless": {
+      "title": "Gold Mapless",
+      "tags": [
+        "gold",
+        "silver",
+        "disasm",
+        "Base"
+      ],
+      "basis": "pret/pokegold",
+      "description": "Pokemon Gold & Silver with all maps and events removed."
+    },
+    "pokegold-msu1": {
+      "title": "Gold & Silver MSU1",
+      "tags": [
+        "gold",
+        "silver",
+        "binary",
+        "Enhancement",
+        "Complete"
+      ],
+      "description": "Pokemon Gold & Silver with MSU-1 audio on Super Game Boy."
+    },
+    "pokered-sgb-audio": {
+      "title": "Red SGB Audio",
+      "tags": [
+        "red",
+        "blue",
+        "disasm",
+        "Enhancement",
+        "Proof of Concept"
+      ],
+      "basis": "pret/pokered",
+      "description": "Pokemon Red with Super Game Boy audio. Includes MSU-1 enhancement branch."
+    },
+    "pokelostsilver": {
+      "title": "Lost Silver",
+      "rgbds": "0.6.0-rc2",
+      "tags": [
+        "silver",
+        "disasm",
+        "New Story",
+        "Remake",
+        "Proof of Concept"
+      ],
+      "basis": "pret/pokegold",
+      "description": "Remake of the Pokemon Lost Silver creepypasta."
+    }
+  },
+  "aaaaaa123456789": {
+    "pokecrystal16": {
+      "title": "Crystal 16-bit",
+      "rgbds": "0.5.2",
+      "tags": [
+        "crystal",
+        "disasm",
+        "Base"
+      ],
+      "basis": "pret/pokecrystal"
+    }
+  },
+  "abhmul": {
+    "pokemon-silver-hardened": {
+      "title": "Silver Hardened",
+      "tags": [
+        "silver",
+        "binary"
+      ]
+    }
+  },
+  "aforward9600": {
+    "JohtoLegends": {
+      "title": "Johto Legends",
+      "rgbds": "0.5.2",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    }
+  },
+  "athendrix": {
+    "pokecrystalplus": {
+      "title": "Crystal Plus",
+      "rgbds": "0.6.0-rc2",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    }
+  },
+  "averykatko": {
+    "poccathyrsas": {
+      "title": "Red (in Old English)",
+      "tags": [
+        "red",
+        "disasm",
+        "Translation",
+        "Work in Progress"
+      ],
+      "basis": "pret/pokered"
+    }
+  },
+  "copperkiddx": {
+    "pokemonwarp": {
+      "title": "Warp Red & Blue",
+      "rgbds": "0.4.1",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    }
+  },
+  "danielah05": {
+    "buried-pokered": {
+      "title": "Buried Pokered",
+      "rgbds": "0.6.1",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    }
+  },
+  "dannye": {
+    "pokered-crysaudio": {
+      "title": "Red & Blue with Crystal Sound Engine",
+      "rgbds": "0.6.1",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    },
+    "pokered-gbc": {
+      "title": "Red & Blue GBC",
+      "rgbds": "0.6.1",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    },
+    "pokered-gen-II": {
+      "title": "Red & Blue Gen II",
+      "rgbds": "0.6.1",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    },
+    "pokered-prototype": {
+      "title": "Prototype",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    },
+    "pokeyellow-crysaudio": {
+      "title": "Yellow with Crystal Sound Engine",
+      "rgbds": "0.6.1",
+      "tags": [
+        "yellow",
+        "disasm",
+        "Enhancement",
+        "Base"
+      ]
+    },
+    "CrystalComplete": {
+      "title": "Crystal Complete",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    },
+    "pokeyellow-gen-II": {
+      "title": "Yellow Gen II",
+      "rgbds": "0.6.1",
+      "tags": [
+        "yellow",
+        "disasm",
+        "Enhancement",
+        "Asset Swap"
+      ]
+    }
+  },
+  "erosunica": {
+    "Gold97SGB-es": {
+      "title": "Super Gold 97 (in Spanish)",
+      "rgbds": "0.4.0",
+      "tags": [
+        "gold",
+        "disasm",
+        "New Region",
+        "New Story",
+        "Complete"
+      ],
+      "basis": "lvl-3-g/Gold97SGB"
+    },
+    "pokered-vwf": {
+      "title": "Red & Blue with VWF",
+      "rgbds": "0.6.1",
+      "tags": [
+        "red",
+        "blue",
+        "disasm",
+        "Enhancement",
+        "Base"
+      ],
+      "basis": "pret/pokered"
+    }
+  },
+  "froggestspirit": {
+    "CrystalComplete": {
+      "title": "Crystal Complete",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
     }
   },
   "gbdev": {
-    "rgbds": {}
+    "rgbds": {
+      "description": "RGBDS Game Boy compiler suite."
+    }
+  },
+  "gofastlily": {
+    "gen-1-minimum-battles": {
+      "title": "Gen 1 Minimum Battles",
+      "rgbds": "0.6.1",
+      "tags": [
+        "yellow",
+        "disasm"
+      ]
+    }
+  },
+  "huderlem": {
+    "maize": {
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    },
+    "pokered_battle_factory": {
+      "rgbds": "0.3.10",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    }
+  },
+  "hyperdriveguy": {
+    "deseret-crystal": {
+      "rgbds": "0.6.1",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    }
+  },
+  "i0brendan0": {
+    "pokecrystal2": {
+      "rgbds": "0.3.5",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    },
+    "pokecrystal2-new": {
+      "rgbds": "0.3.10",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    },
+    "pokeyellow-clefairy": {
+      "rgbds": "0.4.1",
+      "tags": [
+        "yellow",
+        "disasm"
+      ]
+    }
+  },
+  "j-emilsson": {
+    "pokemon-reddest": {
+      "rgbds": "0.5.2",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    }
+  },
+  "jojobear13": {
+    "shinpokered": {
+      "rgbds": "0.5.2",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    }
+  },
+  "kennethblite": {
+    "nuzlocke_PokeRed": {
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    }
+  },
+  "longlostsoul": {
+    "EvoYellow": {
+      "rgbds": "0.2.5",
+      "tags": [
+        "yellow",
+        "disasm"
+      ]
+    }
+  },
+  "lucasyoungers": {
+    "pokered-remastered": {
+      "rgbds": "0.6.1",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    }
+  },
+  "luckytyphlosion": {
+    "pokered-chaos": {
+      "rgbds": "0.3.0",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    },
+    "pokered_fastmenu": {
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    },
+    "pokecathode": {
+      "rgbds": "0.3.10",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    },
+    "pokered-256kb": {
+      "rgbds": "0.3.0",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    },
+    "pokered-animorphs": {
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    },
+    "pokered-challenge": {
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    },
+    "pokered-hombone": {
+      "rgbds": "0.3.0",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    },
+    "pokered-jp": {
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    },
+    "pokered-troll": {
+      "rgbds": "0.4.1",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    },
+    "pokered_fastBGupdate": {
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    },
+    "CrystalClearPasswords": {
+      "tags": [
+        "extras"
+      ]
+    },
+    "gs-ace-helper": {
+      "rgbds": "0.5.2",
+      "tags": [
+        "extras"
+      ]
+    }
+  },
+  "lvl-3-g": {
+    "gold97_upload": {
+      "title": "Gold 97 (Legacy)",
+      "tags": [
+        "crystal",
+        "disasm",
+        "New Region",
+        "New Story",
+        "Complete"
+      ],
+      "basis": "pret/pokecrystal",
+      "description": "The legacy version of Pokemon Gold 97, based on Pokemon Crystal."
+    },
+    "Gold97SGB": {
+      "title": "Super Gold 97",
+      "rgbds": "0.4.0",
+      "tags": [
+        "gold",
+        "disasm",
+        "New Region",
+        "New Story",
+        "Complete"
+      ],
+      "basis": "pret/pokegold",
+      "description": "The updated version of Pokemon Gold 97, based on Pokemon Gold. Featuring Super Game Boy support."
+    }
+  },
+  "mahoushoujorose": {
+    "pkmnplusgreen": {
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    }
+  },
+  "nmhermalin": {
+    "crystalprime": {
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    }
+  },
+  "oatspear": {
+    "crystal50": {
+      "rgbds": "0.6.0-rc2",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    }
+  },
+  "opiter09": {
+    "ASM-Machina": {
+      "rgbds": "0.5.2",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    }
+  },
+  "piclarv": {
+    "pokelavender": {
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    }
+  },
+  "pkmncoraldev": {
+    "polishedcoral": {
+      "title": "Coral",
+      "rgbds": "0.6.1",
+      "tags": [
+        "crystal",
+        "disasm",
+        "New Story",
+        "New Region"
+      ]
+    },
+    "pokecoral": {
+      "title": "Coral (2018)",
+      "rgbds": "0.2.5",
+      "tags": [
+        "crystal",
+        "disasm",
+        "New Story",
+        "New Region"
+      ]
+    }
+  },
+  "pokeachromicdevs": {
+    "pokeoctober": {
+      "title": "October",
+      "rgbds": "0.4.1",
+      "tags": [
+        "crystal",
+        "disasm",
+        "New Region",
+        "New Story",
+        "Work in Progress"
+      ],
+      "basis": "aaaaaa123456789/pokecrystal-16",
+      "description": "Based on Pokemon Crystal. New storyline based off the Pokemon Gold & Silver prototype maps from October and November 1998. Featuring cut Pokemon."
+    }
+  },
+  "pret": {
+    "pokered": {
+      "title": "Pokemon Red & Blue",
+      "rgbds": "0.6.1",
+      "tags": [
+        "official",
+        "disasm",
+        "red",
+        "blue",
+        "debug",
+        "vc-patch"
+      ],
+      "description": "Disassembly of Pokemon Red & Blue."
+    },
+    "pokeyellow": {
+      "title": "Pokemon Yellow",
+      "rgbds": "0.6.1",
+      "tags": [
+        "official",
+        "disasm",
+        "yellow",
+        "debug",
+        "vc-patch"
+      ],
+      "description": "Disassembly of Pokemon Yellow."
+    },
+    "pokegold": {
+      "title": "Pokemon Gold & Silver",
+      "rgbds": "0.6.1",
+      "tags": [
+        "official",
+        "disasm",
+        "gold",
+        "silver",
+        "debug",
+        "vc-patch"
+      ],
+      "description": "Disassembly of Pokemon Gold & Silver."
+    },
+    "pokecrystal": {
+      "title": "Pokemon Crystal",
+      "rgbds": "0.6.1",
+      "tags": [
+        "official",
+        "disasm",
+        "crystal",
+        "debug",
+        "vc-patch"
+      ],
+      "description": "Disassembly of Pokemon Crystal."
+    },
+    "poketcg": {
+      "title": "Trading Card Game",
+      "rgbds": "0.6.1",
+      "tags": [
+        "official",
+        "disasm",
+        "tcg1"
+      ],
+      "description": "Disassembly of Pokemon Trading Card Game."
+    },
+    "poketcg2": {
+      "title": "Trading Card Game 2",
+      "rgbds": "0.6.1",
+      "tags": [
+        "official",
+        "disasm",
+        "tcg2"
+      ],
+      "description": "Disassembly of Pokemon Trading Card Game 2."
+    },
+    "pokegold-spaceworld": {
+      "title": "Gold (Space World 1997)",
+      "rgbds": "0.6.1",
+      "tags": [
+        "official",
+        "disasm",
+        "gold",
+        "debug",
+        "spaceworld"
+      ],
+      "description": "Disassembly of Pokemon Gold & Silver (Space World 1997 demo)."
+    }
+  },
+  "strager": {
+    "pokered-bugfree": {
+      "rgbds": "0.3.0",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    }
+  },
+  "surskitty": {
+    "crystalis": {
+      "rgbds": "0.4.2",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    }
+  },
+  "susieqt": {
+    "pokesus": {
+      "title": "Amogus: Sus Version",
+      "rgbds": "0.6.1",
+      "tags": [
+        "gold",
+        "disasm",
+        "Complete"
+      ],
+      "basis": "pret/pokegold"
+    }
+  },
+  "theresamai": {
+    "pokemon_battle_ASM": {
+      "tags": [
+        "extra"
+      ],
+      "description": "x86 ASM program simulating a Pokemon battle. Submitted as part of a course. Why is this here?"
+    }
+  },
+  "tshadowknight": {
+    "Pokemon-Roaming-Red": {
+      "rgbds": "0.4.1",
+      "tags": [
+        "red",
+        "disasm"
+      ],
+      "basis": "pret/pokered"
+    },
+    "proto_crystal": {
+      "rgbds": "0.3.5",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    },
+    "Pokemon-Roaming-Red-Tajiri": {
+      "rgbds": "0.4.1",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    }
+  },
+  "tysonrss": {
+    "Pokemon-Red-DX": {
+      "tags": [
+        "red",
+        "binary"
+      ]
+    }
+  },
+  "vulcandth": {
+    "pokecrystal16": {
+      "title": "Crystal 16 (current)",
+      "rgbds": "0.6.1",
+      "tags": [
+        "crystal",
+        "disasm",
+        "Base"
+      ],
+      "basis": "aaaaaa123456789/pokecrystal16"
+    },
+    "pokedarkgs": {
+      "rgbds": "0.6.1",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    }
+  },
+  "waicalibre": {
+    "pokered-eo": {
+      "rgbds": "0.5.2",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    }
+  },
+  "wisejustin": {
+    "Red-Blue-Remastered": {
+      "rgbds": "0.2.5",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    }
+  },
+  "wolfboyft": {
+    "pokehalls": {
+      "rgbds": "0.2.5",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    },
+    "pokestygian": {
+      "title": "Stygian",
+      "rgbds": "0.2.5",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    }
+  },
+  "wrulfy": {
+    "carminered": {
+      "title": "Carmine Red",
+      "tags": [
+        "red",
+        "disasm"
+      ]
+    }
+  },
+  "xCrystal": {
+    "pokecrystal-randofuser": {
+      "rgbds": "0.2.5",
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    },
+    "pokecrystal_challenge_cup": {
+      "tags": [
+        "crystal",
+        "disasm"
+      ]
+    }
   }
 }

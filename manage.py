@@ -602,6 +602,16 @@ class repository():
                 self.tags = [data["tags"]]
         else:
             self.tags = []
+
+        if "title" in data:
+            self.FullTitle = data["title"]
+        else:
+            self.FullTitle = self.name
+
+        if "description" in data:
+            self.Description = data["description"]
+        else:
+            self.Description = ""
         
         dir = self.manager.Directory + self.author + '/' + self.title + '/'
         self.path = {

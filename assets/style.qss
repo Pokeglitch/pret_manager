@@ -347,8 +347,13 @@ QWidget#Tag {
     margin:2px;
 }
 
+
+TagGUI {
+    background-color: #ffffff;
+}
+
 TagGUI * {
-    color: black;
+    color: #000000;
     font-size: 11px;
 }
 
@@ -530,7 +535,7 @@ GamePanelArtwork {
     padding: 0;
 }
 
-#PanelDisplay, GamePanel, #PanelOptions *, Field *, #Trees, #Trees * {
+#PanelDisplay, GamePanel, #PanelOptions *, Field *, #Trees, #Trees *, #GameDescription {
     background-color: #252526;
     color: #ffffff;
     border: none;

@@ -14,12 +14,23 @@ show all rgbds options even if they arent downloaded
 -- refresh Outdated list after fetching
 
 Game Tile/Panel:
-- fix entering of box art
+- fix centering of box art
 -- make bg color light gray for missing boxarts...
-- Show Title
 - Indicate queued, missing, outdated
 - click on author in panel to select in browser
-- show lists a game is in on the panel
+- show lists containing this game
+- Dont show process or build details for 'extras'
+- add basis & double click to switch to game panel
+
+- update search to include description and fulltitle
+
+Empty Panel shows settings & about
+- button to check for updates to pret_manager 
+- Settings:
+    - environment
+    - source location for cygwin/w64devkit
+    - also for default process options
+    - option to refresh at start
 
 --------
 
@@ -29,13 +40,6 @@ dont permit erasing of base lists
 
 button to clear filter
 button to close panel
-
-Empty Panel shows settings & about
-- button to check for updates to pret_manager 
-- Settings:
-    - environment
-    - source location for cygwin/w64devkit
-    - also for default process options
 
 CLI:
 - use -l to filter by list
@@ -177,7 +181,7 @@ class GameQueue(HBox):
     def __init__(self, gameGUI):
         super().__init__(gameGUI.GUI)
         self.GameGUI = gameGUI
-        self.label(gameGUI.Game.name)
+        self.label(gameGUI.Game.FullTitle)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -245,8 +249,11 @@ class GameTile(VBox):
         self.setObjectName("Tile")
         self.GameGUI = gameGUI
 
+        self.TopContainer = HBox(self.GUI)
+
         self.ArtworkContainer = Grid(self.GUI)
         self.Artwork = self.ArtworkContainer.label('', 1, 1)
+        self.Artwork.setAlignment(Qt.AlignCenter)
         self.Pixmap = QPixmap(self.GameGUI.Game.Boxart).scaled(100, 100)
         self.Faded = Faded(self.Pixmap)
 
@@ -259,11 +266,16 @@ class GameTile(VBox):
         self.IconContainer.addStretch()
         self.IconContainer.addTo(self.ArtworkContainer, 1, 1)
 
-        self.ArtworkContainer.addTo(self)
+        self.TopContainer.addStretch()
+        self.ArtworkContainer.addTo(self.TopContainer)
+        self.TopContainer.addStretch()
+
+        self.TopContainer.addTo(self)
 
         self.addStretch()
-        self.Title = self.label(gameGUI.Game.title)
+        self.Title = self.label(gameGUI.Game.FullTitle)
         self.Title.setAlignment(Qt.AlignCenter)
+        self.Title.setWordWrap(True)
         self.addStretch()
 
     def updateExcluding(self, isExcluding):
@@ -302,6 +314,10 @@ class TagGUI(HBox):
         self.setProperty('which',name)
         self.Label = self.label(name)
         self.Label.setAlignment(Qt.AlignCenter)
+        
+        # TODO
+        #self.Label.setStyleSheet("background-color: #" + hex(abs(hash(name)))[2:8])
+
         self.addTo(parent)
 
     def mousePressEvent(self, event):
@@ -334,6 +350,14 @@ class GamePanel(VBox):
         self.Artwork = GamePanelArtwork(self)
         self.Tags = TagsGUI(self, gameGUI.Game.tags)
         
+        self.DescriptionContainer = HBox(self.GUI)
+        self.DescriptionContainer.addStretch()
+        self.Description = self.DescriptionContainer.label(gameGUI.Game.Description)
+        self.Description.setAlignment(Qt.AlignCenter)
+        self.Description.setObjectName("GameDescription")
+        self.Description.setWordWrap(True)
+        self.DescriptionContainer.addTo(self)
+        self.DescriptionContainer.addStretch()
 
         # if git repo
         self.GitOptions = VBox(self.GUI)
@@ -1120,7 +1144,7 @@ class Panel(VBox):
 
         if self.Active:
             self.Active.setActive(True)
-            self.Header.setText(self.Active.Game.name)
+            self.Header.setText(self.Active.Game.FullTitle)
             self.Header.updateFavorite(self.GUI.Manager.Catalogs.Lists.get('Favorites').has(self.Active.Game))
         else:
             self.Header.setText("Select a Game")
@@ -1167,8 +1191,6 @@ class MainContents(HBox):
         self.Window = window
         self.Manager = window.Manager
 
-        self.ProcessButtons = []
-        
         self.Col1 = VBox(self)
         self.Col1.addTo(self, 2)
 
@@ -1196,7 +1218,6 @@ class MainContents(HBox):
 
     def switchBranch(self, game, branch):
         if not self.Window.Process:
-            [button.setProcessing(True) for button in self.ProcessButtons]
             self.Window.Process = SwitchBranch(self, game, branch)
             threadpool.start(self.Window.Process)
 
