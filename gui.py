@@ -2,13 +2,22 @@ import sys, webbrowser, json, re
 
 '''
 TODO:
+
+use an emitter for self.Outdated to add/remove from list
+- no need, just define 'Flag' catalogs beforehand...
+
+Show all releases/tags in tree, even if no downloads
+-- can right click to download if missing
+
+update 'build' handling same way as 'releases'
+-----------------
+
 do more testing on branch tracking...
 - why does it fail to switch for purergb?
 --- better clean/reset methods...
 - show on branch dropdown which are not tracked / out dated
 --- way to remove branch from tracking
 
-show all rgbds options even if they arent downloaded
 
 - If game is missing, reset the metadata & make sure gui is correct
 -- refresh Outdated list after fetching
@@ -96,6 +105,8 @@ Option to remove from queue after processed
 - install missing python, node, & linux packages/libraries
 
 - meta data should include successful/failed commit attempts
+
+show git tags and options to build them (combined with releases)
 
 GUI:
 - Catalog/Tile/Queue Sorting:
@@ -351,13 +362,11 @@ class GamePanel(VBox):
         self.Tags = TagsGUI(self, gameGUI.Game.tags)
         
         self.DescriptionContainer = HBox(self.GUI)
-        self.DescriptionContainer.addStretch()
         self.Description = self.DescriptionContainer.label(gameGUI.Game.Description)
         self.Description.setAlignment(Qt.AlignCenter)
         self.Description.setObjectName("GameDescription")
         self.Description.setWordWrap(True)
         self.DescriptionContainer.addTo(self)
-        self.DescriptionContainer.addStretch()
 
         # if git repo
         self.GitOptions = VBox(self.GUI)
@@ -391,7 +400,7 @@ class GamePanel(VBox):
         items = ["None"]
         default_index = 0
         
-        for version in reversed(list(self.GameGUI.Game.manager.RGBDS.releases.keys())):
+        for version in self.GameGUI.Game.manager.RGBDS.ReleaseIDs:
             version = version[1:]
             if version == self.GameGUI.Game.rgbds and not default_index:
                 default_index = len(items)
@@ -460,12 +469,12 @@ class GamePanel(VBox):
             releases.sort()
 
             for releaseName in reversed(releases):
-                roms = self.GameGUI.Game.releases[releaseName]
+                releases = self.GameGUI.Game.releases[releaseName]
                 releaseItem = QTreeWidgetItem(releasesItem)
                 releaseItem.setText(0, re.match(r'^\d{4}-\d{2}-\d{2} - .* \((.*)\)$', releaseName).group(1))
                 releaseItem.Path = QUrl.fromLocalFile(self.GameGUI.Game.path['releases'] + releaseName)
 
-                for romName, path in roms.items():
+                for romName, path in releases.items():
                     romItem = QTreeWidgetItem(releaseItem)
                     romItem.setText(0, romName)
                     romItem.Path = QUrl.fromLocalFile(str(path))

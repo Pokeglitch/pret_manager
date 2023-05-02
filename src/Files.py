@@ -26,7 +26,7 @@ def is_empty(dir):
     return not os.listdir(dir)
 
 def get_dirs(path):
-    return next(os.walk(path))[1]
+    return next(os.walk(path))[1] if os.path.exists(path) else []
 
 def get_all_files(path):
     return [file for file in Path(path).iterdir()]

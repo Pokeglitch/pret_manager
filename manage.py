@@ -8,7 +8,7 @@ from src.Files import *
 
 build_extensions = ['gb','gbc','pocket','patch']
 release_extensions = build_extensions + ['ips','bps','bsp','zip']
-metadata_properties = ['Branches','CurrentBranch','RGBDS']
+metadata_properties = ['Branches','GitTags','CurrentBranch','RGBDS']
 rgbds_files = ['rgbasm','rgbfix','rgblink','rgbgfx']
 
 def error(msg):
@@ -586,8 +586,11 @@ class repository():
         self.GUI = None
         self.MetaData = {}
         self.Lists = []
+
         self.Branches = {}
+        self.GitTags = {}
         self.CurrentBranch = None
+
         self.name = self.title + ' (' + self.author + ')'
         self.author_url = 'https://github.com/' + author + '/'
         self.url = self.author_url + title
@@ -693,6 +696,11 @@ class repository():
                 
         return False
 
+    def rmdir(self, path, msg=''):
+        self.print(msg)
+        self.print('Removing directory: ' + path)
+        rmdir(path)
+
     def addToList(self, list):
         if list not in self.Lists:
             self.Lists.append(list)
@@ -723,23 +731,6 @@ class repository():
                 if self.GUI:
                     self.GUI.updateFavorite(self.isFavorite)
 
-    def parse_branches(self):
-        if self.Branches:
-            for branchName in self.Branches:
-                if self.check_branch_outdated(branchName):
-                    self.Outdated = True
-        else:
-            self.Outdated = True
-
-    # only track branchs that exist locally
-    def check_branch_outdated(self, branchName):
-        branch = self.Branches[branchName]
-
-        if "LastRemoteCommit" in branch and "LastCommit" in branch:
-            return branch["LastRemoteCommit"] != branch["LastCommit"]
-
-        return False
- 
     def parse_builds(self):
         self.builds = {}
         if os.path.exists(self.path['builds']):
@@ -780,49 +771,13 @@ class repository():
                 self.print('Build directory is empty. Removing: ' + self.path['builds'])
                 rmdir(self.path['builds'])
 
-    def parse_releases(self):
-        self.releases = {}
-        if os.path.exists(self.path['releases']):
-            for dirname in get_dirs(self.path['releases']):
-                release_dir = self.path['releases'] + dirname
-                
-                # if the dir name matches the template, then it is a release
-                match = re.match(r'^\d{4}-\d{2}-\d{2} - .* \((.*)\)$', dirname)
-                if match:
-                    release_name = match.group(1)
-                    if self.title == 'rgbds':
-                        files = get_all_files(release_dir)
-                        if files:
-                            self.releases[release_name] = dirname
-                    else:
-                        files = get_releases(release_dir)
-                        if files:
-                            self.releases[dirname] = {}
-                            for file in files:
-                                self.releases[dirname][file.name] = file
-
-                    if files:
-                        self.hasBuild = True
-                    else:
-                        self.print('Missing release files in directory: ' + release_name)
-                        self.print('Removing directory: ' + release_dir)
-                        rmdir(release_dir)
-                else:
-                    self.print('Invalid release directory name: ' + dirname)
-                    self.print('Removing directory: ' + release_dir)
-                    rmdir(release_dir)
-
-            # if the releases directory is empty, then delete
-            if not get_dirs(self.path['releases']):
-                self.print('Release directory is empty. Removing: ' + self.path['releases'])
-                rmdir(self.path['releases'])
-
     def print(self, msg):
-        msg = self.name + ":\t" + str(msg)
-        print(msg)
+        if msg:
+            msg = self.name + ":\t" + str(msg)
+            print(msg)
 
-        if self.Manager.GUI:
-            self.Manager.GUI.Logger.emit(msg)
+            if self.Manager.GUI:
+                self.Manager.GUI.Logger.emit(msg)
 
     def set_branch(self, branch):
         if branch != self.CurrentBranch:
@@ -877,6 +832,7 @@ class repository():
         return result
     
     def get_current_branch_info(self):
+        # todo - move to Git class
         branch = self.git.run('rev-parse --abbrev-ref HEAD', CaptureOutput=True)[0]
         lastUpdate = self.get_date()
         lastCommit = self.get_commit()
@@ -898,33 +854,181 @@ class repository():
         self.print('Fetching')
         return self.git.fetch()
 
-    # will get remote branch information
     def refresh(self):
-        outdated = False
+        self.refresh_branches()
+        self.refresh_tags()
+        self.refresh_releases()
+
+        self.clean_directory()
+
+    def clean_directory(self):
+        self.clean_releases()
+
+    def list(self, which):
+        obj = {}
 
         if not os.path.exists(self.path["repo"]):
-            outdated = True
+            data = self.git.list(which, self.url, Directory = '.')
         else:
-            heads = self.git.compare()
+            data = self.git.list(which)
 
-            for head in heads:
-                # skip empty lines
-                if head:
-                    head = head.split('\t')
-                    commit = head[0]
-                    branch = head[1].split('/')[-1]
+        for row in data:
+            # skip empty rows
+            if row:
+                row = row.split('\t')
+                commit = row[0]
+                name = row[1].split('/')[-1]
 
-                    if branch not in self.Branches:
-                        self.Branches[branch] = {}
+                obj[name] = commit
+
+        return obj.items()
+    
+    def get_branch_data(self, branch):
+        if branch not in self.Branches:
+            self.Branches[branch] = {}
+
+        return self.Branches[branch]
+
+    def refresh_branches(self):
+        for branch, commit in self.list('head'):
+            data = self.get_branch_data(branch)
+            data['LastRemoteCommit'] = commit
+
+            if 'LastCommit' not in data or data['LastCommit'] != commit:
+                self.set_outdated(True)
+
+    def parse_branches(self):
+        if not self.Branches or any([self.check_branch_outdated(branch) for branch in self.Branches]):
+            self.set_outdated(True)
+
+    # only track branchs that exist locally
+    def check_branch_outdated(self, branch):
+        data = self.get_branch_data(branch)
+
+        if "LastRemoteCommit" in data and "LastCommit" in data:
+            return data["LastRemoteCommit"] != data["LastCommit"]
+
+        return False
+
+    def get_tag_data(self, tag):
+        if tag not in self.GitTags:
+            self.GitTags[tag] = {}
+
+        return self.GitTags[tag]
+    
+    def refresh_tags(self):
+        for tag, commit in self.list('tags'):
+            if tag not in self.GitTags:
+                data = self.get_tag_data(tag)
+                data["commit"] = commit
+  
+    def refresh_releases(self):
+        releases = self.github.list()
+        for release in releases:
+            # ignore empty lines
+            if release:
+                [title, isLatest, tag, datetime] = release.split('\t')
+
+                data = self.get_tag_data(tag)
+
+                if "release" not in data:
+                    data["release"] = legal_name(datetime.split('T')[0] + ' - ' + title + ' (' + tag + ')')
+    
+    def parse_releases(self):
+        self.releases = {}
+
+        for tag, data in self.GitTags.items():
+            if "release" in data:
+                release_name = data["release"]
+                release_dir = self.path['releases'] + release_name
+
+                if os.path.exists(release_dir):
+                    files = self.check_releases(release_dir)
+                    if files:
+                        self.store_release(tag, files)
+    
+    def store_release(self, tag, files):
+        release_name = self.GitTags[tag]["release"]
+
+        self.releases[release_name] = {}
+        for file in files:
+            self.releases[release_name][file.name] = file
+        
+    def check_releases(self, dir):
+        return get_releases(dir)
+     
+    def clean_releases(self):
+        if os.path.exists(self.path['releases']):
+            for dirname in get_dirs(self.path['releases']):
+                release_dir = self.path['releases'] + dirname
+                error_message = ''
+
+                # if the dir name matches the template, then it is a release
+                match = re.match(r'^\d{4}-\d{2}-\d{2} - .* \((.*)\)$', dirname)
+                if match:
+                    tag = match.group(1)
+
+                    if tag not in self.GitTags:
+                        error_message = 'Tag does not exist: ' + tag
+
+                    elif "release" not in self.GitTags[tag]:
+                        error_message = 'Tag does not have associated release: ' + tag
+
+                    elif not self.check_releases(release_dir):
+                        error_message = 'Missing release files for tag: ' + tag
+                else:
+                    error_message = 'Invalid release directory name: ' + dirname
                     
-                    self.Branches[branch]['LastRemoteCommit'] = commit
+                if error_message:
+                    self.rmdir(release_dir, error_message)
 
-                    if 'LastCommit' not in self.Branches[branch] or self.Branches[branch]['LastCommit'] != commit:
-                        outdated = True
+            # if the releases directory is empty, then delete
+            if not get_dirs(self.path['releases']):
+                self.rmdir(self.path['releases'], 'Release directory is empty')
 
-        if outdated and not self.Outdated:
-            self.Outdated = True
-            self.manager.Catalogs.Lists.get('Outdated').addGames([self])
+    def get_releases(self, release_id=None):
+        release_found = False
+
+        self.print('Checking releases')
+
+        for tag, data in self.GitTags.items():
+            if not release_id or tag == release_id:
+                if "release" in data and data["release"] not in self.releases:
+                    self.print('Downloading release: ' + tag)
+
+                    release_dir = self.path['releases'] + data["release"]
+
+                    temp_dir = temp_mkdir(release_dir)
+                    self.github.download(tag, release_dir)
+
+                    files = self.check_releases(release_dir)
+                    if files:
+                        self.store_release(tag, files)
+                        release_found = True
+                    else:
+                        self.rmdir(temp_dir, 'Release does not have valid content: ' + data["release"])
+
+        if release_found:
+            if self.GUI:
+                self.manager.GUI.Release.emit(self)
+            
+            if not self.hasBuild:
+                self.hasBuild = True
+                self.manager.Catalogs.Lists.get('Library').addGames([self])
+
+        else:
+            self.print('No new releases found')
+        
+        return release_found
+     
+    def set_outdated(self, value):
+        if self.Outdated != value:
+            #if value:
+            #    self.manager.Catalogs.Lists.get('Outdated').addGames([self])
+            #else:
+            #    self.manager.Catalogs.Lists.get('Outdated').removeGames([self])
+
+            self.Outdated = value
 
     def get_date(self):
         return self.git.date()
@@ -966,85 +1070,7 @@ class repository():
         if len(args):
             self.print('Switching back to previous branch/commit')
             self.git.switch('-')
-
-    def get_releases(self, release_id=None):
-        release_found = False
-
-        self.print('Checking releases')
-        # todo - handle failure to list releases?
-        releases = self.github.list()
-
-        # if any exist, then download
-        if len(releases) > 1:
-            for release in releases:
-                # ignore empty lines
-                if release:
-                    release_valid = True
-
-                    [title, isLatest, id, datetime] = release.split('\t')
-
-                    # skip if this not the targeted release
-                    if release_id and release_id != id:
-                        continue
-
-                    date = datetime.split('T')[0]
-                    name = legal_name(date + ' - ' + title + ' (' + id + ')')
-                    release_dir = self.path['releases'] + name
-
-                    # if the release directory exists and doesnt contain valid files, then remove
-                    if os.path.exists(release_dir):
-                        if self.title == 'rgbds':
-                            files = get_all_files(release_dir)
-                        else:
-                            files = get_releases(release_dir)
-
-                        if not files:
-                            self.print('Missing release files in pre-existing directory: ' + name)
-                            self.print('Removing directory: ' + release_dir)
-                            rmdir(release_dir)
-                
-                    # if the release diretory doesnt exist, then download
-                    if not os.path.exists(release_dir):
-                        temp_dir = temp_mkdir(release_dir)
-                        self.print('Downloading release: ' + title)
-                        self.github.download(id, release_dir)
-
-                        if self.title == 'rgbds':
-                            files = get_all_files(release_dir)
-                            if files:
-                                self.releases[id] = name
-                            else:
-                                release_valid = False
-                            
-                        else:
-                            files = get_releases(release_dir)
-                            if files:
-                                self.releases[name] = {}
-                                for file in files:
-                                    self.releases[name][file.name] = file
-                            else:
-                                release_valid = False
-
-                        if release_valid:
-                            release_found = True
-                        else:
-                            self.print('Release does not have valid content: ' + name)
-                            self.print('Removing directory: ' + release_dir)
-                            rmdir(temp_dir)
-
-            if release_found:
-                if self.GUI:
-                    self.manager.GUI.Release.emit(self)
-                
-                if not self.hasBuild:
-                    self.hasBuild = True
-                    self.manager.Catalogs.Lists.get('Library').addGames([self])
-
-        else:
-            self.print('No releases found')
-        
-        return release_found
-         
+    
     def update(self, release_id=None):
         mkdir(self.path['base'])
 
@@ -1153,7 +1179,7 @@ class repository():
             self.git.switch(*args)
 
         self.rgbds = ''
-        releases = [version[1:] for version in reversed(list(self.manager.RGBDS.releases.keys()))]
+        releases = [version[1:] for version in self.manager.RGBDS.ReleaseIDs]
 
         # If there is a .rgbds-version file, try that first
         if os.path.exists(self.path['repo'] + '/.rgbds-version'):
@@ -1173,6 +1199,27 @@ class repository():
             self.git.switch('-')
 
 class RGBDS(repository):
+    def __init__(self, *args):
+        super().__init__(*args)
+
+        if not self.GitTags:
+            self.refresh()
+            self.updateMetaData()
+
+    def check_releases(self, dir):
+        return get_all_files(dir)
+    
+    def store_release(self, tag, files):
+        self.releases[tag] = files[0].parts[-2]
+
+    def parse_releases(self):
+        super().parse_releases()
+
+        self.ReleaseIDs = []
+        for tag, data in self.GitTags.items():
+            if "release" in data:
+                self.ReleaseIDs.insert(0, tag)
+
     def parse_builds(self):
         self.builds = {
             'linux' : {},
