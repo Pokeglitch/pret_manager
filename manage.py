@@ -8,7 +8,7 @@ from src.Files import *
 
 build_extensions = ['gb','gbc','pocket','patch']
 release_extensions = build_extensions + ['ips','bps','bsp','zip']
-metadata_properties = ['Branches','GitTags','CurrentBranch','RGBDS']
+metadata_properties = ['Branches','GitTags','CurrentBranch','RGBDS','Excluding','Favorites']
 rgbds_files = ['rgbasm','rgbfix','rgblink','rgbgfx']
 
 def error(msg):
@@ -94,18 +94,9 @@ class TagEntry(CatalogEntry):
             self.GUI.Label.setParent(None)
             self.GUI.TagGUI = gui.TagGUI(self.GUI, self.Name)
 
-class ListEntry(CatalogEntry):
-    def build_GUI(self):
-        return gui.ListEntryGUI(self)
-
+class BaseListEntry(CatalogEntry):
     def reset(self, isPermanent=False):
         self.removeGames(self.GameList[:], isPermanent)
-
-    def erase(self):
-        self.reset(True)
-        
-        if self.Name not in self.Manager.BaseLists:
-            os.remove(list_dir + self.Name + '.json')
 
     def addGame(self, game):
         super().addGame(game)
@@ -121,7 +112,7 @@ class ListEntry(CatalogEntry):
         for game in games:
             if game not in self.GameList:
                 isChanged = True
-                game.addToList(self)
+                self.addGame(game)
                 
         self.addToFilter()
 
@@ -141,7 +132,7 @@ class ListEntry(CatalogEntry):
         for game in games:
             if game in self.GameList:
                 isChanged = True
-                game.removeFromList(self)
+                self.removeGame(game)
                 
         if isPermanent:
             self.GUI.setMode(None)
@@ -176,23 +167,47 @@ class ListEntry(CatalogEntry):
             self.Manager.GUI.Content.Tiles.refresh()
 
     def write(self):
-        if self.Name not in ["Library","Missing","Outdated","Search"]:
-            with open(list_dir + self.Name + '.json', 'w') as f:
-                f.write(json.dumps(self.GameStructure))
+        pass
 
-class SearchEntry(ListEntry):
+class ListEntry(BaseListEntry):
+    def build_GUI(self):
+        return gui.ListEntryGUI(self)
+    
+    def addGame(self, game):
+        super().addGame(game)
+        game.addToList(self)
+
+    def removeGame(self, game):
+        super().removeGame(game)
+        game.removeFromList(self)
+
+    def write(self):
+        with open(list_dir + self.Name + '.json', 'w') as f:
+            f.write(json.dumps(self.GameStructure))
+
+    def erase(self):
+        self.reset(True)
+        os.remove(list_dir + self.Name + '.json')
+
+class FlagListEntry(BaseListEntry):  
+    def addGame(self, game):
+        super().addGame(game)
+        game.setFlag(self, True)
+
+    def removeGame(self, game):
+        super().removeGame(game)
+        game.setFlag(self, False)
+
+class SearchEntry(BaseListEntry):
     def __init__(self, manager):
-        self.Manager = manager
-        self.GUI = None
-        super().__init__(self, "Search")
-
-        if manager.GUI:
-            self.GUI = gui.SearchBox(self)
-
+        super().__init__(manager, "Search")
         self.ExcludedGames = []
         self.addGames(self.Manager.All)
 
         self.PreviousText = ""
+
+    def build_GUI(self):
+        return gui.SearchBox(self)
 
     def onTextChanged(self, text):
         text_lower = text.lower()
@@ -257,6 +272,10 @@ class ListCatalog(Catalog):
     def __init__(self, catalogs):
         super().__init__(catalogs, 'Lists', ListEntry)
 
+class FlagCatalog(Catalog):
+    def __init__(self, catalogs):
+        super().__init__(catalogs, 'Flags', FlagListEntry)
+
 class AuthorCatalog(Catalog):
     def __init__(self, catalogs):
         super().__init__(catalogs, 'Authors', AuthorEntry)
@@ -268,9 +287,10 @@ class TagCatalog(Catalog):
 class Catalogs:
     def __init__(self, manager):
         self.Manager = manager
-        self.Lists = ListCatalog(self)
+        self.Flags = FlagCatalog(self)
         self.Authors = AuthorCatalog(self)
         self.Tags = TagCatalog(self)
+        self.Lists = ListCatalog(self)
 
 class Settings:
     def __init__(self, manager):
@@ -330,7 +350,7 @@ class PRET_Manager:
         self.App = None
         self.Search = None
 
-        self.BaseLists = ["Library", "Favorites", "Excluding", "Outdated", "Missing"]
+        self.FlagLists = ["Library", "Favorites", "Excluding", "Outdated", "Missing"]
 
         self.Queue = []
 
@@ -340,6 +360,9 @@ class PRET_Manager:
 
         self.Settings = Settings(self)
         self.Environments = Environments(self)
+
+    def addFlagList(self, name):
+        self.Catalogs.Flags.add(name)
 
     def addList(self, name, list):
         if self.Catalogs.Lists.has(name):
@@ -378,15 +401,11 @@ class PRET_Manager:
     def init(self):
         self.Catalogs = Catalogs(self)
 
+        # Initialize the Flag Lists
+        for name in self.FlagLists:
+            self.addFlagList(name)
+
         self.load('data.json')
-
-        # Initialize the base lists
-        for name in self.BaseLists:
-            self.addList(name, [])
-
-        self.Catalogs.Lists.get("Library").addGames([game for game in self.All if game.hasBuild])
-        self.Catalogs.Lists.get("Outdated").addGames([game for game in self.All if game.Outdated])
-        self.Catalogs.Lists.get("Missing").addGames([game for game in self.All if game.Missing])
 
         # Load lists
         for file in get_files(list_dir):
@@ -455,7 +474,7 @@ class PRET_Manager:
             self.print('Queue is empty')
         elif processes:
             for repo in self.Queue:
-                if self.Catalogs.Lists.get('Excluding').has(repo):
+                if repo.Excluding:
                     self.print('Excluding ' + repo.name)
                     continue
 
@@ -632,11 +651,15 @@ class repository():
         if not os.path.exists(self.Boxart):
             self.Boxart = 'assets/images/gb.png'
 
-        self.Missing = not os.path.exists(self.path['repo'])
-        self.hasBuild = False
-        self.Outdated = False
-        self.isExcluding = False
-        self.isFavorite = False
+        self.Initialized = False
+        self.Missing = None
+        self.Outdated = None
+        self.Excluding = False
+        self.Favorites = False
+        self.Library = False
+
+        self.setMissing(not os.path.exists(self.path['repo']))
+        self.setOutdated(False)
 
         self.readMetaData()
 
@@ -644,11 +667,30 @@ class repository():
         self.parse_builds()
         self.parse_releases()
 
-        if self.manager.GUI and self.author != 'gbdev':
+        self.Initialized = True
+
+        # if meta data includes a current branch, but it was detected as missing, then update
+        if self.Missing and self.CurrentBranch:
+            self.CurrentBranch = None
+            for branch in self.Branches:
+                if "LastCommit" in self.Branches[branch]:
+                    del self.Branches[branch]["LastCommit"]
+                    
+                if "LastUpdate" in self.Branches[branch]:
+                    del self.Branches[branch]["LastUpdate"]
+
+            self.updateMetaData()
+                
+
+        if self.manager.GUI:
             self.init_GUI()
+
+######### GUI Methods
 
     def init_GUI(self):
         self.GUI = gui.GameGUI(self.manager.GUI.Content, self)
+
+######### Metadata Methods
 
     def readMetaData(self):
         path = self.path['base'] + 'metadata.json'
@@ -661,7 +703,7 @@ class repository():
                 if prop in data:
                     self.MetaData[prop] = data[prop]
         else:
-            self.Outdated = True
+            self.setOutdated(True)
 
         for prop in metadata_properties:
             self.getMetaDataProperty(prop)
@@ -669,15 +711,21 @@ class repository():
     def getMetaDataProperty(self, name):
         if name in self.MetaData:
             value = copy.deepcopy(self.MetaData[name])
-            setattr(self, name, value)
+            if name in self.Manager.FlagLists:
+                getattr(self, "set" + name)(value)
+            else:
+                setattr(self, name, value)
 
     def updateMetaData(self):
-        metadataChanged = [self.updateMetaDataProperty(prop) for prop in metadata_properties]
+        # dont update meta data if triggered during initialization
+        # (since some parameters are not assigned properly yet)
+        if self.Initialized:
+            metadataChanged = [self.updateMetaDataProperty(prop) for prop in metadata_properties]
 
-        if any(metadataChanged):
-            mkdir(self.path['base'])
-            with open(self.path['base'] + 'metadata.json', 'w') as f:
-                f.write(json.dumps(self.MetaData, indent=4))
+            if any(metadataChanged):
+                mkdir(self.path['base'])
+                with open(self.path['base'] + 'metadata.json', 'w') as f:
+                    f.write(json.dumps(self.MetaData, indent=4))
 
     def updateMetaDataProperty(self, name):
         value = copy.deepcopy( getattr(self, name) )
@@ -696,40 +744,76 @@ class repository():
                 
         return False
 
+######### IO Methods
+
     def rmdir(self, path, msg=''):
         self.print(msg)
         self.print('Removing directory: ' + path)
         rmdir(path)
+        
+    def print(self, msg):
+        if msg:
+            msg = self.name + ":\t" + str(msg)
+            print(msg)
+
+            if self.Manager.GUI:
+                self.Manager.GUI.Logger.emit(msg)
+
+######### Catalog Methods
 
     def addToList(self, list):
         if list not in self.Lists:
             self.Lists.append(list)
-            list.addGame(self)
-
-            if list.Name == "Excluding":
-                self.isExcluding = True
-                if self.GUI:
-                    self.GUI.updateExcluding(self.isExcluding)
-
-            if list.Name == "Favorites":
-                self.isFavorite = True
-                if self.GUI:
-                    self.GUI.updateFavorite(self.isFavorite)
 
     def removeFromList(self, list):
         if list in self.Lists:
             self.Lists.pop(self.Lists.index(list))
-            list.removeGame(self)
 
-            if list.Name == "Excluding":
-                self.isExcluding = False
-                if self.GUI:
-                    self.GUI.updateExcluding(self.isExcluding)
+######### Make Methods
 
-            if list.Name == "Favorites":
-                self.isFavorite = False
-                if self.GUI:
-                    self.GUI.updateFavorite(self.isFavorite)
+    def clean(self):
+        self.print('Cleaning')
+        return self.make.clean()
+
+######### Git Methods
+
+    def fetch(self):
+        self.print('Fetching')
+        return self.git.fetch()
+
+    def pull(self):
+        self.git.pull()
+        self.get_current_branch_info()
+
+    def get_url(self):
+        return self.git.get('remote.origin.url')[0]
+
+    def get_date(self):
+        return self.git.date()
+
+    def get_commit(self):
+        return self.git.head()
+
+    def list(self, which):
+        obj = {}
+
+        if not os.path.exists(self.path["repo"]):
+            data = self.git.list(which, self.url, Directory = '.')
+        else:
+            data = self.git.list(which)
+
+        for row in data:
+            # skip empty rows
+            if row:
+                row = row.split('\t')
+                commit = row[0]
+                name = row[1].split('/')[-1]
+
+                obj[name] = commit
+
+        return obj.items()
+
+######### Builds Methods
 
     def parse_builds(self):
         self.builds = {}
@@ -750,7 +834,7 @@ class repository():
                             for build in builds:
                                 self.builds[branch][dirname][build.name] = build
 
-                            self.hasBuild = True
+                            self.setLibrary(True)
                         else:
                             self.print('Missing valid build files in pre-existing directory: ' + branch + '/' + dirname)
                             self.print('Removing directory: ' + build_path)
@@ -771,14 +855,6 @@ class repository():
                 self.print('Build directory is empty. Removing: ' + self.path['builds'])
                 rmdir(self.path['builds'])
 
-    def print(self, msg):
-        if msg:
-            msg = self.name + ":\t" + str(msg)
-            print(msg)
-
-            if self.Manager.GUI:
-                self.Manager.GUI.Logger.emit(msg)
-
     def set_branch(self, branch):
         if branch != self.CurrentBranch:
             self.switch(branch)
@@ -797,10 +873,6 @@ class repository():
             self.RGBDS = RGBDS
             self.updateMetaData()
 
-    def pull(self):
-        self.git.pull()
-        self.get_current_branch_info()
-
     def update_branches(self):
         starting_branch = self.CurrentBranch
 
@@ -818,13 +890,13 @@ class repository():
         if self.GUI:
             self.GUI.Panel.updateBranchDetails()
 
-    def get_url(self):
-        return self.git.get('remote.origin.url')[0]
-
     def switch(self, *args):
         self.print('Switching to branch/commit: ' + ' '.join(args))
+
+        # todo - move to Git class
         self.git.run('clean -f')
         self.git.run('reset --hard')
+
         result = self.git.switch(*args)
         # TODO - handle failed switch?
         self.print('Switched to ' + ' '.join(args))
@@ -846,13 +918,7 @@ class repository():
 
         self.CurrentBranch = branch
 
-    def clean(self):
-        self.print('Cleaning')
-        return self.make.clean()
-
-    def fetch(self):
-        self.print('Fetching')
-        return self.git.fetch()
+######### Refresh Methods
 
     def refresh(self):
         self.refresh_branches()
@@ -864,25 +930,8 @@ class repository():
     def clean_directory(self):
         self.clean_releases()
 
-    def list(self, which):
-        obj = {}
+######### Branch Methods
 
-        if not os.path.exists(self.path["repo"]):
-            data = self.git.list(which, self.url, Directory = '.')
-        else:
-            data = self.git.list(which)
-
-        for row in data:
-            # skip empty rows
-            if row:
-                row = row.split('\t')
-                commit = row[0]
-                name = row[1].split('/')[-1]
-
-                obj[name] = commit
-
-        return obj.items()
-    
     def get_branch_data(self, branch):
         if branch not in self.Branches:
             self.Branches[branch] = {}
@@ -895,11 +944,11 @@ class repository():
             data['LastRemoteCommit'] = commit
 
             if 'LastCommit' not in data or data['LastCommit'] != commit:
-                self.set_outdated(True)
+                self.setOutdated(True)
 
     def parse_branches(self):
         if not self.Branches or any([self.check_branch_outdated(branch) for branch in self.Branches]):
-            self.set_outdated(True)
+            self.setOutdated(True)
 
     # only track branchs that exist locally
     def check_branch_outdated(self, branch):
@@ -909,6 +958,8 @@ class repository():
             return data["LastRemoteCommit"] != data["LastCommit"]
 
         return False
+
+######### Git Tags & Releases Methods
 
     def get_tag_data(self, tag):
         if tag not in self.GitTags:
@@ -1012,29 +1063,78 @@ class repository():
             if self.GUI:
                 self.manager.GUI.Release.emit(self)
             
-            if not self.hasBuild:
-                self.hasBuild = True
-                self.manager.Catalogs.Lists.get('Library').addGames([self])
-
+            self.setLibrary(True)
         else:
             self.print('No new releases found')
         
         return release_found
      
-    def set_outdated(self, value):
-        if self.Outdated != value:
-            #if value:
-            #    self.manager.Catalogs.Lists.get('Outdated').addGames([self])
-            #else:
-            #    self.manager.Catalogs.Lists.get('Outdated').removeGames([self])
+######### Flag Methods
 
-            self.Outdated = value
+    def setFlag(self, flagList, value):
+        getattr(self, 'set' + flagList.Name)(value, False)
 
-    def get_date(self):
-        return self.git.date()
+    def setLibrary(self, library, addToList=True):
+        if self.Library != library:
+            self.Library = library
 
-    def get_commit(self):
-        return self.git.head()
+            if addToList:
+                if library:
+                    self.Manager.Catalogs.Flags.get('Library').addGames([self])
+                else:
+                    self.Manager.Catalogs.Flags.get('Library').removeGames([self])
+
+    def setOutdated(self, outdated, addToList=True):
+        if self.Outdated != outdated:
+            self.Outdated = outdated
+
+            if addToList:
+                if outdated:
+                    self.Manager.Catalogs.Flags.get('Outdated').addGames([self])
+                else:
+                    self.Manager.Catalogs.Flags.get('Outdated').removeGames([self])
+
+    def setMissing(self, missing, addToList=True):
+        if self.Missing != missing:
+            self.Missing = missing
+
+            if addToList:
+                if missing:
+                    self.Manager.Catalogs.Flags.get('Missing').addGames([self])
+                else:
+                    self.Manager.Catalogs.Flags.get('Missing').removeGames([self])
+
+    def setExcluding(self, excluding, addToList=True):
+        if self.Excluding != excluding:
+            self.Excluding = excluding
+
+            if addToList:
+                if excluding:
+                    self.Manager.Catalogs.Flags.get('Excluding').addGames([self])
+                else:
+                    self.Manager.Catalogs.Flags.get('Excluding').removeGames([self])
+            
+            if self.GUI:
+                self.GUI.updateExcluding(self.Excluding)
+
+            self.updateMetaData()
+
+    def setFavorites(self, favorite, addToList=True):
+        if self.Favorites != favorite:
+            self.Favorites = favorite
+
+            if addToList:
+                if favorite:
+                    self.Manager.Catalogs.Flags.get('Favorites').addGames([self])
+                else:
+                    self.Manager.Catalogs.Flags.get('Favorites').removeGames([self])
+            
+            if self.GUI:
+                self.GUI.updateFavorites(self.Favorites)
+
+            self.updateMetaData()
+
+######### TODO Methods
 
     def get_build_info(self, version):
         commit = self.get_commit()
@@ -1071,23 +1171,32 @@ class repository():
             self.print('Switching back to previous branch/commit')
             self.git.switch('-')
     
+    def update_repo(self):
+        self.print("Updating repository")
+        url = self.get_url()
+        if url != self.url:
+            self.print("Local repo origin path is \"" + url + "\" \"" + self.url + "\"")
+        
+        self.refresh()
+        
+        if self.Outdated:
+            self.update_branches()
+
+    def init_repo(self):
+        self.print("Initializing repository")
+        self.git.clone()
+        self.get_current_branch_info()
+        self.refresh()
+        if self.GUI:
+            self.GUI.Panel.updateBranchDetails()
+
     def update(self, release_id=None):
         mkdir(self.path['base'])
 
-        self.print("Updating local repository")
         if not os.path.exists(self.path['repo']):
-            self.git.clone()
-            self.get_current_branch_info()
-            self.refresh()
-            if self.GUI:
-                self.GUI.Panel.updateBranchDetails()
+            self.init_repo()
         else:
-            url = self.get_url()
-            if url != self.url:
-                self.print("Local repo origin path is \"" + url + "\" \"" + self.url + "\"")
-            self.refresh()
-            if self.Outdated:
-                self.update_branches()
+            self.update_repo()
     
         # check the shortcut
         shortcut = self.path['base'] + self.name + ' Repository.url'
@@ -1098,19 +1207,13 @@ class repository():
         releases_found = self.get_releases(release_id=release_id)
         self.get_submodules()
 
-        if self.Missing:
-            self.manager.Catalogs.Lists.get('Missing').removeGames([self])
-            self.Missing = False
-
-        # todo - only if branch is tracked...
-        if self.Outdated:
-            self.Outdated = False
-            self.manager.Catalogs.Lists.get('Outdated').removeGames([self])
-
         self.updateMetaData()
 
-        return releases_found
+        self.setMissing(False)
+        self.setOutdated(False)
 
+        return releases_found
+    
     def get_submodules(self):
         submodules = {}
 
@@ -1165,9 +1268,7 @@ class repository():
                 if self.GUI:
                     self.manager.GUI.Build.emit(self)
 
-                if not self.hasBuild:
-                    self.hasBuild = True
-                    self.manager.Catalogs.Lists.get('Library').addGames([self])
+                self.setLibrary(True)
 
                 return True
             else:
@@ -1205,6 +1306,9 @@ class RGBDS(repository):
         if not self.GitTags:
             self.refresh()
             self.updateMetaData()
+
+    def init_GUI(self):
+        pass
 
     def check_releases(self, dir):
         return get_all_files(dir)

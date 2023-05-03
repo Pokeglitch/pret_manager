@@ -22,19 +22,19 @@ class CatalogEntryContextMenu(ContextMenu):
             self.addAction( parent.AddToQueue )
             self.addAction( parent.RemoveFromQueue )
 
-            if parent.Data != parent.GUI.Manager.Catalogs.Lists.get('Favorites'):
+            if parent.Data != parent.GUI.Manager.Catalogs.Flags.get('Favorites'):
                 self.addAction( parent.AddToFavorites )
                 self.addAction( parent.RemoveFromFavorites )
 
-            if parent.Data != parent.GUI.Manager.Catalogs.Lists.get('Excluding'):
+            if parent.Data != parent.GUI.Manager.Catalogs.Flags.get('Excluding'):
                 self.addAction( parent.AddToExcluding )
                 self.addAction( parent.RemoveFromExcluding )
 
             # Add to list/ remove from list (except itself)
             lists = []
 
-            for name, list in parent.GUI.Manager.Catalogs.Lists.Entries.items():
-                if name not in parent.GUI.Manager.BaseLists and list != parent.Data:
+            for list in parent.GUI.Manager.Catalogs.Lists.Entries.values():
+                if list != parent.Data:
                     lists.append(list)
 
             self.addMenu( AddListToListMenu(parent, lists) )
@@ -108,17 +108,17 @@ class CatalogEntryGUI(HBox):
         self.GUI.Queue.removeGames(self.getData())
 
     def addToFavoritesHandler(self):
-        self.GUI.Manager.Catalogs.Lists.get('Favorites').addGames(self.getData())
+        self.GUI.Manager.Catalogs.Flags.get('Favorites').addGames(self.getData())
 
     def removeFromFavoritesHandler(self):
-        self.GUI.Manager.Catalogs.Lists.get('Favorites').removeGames(self.getData())
-
+        self.GUI.Manager.Catalogs.Flags.get('Favorites').removeGames(self.getData())
+            
     def addToExcludingHandler(self):
-        self.GUI.Manager.Catalogs.Lists.get('Excluding').addGames(self.getData())
-
+        self.GUI.Manager.Catalogs.Flags.get('Excluding').addGames(self.getData())
+            
     def removeFromExcludingHandler(self):
-        self.GUI.Manager.Catalogs.Lists.get('Excluding').removeGames(self.getData())
-
+        self.GUI.Manager.Catalogs.Flags.get('Excluding').removeGames(self.getData())
+            
     def saveList(self):
         self.GUI.saveList(self.getData())
 
@@ -129,8 +129,7 @@ class ListEntryGUI(CatalogEntryGUI):
 
     def erase(self):
         self.Data.erase()
-        if self.Data.Name not in self.GUI.Manager.BaseLists:
-            self.addTo(None)
+        self.addTo(None)
 
 class CatalogModesRow(HBox):
     def __init__(self, parent, mode):
@@ -152,18 +151,24 @@ class CatalogsTabs(VBox):
     def __init__(self, parent):
         super().__init__(parent.GUI)
 
-        self.ListTab = CatalogIcon(self, 'assets/images/list.png', 0)
-        self.AuthorsTab = CatalogIcon(self, 'assets/images/author.png', 1)
-        self.TagsTab = CatalogIcon(self, 'assets/images/tag.png', 2)
+        self.TabCount = 0
 
-        self.ActiveTab = self.ListTab
-        self.ActiveTab.setActive(True)
+        self.Container = VBox(self.GUI)
+        self.Container.addTo(self)
 
         self.addStretch()
-        
         self.Modes = CatalogModes(self)
 
         self.addTo(parent, 1)
+
+    def addTab(self, name):
+        tab = CatalogIcon(self, 'assets/images/{0}.png'.format(name.lower()), self.TabCount )
+
+        if not self.TabCount:
+            self.ActiveTab = tab
+            tab.setActive(True)
+        
+        self.TabCount += 1
 
     def setCatalog(self, tab):
         if tab != self.ActiveTab:
@@ -173,12 +178,13 @@ class CatalogsTabs(VBox):
 
 class CatalogIcon(Icon):
     def __init__(self, parent, image, index):
-        super().__init__(parent, image, 35)
         self.Index = index
+
+        super().__init__(parent.Container, image, 35)
 
     def mousePressEvent(self, e):
         self.setActive(True)
-        self.Parent.setCatalog(self)
+        self.Parent.Parent.setCatalog(self)
 
 class CatalogsContainer(VBox):
     def __init__(self, parent):
@@ -205,6 +211,8 @@ class CatalogGUI(VBox):
         self.ListGUI = VBox(parent.GUI)
         self.ListGUI.addTo(self.ListContainer)
         self.ListContainer.addStretch()
+
+        self.Tab = data.Manager.GUI.Content.Catalogs.Body.Tabs.addTab(ID)
 
         parent.Stack.addWidget(self)
 

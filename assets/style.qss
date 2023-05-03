@@ -553,6 +553,11 @@ Panel QScrollArea, Panel VScroll {
     background-color: #3a3a3b;
 }
 
+#PanelOptions QComboBox[processing=true] {
+    color: #616161;
+    background-color: #313131;
+}
+
 #PanelOptions QComboBox::down-arrow {
     background: none;
     border: none;

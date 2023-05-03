@@ -3,28 +3,14 @@ import sys, webbrowser, json, re
 '''
 TODO:
 
-use an emitter for self.Outdated to add/remove from list
-- no need, just define 'Flag' catalogs beforehand...
+Add icons for all flags
 
-Show all releases/tags in tree, even if no downloads
--- can right click to download if missing
-
-update 'build' handling same way as 'releases'
 -----------------
 
-do more testing on branch tracking...
-- why does it fail to switch for purergb?
---- better clean/reset methods...
-- show on branch dropdown which are not tracked / out dated
---- way to remove branch from tracking
-
-
-- If game is missing, reset the metadata & make sure gui is correct
--- refresh Outdated list after fetching
+update 'build' handling same way as 'releases'
 
 Game Tile/Panel:
-- fix centering of box art
--- make bg color light gray for missing boxarts...
+- make bg color light gray for missing boxarts...
 - Indicate queued, missing, outdated
 - click on author in panel to select in browser
 - show lists containing this game
@@ -43,10 +29,6 @@ Empty Panel shows settings & about
 
 --------
 
-dont permit erasing of base lists
-- separate on gui from custom ones?
-(and make sure it doesnt get confused with custom ones)
-
 button to clear filter
 button to close panel
 
@@ -60,6 +42,15 @@ Update README
 --------------------------
 finish artwork/tags
 IPS Patches
+
+do more testing on branch tracking...
+- why does it fail to switch for purergb?
+--- better clean/reset methods...
+- show on branch dropdown which are not tracked / out dated
+--- way to remove branch from tracking
+
+Show all releases/tags in tree, even if no downloads
+-- can right click to download or build if missing
 
 some makefiles require rgbds to be in a folder in the repo
 - bw3g
@@ -84,7 +75,6 @@ update rgbds dropdowns after updating...
 
 Option to only list releases, and user can select which to download
 
-handle lists with same name as built in lists
 hande importing corrupt lists
 collect roms/patches from 'releases'
 
@@ -212,12 +202,12 @@ class GameBaseContextMenu(ContextMenu):
         else:
             self.addAction( gui.AddToQueue )
 
-        if game.isFavorite:
+        if game.Favorites:
             self.addAction( gui.RemoveFromFavorites )
         else:
             self.addAction( gui.AddToFavorites )
 
-        if game.isExcluding:
+        if game.Excluding:
             self.addAction( gui.RemoveFromExcluding )
         else:
             self.addAction( gui.AddToExcluding )
@@ -225,12 +215,11 @@ class GameBaseContextMenu(ContextMenu):
         addLists = []
         removeLists = []
 
-        for name, list in parent.GUI.Manager.Catalogs.Lists.Entries.items():
-            if name not in parent.GUI.Manager.BaseLists:
-                if list.has(parent.GameGUI.Game):
-                    removeLists.append(list)
-                else:
-                    addLists.append(list)
+        for list in parent.GUI.Manager.Catalogs.Lists.Entries.values():
+            if list.has(parent.GameGUI.Game):
+                removeLists.append(list)
+            else:
+                addLists.append(list)
 
         self.addMenu( AddGameToListMenu(parent, addLists) )
 
@@ -289,14 +278,14 @@ class GameTile(VBox):
         self.Title.setWordWrap(True)
         self.addStretch()
 
-    def updateExcluding(self, isExcluding):
-        if isExcluding:
+    def updateExcluding(self, excluding):
+        if excluding:
             self.Artwork.setPixmap(self.Faded)
         else:
             self.Artwork.setPixmap(self.Pixmap)
 
-    def updateFavorite(self, isFavorite):
-        if isFavorite:
+    def updateFavorites(self, favorite):
+        if favorite:
             self.FavoriteIcon.setPixmap(self.FavoritePixmap)
         else:
             self.FavoriteIcon.clear()
@@ -386,6 +375,8 @@ class GamePanel(VBox):
         self.BranchComboBox = QComboBox()
         self.ignoreComboboxChanges = False
         self.BranchComboBox.currentTextChanged.connect(self.handleBranchSelected)
+
+        self.GUI.Window.Processing.connect(self.handleProcessing)
 
         self.Branch.add(self.BranchComboBox)
         self.Branch.addTo(self.GitOptions)
@@ -543,10 +534,15 @@ class GamePanel(VBox):
         self.ignoreComboboxChanges = False
         
     def handleBranchSelected(self, branch):
-        if not self.ignoreComboboxChanges and branch != self.GameGUI.Game.CurrentBranch:
+        if not self.GameGUI.Game.Missing and not self.GUI.Window.Process and not self.ignoreComboboxChanges and branch != self.GameGUI.Game.CurrentBranch:
             self.GUI.switchBranch(self.GameGUI.Game, branch)
 
             # todo - if it failed, change selection back to previous branch
+
+    def handleProcessing(self, processing):
+        self.BranchComboBox.setEnabled(not processing)
+        self.BranchComboBox.setProperty('processing', processing)
+        self.BranchComboBox.style().polish(self.BranchComboBox)
 
     def handleRGBDSSelected(self, rgbds):
         self.GameGUI.Game.set_RGBDS(rgbds.split(' ')[0])
@@ -580,17 +576,17 @@ class GameGUI(QWidget):
         self.Panel = GamePanel(self)
 
         self.setQueued(False)
-        self.updateExcluding(self.Game.isExcluding)
-        self.updateFavorite(self.Game.isFavorite)
+        self.updateExcluding(self.Game.Excluding)
+        self.updateFavorites(self.Game.Favorites)
 
-    def updateExcluding(self, isExcluding):
-        self.Tile.updateExcluding(isExcluding)
-        self.Panel.Artwork.updateExcluding(isExcluding)
+    def updateExcluding(self, excluding):
+        self.Tile.updateExcluding(excluding)
+        self.Panel.Artwork.updateExcluding(excluding)
 
-    def updateFavorite(self, isFavorite):
-        self.Tile.updateFavorite(isFavorite)
+    def updateFavorites(self, favorite):
+        self.Tile.updateFavorites(favorite)
         if self.GUI.Panel.Active == self:
-            self.GUI.Panel.Header.updateFavorite(isFavorite)
+            self.GUI.Panel.Header.updateFavorites(favorite)
 
     def setQueued(self, queued):
         self.isQueued = queued
@@ -623,23 +619,29 @@ class GameGUI(QWidget):
         self.GUI.Queue.removeGame(self)
 
     def addToFavoritesHandler(self):
-        self.toggleFavoritesHandler()
+        self.Game.setFavorites(True)
 
     def removeFromFavoritesHandler(self):
-        self.toggleFavoritesHandler()
+        self.Game.setFavorites(False)
         
     def toggleFavoritesHandler(self):
-        self.GUI.Manager.Catalogs.Lists.get('Favorites').toggleGames([self.Game])
+        if self.Game.Favorites:
+            self.removeFromFavoritesHandler()
+        else:
+            self.addToFavoritesHandler()
 
     def addToExcludingHandler(self):
-        self.toggleExcludingHandler()
+        self.Game.setExcluding(True)
 
     def removeFromExcludingHandler(self):
-        self.toggleExcludingHandler()
+        self.Game.setExcluding(False)
 
     def toggleExcludingHandler(self):
-        self.GUI.Manager.Catalogs.Lists.get('Excluding').toggleGames([self.Game])
-        
+        if self.Game.Excluding:
+            self.removeFromExcludingHandler()
+        else:
+            self.addToExcludingHandler()
+
     def saveList(self):
         self.GUI.saveList([self.Game])
 
@@ -658,9 +660,8 @@ class QueueContextMenu(ContextMenu):
         # Add to list/ remove from list (except itself)
         lists = []
 
-        for name, list in parent.GUI.Manager.Catalogs.Lists.Entries.items():
-            if name not in parent.GUI.Manager.BaseLists:
-                lists.append(list)
+        for list in parent.GUI.Manager.Catalogs.Lists.Entries.values():
+            lists.append(list)
 
         self.addMenu( AddListToListMenu(queue, lists) )
 
@@ -781,17 +782,17 @@ class Queue(VBox):
         return [gameGUI.Game for gameGUI in self.List]
 
     def addToFavoritesHandler(self):
-        self.GUI.Manager.Catalogs.Lists.get('Favorites').addGames(self.getData())
+        self.GUI.Manager.Catalogs.Flags.get('Favorites').addGames(self.getData())
 
     def removeFromFavoritesHandler(self):
-        self.GUI.Manager.Catalogs.Lists.get('Favorites').removeGames(self.getData())
-
+        self.GUI.Manager.Catalogs.Flags.get('Favorites').removeGames(self.getData())
+            
     def addToExcludingHandler(self):
-        self.GUI.Manager.Catalogs.Lists.get('Excluding').addGames(self.getData())
-
+        self.GUI.Manager.Catalogs.Flags.get('Excluding').addGames(self.getData())
+            
     def removeFromExcludingHandler(self):
-        self.GUI.Manager.Catalogs.Lists.get('Excluding').removeGames(self.getData())
-
+        self.GUI.Manager.Catalogs.Flags.get('Excluding').removeGames(self.getData())
+            
 class TilesContextMenu(ContextMenu):
     def __init__(self, parent, event):
         super().__init__(parent, event)
@@ -810,9 +811,8 @@ class TilesContextMenu(ContextMenu):
 
             lists = []
 
-            for name, list in parent.GUI.Manager.Catalogs.Lists.Entries.items():
-                if name not in parent.GUI.Manager.BaseLists:
-                    lists.append(list)
+            for list in parent.GUI.Manager.Catalogs.Lists.Entries.values():
+                lists.append(list)
 
             self.addMenu( AddListToListMenu(tiles, lists) )
 
@@ -894,17 +894,17 @@ class Tiles(VBox):
             self.isEmpty = not bool(self.All_Games)
 
     def addToFavoritesHandler(self):
-        self.GUI.Manager.Catalogs.Lists.get('Favorites').addGames(self.getData())
+        self.GUI.Manager.Catalogs.Flags.get('Favorites').addGames(self.getData())
 
     def removeFromFavoritesHandler(self):
-        self.GUI.Manager.Catalogs.Lists.get('Favorites').removeGames(self.getData())
-
+        self.GUI.Manager.Catalogs.Flags.get('Favorites').removeGames(self.getData())
+            
     def addToExcludingHandler(self):
-        self.GUI.Manager.Catalogs.Lists.get('Excluding').addGames(self.getData())
-
+        self.GUI.Manager.Catalogs.Flags.get('Excluding').addGames(self.getData())
+            
     def removeFromExcludingHandler(self):
-        self.GUI.Manager.Catalogs.Lists.get('Excluding').removeGames(self.getData())
-
+        self.GUI.Manager.Catalogs.Flags.get('Excluding').removeGames(self.getData())
+            
     def addToQueueHandler(self):
         self.GUI.Queue.addGames(self.getData())
 
@@ -1122,8 +1122,8 @@ class PanelHeader(Grid):
         
         self.addTo(parent, 10)
 
-    def updateFavorite(self, isFavorite):
-        self.Favorite.setPixmap(self.StarPixmap if isFavorite else self.FadedStar)
+    def updateFavorites(self, favorite):
+        self.Favorite.setPixmap(self.StarPixmap if favorite else self.FadedStar)
 
     def setText(self, text):
         self.Label.setText(text)
@@ -1154,7 +1154,7 @@ class Panel(VBox):
         if self.Active:
             self.Active.setActive(True)
             self.Header.setText(self.Active.Game.FullTitle)
-            self.Header.updateFavorite(self.GUI.Manager.Catalogs.Lists.get('Favorites').has(self.Active.Game))
+            self.Header.updateFavorites(self.Active.Game.Favorites)
         else:
             self.Header.setText("Select a Game")
 
