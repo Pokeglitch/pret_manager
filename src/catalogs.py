@@ -131,6 +131,13 @@ class ListEntryGUI(CatalogEntryGUI):
         self.Data.erase()
         self.addTo(None)
 
+class FlagListEntryGUI(CatalogEntryGUI):
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.Icon = Icon(self, 'assets/images/{}_25.png'.format(self.Name.lower()), 25)
+        self.add(self.Label)
+        self.addStretch()
+
 class CatalogModesRow(HBox):
     def __init__(self, parent, mode):
         super().__init__(parent.GUI)

@@ -88,11 +88,11 @@ class AuthorEntry(CatalogEntry):
         super().removeGame(game)
 
 class TagEntry(CatalogEntry):
-    def __init__(self, *args):
-        super().__init__(*args)
-        if self.GUI:
-            self.GUI.Label.setParent(None)
-            self.GUI.TagGUI = gui.TagGUI(self.GUI, self.Name)
+    def build_GUI(self):
+        GUI = super().build_GUI()
+        GUI.Label.setParent(None)
+        GUI.TagGUI = gui.TagGUI(GUI, self.Name)
+        return GUI
 
 class BaseListEntry(CatalogEntry):
     def reset(self, isPermanent=False):
@@ -189,7 +189,10 @@ class ListEntry(BaseListEntry):
         self.reset(True)
         os.remove(list_dir + self.Name + '.json')
 
-class FlagListEntry(BaseListEntry):  
+class FlagListEntry(BaseListEntry):
+    def build_GUI(self):
+        return gui.FlagListEntryGUI(self)
+    
     def addGame(self, game):
         super().addGame(game)
         game.setFlag(self, True)

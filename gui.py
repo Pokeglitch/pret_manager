@@ -260,7 +260,7 @@ class GameTile(VBox):
         self.IconContainer = VBox(self.GUI)
         self.FavoriteContainer = HBox(self.GUI)
         self.FavoriteIcon = self.FavoriteContainer.label()
-        self.FavoritePixmap = QPixmap('assets/images/favorite.png').scaled(20,20)
+        self.FavoritePixmap = QPixmap('assets/images/favorites.png').scaled(20,20)
         self.FavoriteContainer.addStretch()
         self.FavoriteContainer.addTo(self.IconContainer)
         self.IconContainer.addStretch()
@@ -1116,7 +1116,7 @@ class PanelHeader(Grid):
         self.Favorite =  self.Right.label()
         self.Favorite.setObjectName("favorite")
         self.Favorite.mousePressEvent = parent.favorite
-        self.StarPixmap = QPixmap('assets/images/favorite.png').scaled(35, 35)
+        self.StarPixmap = QPixmap('assets/images/favorites.png').scaled(35, 35)
         self.FadedStar = Faded(self.StarPixmap)
         self.Right.addTo(self.IconsContainer)
         

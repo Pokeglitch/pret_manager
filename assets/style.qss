@@ -266,6 +266,11 @@ GameQueue, CatalogEntryGUI {
     background-color: #252526;
 }
 
+FlagListEntryGUI {
+    min-height: 30px;
+    max-height: 30px;
+}
+
 GameQueue *, CatalogEntryGUI * {
     font-size: 12px;
     color: white;
