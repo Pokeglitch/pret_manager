@@ -280,11 +280,11 @@ GameQueue:hover, CatalogEntryGUI:hover, GameTile:hover {
     background-color: #3a3a3b
 }
 
-GameQueue[active="true"], CatalogEntryGUI[mode="New"], GameTile[active="true"] {
+GameQueue[active="true"], CatalogEntryGUI[mode="New"] {
     background-color: #4C4C54;
 }
 
-GameQueue[active="true"]:hover, CatalogEntryGUI[mode="New"]:hover, GameTile[active="true"]:hover {
+GameQueue[active="true"]:hover, CatalogEntryGUI[mode="New"]:hover {
     background-color: #4C4C54;
 }
 
@@ -305,24 +305,64 @@ GameQueue[processing="true"]:hover, CatalogEntryGUI[processing="true"]:hover, Ga
 }
 
 GameTile[queued="true"] {
-    border: 2px solid black;
-    min-width:98px;
-    max-width:98px;
-    min-height:148px;
-    max-height:148px;
+    border: 2px solid #000000;
+    min-width:130px;
+    max-width:130px;
+    min-height:150px;
+    max-height:150px;
+    background-color: #464646;
+}
+
+GameTile[queued="true"]:hover {
+    background-color: #5a5a5a;
+}
+
+GameTile[active="true"] {
+    min-width:132px;
+    max-width: 132px;
+    min-height: 152px;
+    max-height: 152px;
+    border: 1px solid #000000;
+    background-color: #555555;
+}
+GameTile[active="true"]:hover {
+    background-color: #606060;
 }
 
 GameTile {
-    border: 1px solid #000000;
-    min-width:100px;
-    max-width: 100px;
-    min-height: 150px;
-    max-height: 150px;
-    background-color: #2c2c2c;
+    min-width:134px;
+    max-width: 134px;
+    min-height: 154px;
+    max-height: 154px;
+    border-radius:10px;
 }
 
 GameTile * {
     color: #ffffff;
+}
+
+#Artwork {
+    margin-top:38px;
+}
+
+#CartridgeTitle {
+    padding: 0px;
+    margin-top:16px;
+    min-height:24px;
+    max-height:24px;
+    min-width:100px;
+    max-width: 100px;
+    border-radius: 12px;
+    color: black;
+    border: 2px solid black;
+}
+
+#CartridgeTitle[faded=true] {
+    border-color: rgba(0, 0, 0, 0.5)
+}
+
+#CartridgeTitle[faded=true][active=true] {
+    border-color: rgba(0, 0, 0, 0.4)
 }
 
 #TileArt {

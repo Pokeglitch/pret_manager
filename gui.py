@@ -3,9 +3,10 @@ import sys, webbrowser, json, re
 '''
 TODO:
 
-Add icons for all flags
+Test library/outdated changes for Tiles
+Increase readability for title of games not in library
 
------------------
+Why does Camerupt not build...using wrong python beacuse wsl using root?
 
 update 'build' handling same way as 'releases'
 
@@ -249,44 +250,101 @@ class GameTile(VBox):
         self.setObjectName("Tile")
         self.GameGUI = gameGUI
 
-        self.TopContainer = HBox(self.GUI)
-
         self.ArtworkContainer = Grid(self.GUI)
+
+        self.Cartridge = self.ArtworkContainer.label('', 1, 1)
+        self.Cartridge.setAlignment(Qt.AlignCenter)
+        self.CartridgePixmap = QPixmap('assets/images/cartridge.png').scaled(150, 150)
+        self.FadedCartridge = Faded(self.CartridgePixmap)
+        self.EmptyCartridgePixmap = QPixmap('assets/images/cartridge_empty.png').scaled(150, 150)
+        self.FadedEmptyCartridge = Faded(self.EmptyCartridgePixmap)
+
         self.Artwork = self.ArtworkContainer.label('', 1, 1)
+        self.Artwork.setObjectName("Artwork")
         self.Artwork.setAlignment(Qt.AlignCenter)
-        self.Pixmap = QPixmap(self.GameGUI.Game.Boxart).scaled(100, 100)
+        self.Pixmap = QPixmap(self.GameGUI.Game.Boxart).scaled(92, 92)
         self.Faded = Faded(self.Pixmap)
 
         self.IconContainer = VBox(self.GUI)
+
         self.FavoriteContainer = HBox(self.GUI)
         self.FavoriteIcon = self.FavoriteContainer.label()
         self.FavoritePixmap = QPixmap('assets/images/favorites.png').scaled(20,20)
+        self.FadedFavoritePixmap = Faded(self.FavoritePixmap)
         self.FavoriteContainer.addStretch()
         self.FavoriteContainer.addTo(self.IconContainer)
         self.IconContainer.addStretch()
+
+        self.OutdatedContainer = HBox(self.GUI)
+        self.OutdatedContainer.addStretch()
+        self.OutdatedIcon = self.OutdatedContainer.label()
+        self.OutdatedPixmap = QPixmap('assets/images/outdated.png').scaled(25,25)
+        self.OutdatedContainer.addTo(self.IconContainer)
+
         self.IconContainer.addTo(self.ArtworkContainer, 1, 1)
 
-        self.TopContainer.addStretch()
-        self.ArtworkContainer.addTo(self.TopContainer)
-        self.TopContainer.addStretch()
+        self.CartridgeTitleContainer = VBox(self.GUI)
+        self.CartridgeTitleContainer.addTo(self.ArtworkContainer, 1, 1)
 
-        self.TopContainer.addTo(self)
-
-        self.addStretch()
-        self.Title = self.label(gameGUI.Game.FullTitle)
+        self.TitleContainer = HBox(self.GUI)
+        self.TitleContainer.addTo(self.CartridgeTitleContainer)
+        self.TitleContainer.addStretch()
+        self.Title = self.TitleContainer.label(gameGUI.Game.FullTitle)
+        self.Title.setObjectName("CartridgeTitle")
         self.Title.setAlignment(Qt.AlignCenter)
         self.Title.setWordWrap(True)
+        self.TitleContainer.addStretch()
+
+        self.CartridgeTitleContainer.addStretch()
+
         self.addStretch()
+        self.ArtworkContainer.addTo(self)
+        self.addStretch()
+
+    def updateLibrary(self, library):
+        self.updateExcluding(self.GameGUI.Game.Excluding)
+
+    def updateOutdated(self, outdated):
+        if outdated:
+            self.OutdatedIcon.setPixmap(self.OutdatedPixmap)
+        else:
+            self.OutdatedIcon.clear()
 
     def updateExcluding(self, excluding):
         if excluding:
             self.Artwork.setPixmap(self.Faded)
+
+            if self.GameGUI.Game.Library:
+                self.Cartridge.setPixmap(self.FadedCartridge)
+            else:
+                self.Cartridge.setPixmap(self.FadedEmptyCartridge)
+
+            self.Title.setProperty("faded", True)
+
+            if self.GameGUI.Game.Favorites:
+                self.FavoriteIcon.setPixmap(self.FadedFavoritePixmap)
+
         else:
             self.Artwork.setPixmap(self.Pixmap)
 
+            if self.GameGUI.Game.Library:
+                self.Cartridge.setPixmap(self.CartridgePixmap)
+            else:
+                self.Cartridge.setPixmap(self.EmptyCartridgePixmap)
+
+            self.Title.setProperty("faded", False)
+
+            if self.GameGUI.Game.Favorites:
+                self.FavoriteIcon.setPixmap(self.FavoritePixmap)
+
+        self.Title.style().polish(self.Title)
+
     def updateFavorites(self, favorite):
         if favorite:
-            self.FavoriteIcon.setPixmap(self.FavoritePixmap)
+            if self.GameGUI.Game.Excluding:
+                self.FavoriteIcon.setPixmap(self.FadedFavoritePixmap)
+            else:
+                self.FavoriteIcon.setPixmap(self.FavoritePixmap)
         else:
             self.FavoriteIcon.clear()
 
@@ -578,6 +636,14 @@ class GameGUI(QWidget):
         self.setQueued(False)
         self.updateExcluding(self.Game.Excluding)
         self.updateFavorites(self.Game.Favorites)
+        self.updateOutdated(self.Game.Outdated)
+        self.updateLibrary(self.Game.Library)
+
+    def updateLibrary(self, library):
+        self.Tile.updateLibrary(library)
+
+    def updateOutdated(self, outdated):
+        self.Tile.updateOutdated(outdated)
 
     def updateExcluding(self, excluding):
         self.Tile.updateExcluding(excluding)
@@ -832,7 +898,7 @@ class TileContent(Flow):
     def __init__(self, parent):
         super().__init__(parent.GUI)
         self.setObjectName('Tiles')
-        self.Layout.setSpacing(10)
+        self.Layout.setSpacing(5)
         self.Scroll.setObjectName('Tiles')
         self.addTo(parent, 95)
 

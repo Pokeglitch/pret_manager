@@ -41,7 +41,8 @@ class Linux(AppEnvironment):
     
 class WSL(Linux):
     def __init__(self, environments):
-        super().__init__(environments, 'wsl -u root')
+        #super().__init__(environments, 'wsl -u root')
+        super().__init__(environments, 'wsl')
 
     def path(self, path):
         return re.sub(r'^([^:]+):/',lambda p: '/mnt/{0}/'.format(p.group(1).lower()), super().path(path))

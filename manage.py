@@ -662,7 +662,7 @@ class repository():
         self.Library = False
 
         self.setMissing(not os.path.exists(self.path['repo']))
-        self.setOutdated(False)
+        self.setOutdated(self.Missing)
 
         self.readMetaData()
 
@@ -1074,6 +1074,8 @@ class repository():
      
 ######### Flag Methods
 
+    # TODO - all these gui update should be emitters?
+
     def setFlag(self, flagList, value):
         getattr(self, 'set' + flagList.Name)(value, False)
 
@@ -1087,6 +1089,9 @@ class repository():
                 else:
                     self.Manager.Catalogs.Flags.get('Library').removeGames([self])
 
+            if self.GUI:
+                self.GUI.updateLibrary(self.Library)
+
     def setOutdated(self, outdated, addToList=True):
         if self.Outdated != outdated:
             self.Outdated = outdated
@@ -1096,6 +1101,9 @@ class repository():
                     self.Manager.Catalogs.Flags.get('Outdated').addGames([self])
                 else:
                     self.Manager.Catalogs.Flags.get('Outdated').removeGames([self])
+            
+            if self.GUI:
+                self.GUI.updateOutdated(self.Outdated)
 
     def setMissing(self, missing, addToList=True):
         if self.Missing != missing:
