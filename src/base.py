@@ -1,6 +1,6 @@
 from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QObject, QUrl, QThreadPool, QRunnable, QMargins, QPoint, QRect, QSize
 from PyQt5.QtWidgets import QDialog, QAction, QMenu, QSlider, QStackedWidget, QLineEdit, QSplashScreen, QComboBox, QHeaderView, QTreeWidgetItem, QFileDialog, QTreeWidget, QApplication, QStyleOption, QStyle, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
-from PyQt5.QtGui import QPixmap, QDesktopServices, QIcon, QPainter
+from PyQt5.QtGui import QBrush, QColor, QPixmap, QDesktopServices, QIcon, QPainter
 import time, json
 
 threadpool = QThreadPool()

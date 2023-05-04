@@ -42,6 +42,10 @@ QWidget#header-frame, QLabel#list-header, QWidget#status-header, QWidget#footer 
     max-height:50px;
 }
 
+QWidget#header-frame {
+    border-left: none;
+}
+
 QScrollBar {
     background-color: #252526;
     border-radius:3px;
@@ -175,9 +179,17 @@ Queue QScrollArea, CatalogGUI VScroll, CatalogGUI QScrollArea {
     border: none;
 }
 
+Queue QScrollArea, #QueueFooter {
+    border-right: 1px solid black;
+}
+
 PanelHeader, PanelHeader QLabel, QueueHeader, QueueHeader QLabel {
     background-color: #1e1e1e;
     color: #ffffff;
+}
+
+#PanelHeaderIcons QLabel, QueueHeaderMenu * {
+    border-bottom: 1px solid black;
 }
 
 QueueHeader Button {
@@ -343,6 +355,9 @@ GameTile * {
 
 #Artwork {
     margin-top:38px;
+    border: 1px solid black;
+    padding: 0px;
+    border-radius:5px;
 }
 
 #CartridgeTitle {
@@ -715,6 +730,7 @@ Process QScrollBar, Process QAbstractScrollArea{
 ProcessTitle, ProcessTitle * {
     font-size:22px;
     color: white;
+    border-top: 1px solid black;
     border-bottom: 1px solid black;
     min-height:50px;
     max-height:50px;

@@ -6,17 +6,17 @@ TODO:
 Test library/outdated changes for Tiles
 Increase readability for title of games not in library
 
-Why does Camerupt not build...using wrong python beacuse wsl using root?
-
 update 'build' handling same way as 'releases'
 
-Game Tile/Panel:
-- make bg color light gray for missing boxarts...
-- Indicate queued, missing, outdated
+Game Panel:
+- way to close it
+- top left - fav, top right- crtridge, bottom right-update
+-- dbl click cartridge to lauch preset gme or latest
+-- dbl click updte to run update process
 - click on author in panel to select in browser
 - show lists containing this game
 - Dont show process or build details for 'extras'
-- add basis & double click to switch to game panel
+- add basis & double click to switch the basis fron game panel
 
 - update search to include description and fulltitle
 
@@ -259,10 +259,32 @@ class GameTile(VBox):
         self.EmptyCartridgePixmap = QPixmap('assets/images/cartridge_empty.png').scaled(150, 150)
         self.FadedEmptyCartridge = Faded(self.EmptyCartridgePixmap)
 
-        self.Artwork = self.ArtworkContainer.label('', 1, 1)
+        self.ArtworkWrapper = VBox(self.GUI)
+        self.ArtworkWrapper.addTo(self.ArtworkContainer, 1, 1)
+        self.ArtworkWrapper.addStretch()
+        self.ArtworkWrapperH = HBox(self.GUI)
+        self.ArtworkWrapperH.addTo(self.ArtworkWrapper)
+        self.ArtworkWrapper.addStretch()
+
+        self.ArtworkWrapperH.addStretch()
+        self.Artwork = self.ArtworkWrapperH.label('')
         self.Artwork.setObjectName("Artwork")
         self.Artwork.setAlignment(Qt.AlignCenter)
-        self.Pixmap = QPixmap(self.GameGUI.Game.Boxart).scaled(92, 92)
+        self.PixmapBase = QPixmap(self.GameGUI.Game.Boxart).scaled(92, 92)
+        self.ArtworkWrapperH.addStretch()
+
+        # create empty pixmap of same size as original 
+        self.Pixmap = QPixmap(self.PixmapBase.size())
+        self.Pixmap.fill(QColor("transparent"))
+
+        # draw rounded rect on new pixmap using original pixmap as brush
+        painter = QPainter(self.Pixmap)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setBrush(QBrush(self.PixmapBase))
+        painter.setPen(Qt.NoPen)
+        painter.drawRoundedRect(self.PixmapBase.rect(), 5, 5)
+
+        
         self.Faded = Faded(self.Pixmap)
 
         self.IconContainer = VBox(self.GUI)
@@ -784,6 +806,7 @@ class Queue(VBox):
         self.ListContainer.addStretch()
         
         self.Footer = HBox(GUI)
+        self.Footer.setObjectName("QueueFooter")
         self.Process = Button(self.Footer, 'Process', self.processButton)
         self.GUI.Window.Processing.connect(self.Process.setProcessing)
         self.Footer.addTo(self)
@@ -1172,6 +1195,7 @@ class PanelHeader(Grid):
         self.Label.setAlignment(Qt.AlignCenter)
 
         self.IconsContainer = HBox(self.GUI)
+        self.IconsContainer.setObjectName("PanelHeaderIcons")
         self.IconsContainer.addTo(self, 1, 1)
 
         self.Menu = PanelHeaderMenu(self)
