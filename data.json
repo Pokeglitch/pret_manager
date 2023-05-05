@@ -407,6 +407,15 @@
       ]
     }
   },
+  "mid-kid": {
+    "mobile-ace": {
+      "rgbds": "0.6.0-rc1",
+      "tags": [
+        "crystal",
+        "extras"
+      ]
+    }
+  },
   "MineRobber9000": {
     "pokered-nuzlocke": {
       "rgbds": "0.4.1",
@@ -434,7 +443,6 @@
   },
   "MoriyaFaith": {
     "neocrystal": {
-      "rgbds": "0.6.1",
       "tags": [
         "crystal",
         "disasm"
@@ -531,6 +539,14 @@
         "red",
         "disasm",
         "analogue"
+      ]
+    },
+    "poketre2_old": {
+      "title": "Team Rocket Edition 2 (old)",
+      "rgbds": "0.2.5",
+      "tags": [
+        "red",
+        "disasm"
       ]
     }
   },

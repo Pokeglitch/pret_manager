@@ -98,6 +98,7 @@ Add predefined processes to run (i.e. only pull/build pret & pokeglitch)
 - auto-detect if wsl/cygwin/w64devkit is installed
 -- auto download w64devkit if not ?
 - install missing python, node, & linux packages/libraries
+-- pyenv local <version> ?
 
 - meta data should include successful/failed commit attempts
 
