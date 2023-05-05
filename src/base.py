@@ -186,11 +186,15 @@ class VScroll(VBox):
             self.setParent(None)
 
 class Button(QLabel):
-    def __init__(self, parent, text, click):
+    def __init__(self, parent, text, handler):
         super().__init__(text)
         self.setAlignment(Qt.AlignCenter)
-        self.mousePressEvent = click
+        self.handler = handler
         parent.add(self)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.handler()
 
     def updateStyle(self):
         self.style().polish(self)
@@ -201,18 +205,6 @@ class Button(QLabel):
 
     def setProcessing(self, isProcessing):
         self.setProperty('processing', isProcessing)
-        self.updateStyle()
-
-class ToggleButton(HBox):
-    def __init__(self, parent, text, click):
-        super().__init__(None)
-        self.Label = self.label(text)
-        self.Label.setAlignment(Qt.AlignCenter)
-        self.mousePressEvent = click
-        parent.add(self)
-
-    def setActive(self, value):
-        self.setProperty("active",value)
         self.updateStyle()
 
 class Scaled(QPixmap):
@@ -418,7 +410,7 @@ class SaveListDialog(QDialog):
 
         self.Buttons = HBox(GUI)
         self.Save = Button(self.Buttons, 'Save', self.accept)
-        self.Cancel = Button(self.Buttons, 'Cancel', lambda e: self.reject() )
+        self.Cancel = Button(self.Buttons, 'Cancel', self.reject )
 
         self.Save.setProperty('bg','green')
         self.Save.updateStyle()
@@ -444,7 +436,7 @@ class SaveListDialog(QDialog):
     def onTextChanged(self, text):
         self.Save.setDisabled(not text)
 
-    def accept(self, e=None):
+    def accept(self):
         name = self.ListName.text()
         if not name:
             return
@@ -472,8 +464,8 @@ class OverwriteMessage(QDialog):
         self.Message = QLabel(name + " Already Exists. Proceed?")
 
         self.Buttons = HBox(GUI)
-        self.Overwrite = Button(self.Buttons, 'Overwrite', lambda e: self.accept() )
-        self.Cancel = Button(self.Buttons, 'Cancel', lambda e: self.reject() )
+        self.Overwrite = Button(self.Buttons, 'Overwrite', self.accept )
+        self.Cancel = Button(self.Buttons, 'Cancel', self.reject )
 
         self.Overwrite.setProperty('bg','green')
         self.Overwrite.updateStyle()

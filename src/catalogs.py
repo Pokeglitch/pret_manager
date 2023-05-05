@@ -190,8 +190,9 @@ class CatalogIcon(Icon):
         super().__init__(parent.Container, image, 35)
 
     def mousePressEvent(self, e):
-        self.setActive(True)
-        self.Parent.Parent.setCatalog(self)
+        if e.button() == Qt.LeftButton:
+            self.setActive(True)
+            self.Parent.Parent.setCatalog(self)
 
 class CatalogsContainer(VBox):
     def __init__(self, parent):
@@ -266,7 +267,8 @@ class CatalogsModeIcon(Icon):
         self.setProperty('active',False)
 
     def mousePressEvent(self, e):
-        self.GUI.Catalogs.setMode(self.Mode)
+        if e.button() == Qt.LeftButton:
+            self.GUI.Catalogs.setMode(self.Mode)
 
 class Catalogs(VBox):
     def __init__(self, parent):

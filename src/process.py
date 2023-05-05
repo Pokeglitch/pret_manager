@@ -14,7 +14,8 @@ class ProcessToggleSlider(QSlider):
         self.style().polish(self)
 
     def mousePressEvent(self, event):
-        self.setValue(1 - self.sliderPosition())
+        if event.button() == Qt.LeftButton:
+            self.setValue(1 - self.sliderPosition())
 
 class ProcessToggleBG(HBox):
     def __init__(self, parent):

@@ -212,7 +212,7 @@ Button:hover {
     color: #ffffff;
 }
 
-Button, ToggleButton {
+Button {
     border: 1px solid black;
     border-radius: 10px;
 }
@@ -233,28 +233,6 @@ Button[disabled=true], Button[disabled=true]:hover, Button[processing=true], But
     color: #bbbbbb
 }
 
-ToggleButton {
-    max-height: 30px;
-    min-height: 30px;
-    min-width: 60px;
-    margin: 5;
-}
-
-ToggleButton[active="false"] {
-    background-color: #775858;
-}
-
-ToggleButton[active="false"]:hover {
-    background-color: #846868;
-}
-
-ToggleButton[active="true"] {
-    background-color: #58775a;
-}
-
-ToggleButton[active="true"]:hover {
-    background-color: #68846a;
-}
 
 CatalogEntryGUI[mode="Not"] {
     background-color: #7b3131

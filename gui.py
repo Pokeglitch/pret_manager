@@ -584,7 +584,7 @@ class QueueContextMenu(ContextMenu):
 
 class QueueHeaderMenuIcon(MenuIcon):
     def mousePressEvent(self, event):
-        if not self.Parent.GUI.Queue.isEmpty:
+        if event.button() == Qt.LeftButton and not self.Parent.GUI.Queue.isEmpty:
             QueueContextMenu(self, event)
 
 class QueueHeaderMenu(HBox):
@@ -624,7 +624,7 @@ class Queue(VBox):
         
         self.Footer = HBox(GUI)
         self.Footer.setObjectName("QueueFooter")
-        self.Process = Button(self.Footer, 'Process', self.processButton)
+        self.Process = Button(self.Footer, 'Process', self.process)
         self.GUI.Window.Processing.connect(self.Process.setProcessing)
         self.Footer.addTo(self)
 
@@ -672,10 +672,6 @@ class Queue(VBox):
 
     def erase(self):
         self.removeGames(self.getData())
-
-    def processButton(self, event):
-        if event.button() == Qt.LeftButton:
-            self.process()
 
     def process(self):
         if self.List:
@@ -744,7 +740,8 @@ class TileContent(Flow):
 
 class TilesHeaderMenuIcon(MenuIcon):
     def mousePressEvent(self, event):
-        self.Menu = TilesContextMenu(self, event)
+        if event.button() == Qt.LeftButton:
+            self.Menu = TilesContextMenu(self, event)
 
 class TilesHeaderMenu(HBox):
     def __init__(self, parent):
@@ -992,7 +989,7 @@ class PanelHeaderMenuIcon(MenuIcon):
         return self.Parent.Parent.Parent.Parent.Active 
 
     def mousePressEvent(self, event):
-        if self.Parent.Parent.Parent.Parent.Active:
+        if event.button() == Qt.LeftButton and self.Parent.Parent.Parent.Parent.Active:
             PanelContextMenu(self, event)
 
 class PanelHeaderMenu(HBox):
@@ -1022,7 +1019,7 @@ class PanelHeader(Grid):
         self.Right = HBox(self.GUI)
         self.Favorite =  self.Right.label()
         self.Favorite.setObjectName("favorite")
-        self.Favorite.mousePressEvent = parent.favorite
+        self.Favorite.mousePressEvent = parent.favoriteMousePress
         self.StarPixmap = QPixmap('assets/images/favorites.png').scaled(35, 35)
         self.FadedStar = Faded(self.StarPixmap)
         self.Right.addTo(self.IconsContainer)
@@ -1048,8 +1045,8 @@ class Panel(VBox):
         self.setActive(None)
         self.addTo(GUI, 3)
 
-    def favorite(self, e):
-        if self.Active:
+    def favoriteMousePress(self, event):
+        if event.button() == Qt.LeftButton and self.Active:
             self.Active.toggleFavoritesHandler()
 
     def setActive(self, game):
