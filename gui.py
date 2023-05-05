@@ -2,14 +2,13 @@ import sys, webbrowser, json, re
 
 '''
 TODO:
-
-Test library/outdated changes for Tiles
-Increase readability for title of games not in library
-
 update 'build' handling same way as 'releases'
 
+
+------
 Game Panel:
-- way to close it
+- QLabels have a built in method to launch a url?
+- replace fav button with X button to close
 - top left - fav, top right- crtridge, bottom right-update
 -- dbl click cartridge to lauch preset gme or latest
 -- dbl click updte to run update process
@@ -18,20 +17,49 @@ Game Panel:
 - Dont show process or build details for 'extras'
 - add basis & double click to switch the basis fron game panel
 
+- rename Builds to Branches, and show all possible branches
+-- checkmarks nexts to ones to track
+--- also (if tracked) whether to include in 'build' or not
+---- need separate rgbds version?
+---- extras tag will turn this off by default
+-- show which ones are outdated (if tracking)
+-- can right click to: switch to, delete, update, etc
+--- right click on specific builds of that branch to delete
+-- can double click to switch to
+
+-Show all releases & git tags in tree, even if no downloads
+-- can right click to download, switch to, delete, or build if missing
+
+Option to change current commit, or build specific commit
+
+Option for specific Make targets to run
+- check box for which ones to always include when build
+
+-------------
+
+context menu:
+- way to delete a game(s) from disk
+-- or specifically, a repo, build(s), release(s)
+- option for each specific process in addition to 'all'
+
 - update search to include description and fulltitle
 
 Empty Panel shows settings & about
-- button to check for updates to pret_manager 
+- button to check for updates to pret_manager / apply
+- show rgbds options?
 - Settings:
     - environment
     - source location for cygwin/w64devkit
-    - also for default process options
+    - option to have cygwin build instead of use prebuilt binaries
+    - save current process options as default (& apply now)
+    - save current browser as default (& apply now)
     - option to refresh at start
+    - option to include releases when 'update'
+    - option to remove from queue after process
+    - option to always hide excluding games from browser
+    -- need to make sure this isnt true when 'exlcuding' is explicitly selected...
 
 --------
-
-button to clear filter
-button to close panel
 
 CLI:
 - use -l to filter by list
@@ -43,33 +71,19 @@ CLI:
 Update README
 --------------------------
 finish artwork/tags
-- fix scaling
 
 IPS Patches
 
-
 option to have all logs (even build) to appear in app
 
-do more testing on branch tracking...
-- why does it fail to switch for purergb?
---- better clean/reset methods...
-- show on branch dropdown which are not tracked / out dated
---- way to remove branch from tracking
-
-Show all releases/tags in tree, even if no downloads
--- can right click to download or build if missing
+fix branch switching for purergb
+- clean/reset not enough?
+Fix polished crystal building
 
 some makefiles require rgbds to be in a folder in the repo
 - bw3g
 
-git reset --hard before pulling
-- test with purergb
-
 option to kill process
-
-Right click dropdown should have option for each specific process in addition to 'all'
-
-Option for auto-refresh on open
 
 'tar' in linux wont extract a zip file
 -- only permit 'tar' to be used with wsl, otherwise it uses main
@@ -77,25 +91,9 @@ Option for auto-refresh on open
 fallback plan when gh isnt available
 - simply add the details to data.json, and download via http
 
-add local/custom repositories
-update rgbds dropdowns after updating...
-
-Option to only list releases, and user can select which to download
-
-hande importing corrupt lists
-collect roms/patches from 'releases'
-
-Way to build archives in releases
-
-Fix polished crystal building
+support local/custom repositories
 
 Add predefined processes to run (i.e. only pull/build pret & pokeglitch)
-
-- Way to hide ignored games from browser
--- i.e. auto NOT the excluding list...
-
-Scroll list if the processed game is off screen
-Option to remove from queue after processed
 
 - auto-detect if wsl/cygwin/w64devkit is installed
 -- auto download w64devkit if not ?
@@ -103,33 +101,30 @@ Option to remove from queue after processed
 
 - meta data should include successful/failed commit attempts
 
-show git tags and options to build them (combined with releases)
-
 GUI:
 - Catalog/Tile/Queue Sorting:
 -- date of last update, alphabet, etc
 --- Also, can hide missing/excluding, etc
 
+Browser:
+- Show number of items in browser
+
 Filter:
-- Show number of items in filter
+- Button to clear filter
+- Button to 'invert' the filter
 - Add way to Save the filter options (catalogs for each mode & search term)
 -- Add way to load a filter
 
 Lists:
+- hande importing corrupt lists
 - Way to load a list
 - show size of each list next to name
 
-Games:
-- give games keywords, which are different from tags and only used in search
-- also a custom description field, which can be used in search
-
-- way to delete a game from disk
--- will keep builds and releases
-
+Game:
 - Way to launch most recent build/release
 -- or, set which is the default 'launch'
 
-- Way to copy selected builds to another location
+- Way to copy selected builds/releases to another location
 
 - Tile:
 -- Double click to launch
@@ -142,39 +137,14 @@ Tree view of all forks
 - since some forked shinpokomon, crystal16 etc
 - or, just a deriviate count for each...
 
-Extra functionality:
-- And invert filter (for all tiles, for easy 'excluding')
-
 Way to create/handle Groups of Tags (i.e. Gen1, Gen2, TCG)
 - tag can be a list, or an object
 -- if object, the sub tags will be the exact same array at the real tag
 --- can have nested subtags
 
-Option to build RGBDS with cygwin?
-
 Multiple Themes
 
-New column:
-- RGBDS panel ?
--Way to check if this program has updates/apply update
--Way to Modify Settings:
-    - default emulator (or, per game or file type)
-    - custom tags
-    - default process actions
-    - different path for rgbds builds
-    - default List to display
-
 Safely copy files by first making a backup, or restoring it if corrupt
-
-Option to ignore specific branches, commits, releases, games
-- auto ignore early rgbds versions
-
-Option to change commit to build
-
-Option for specific Make commands to build
-- Need to parse makefile...
-
-Option to build multiple branches within a single 'update'
 
 Associate Authors with a Team
 
