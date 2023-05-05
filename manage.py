@@ -5,6 +5,7 @@ from pathlib import Path
 import gui
 from src.Environment import *
 from src.Files import *
+from PyQt5.QtCore import pyqtSignal, QObject
 
 build_extensions = ['gb','gbc','pocket','patch']
 release_extensions = build_extensions + ['ips','bps','bsp','zip']
@@ -598,8 +599,15 @@ class PRET_Manager:
             if self.Catalogs.Tags.has(tag):
                 self.keep_in_queue(self.Catalogs.Tags.get(tag).GameList)
 
-class repository():
+class repository(QObject):
+    MissingSignal = pyqtSignal(bool)
+    OutdatedSignal = pyqtSignal(bool)
+    ExcludingSignal = pyqtSignal(bool)
+    FavoritesSignal = pyqtSignal(bool)
+    LibrarySignal = pyqtSignal(bool)
+
     def __init__(self, manager, author, title, data):
+        super().__init__()
         self.manager = manager
         self.Manager = manager
 
@@ -689,6 +697,14 @@ class repository():
             self.init_GUI()
 
 ######### GUI Methods
+    def on(self, key, handler):
+        if hasattr(self, key + 'Signal'):
+            getattr(self, key + 'Signal').connect(handler)
+            handler( getattr(self, key) )
+
+    def off(self, key, handler):
+        if hasattr(self, key + 'Signal'):
+            getattr(self, key + 'Signal').disconnect(handler)
 
     def init_GUI(self):
         self.GUI = gui.GameGUI(self.manager.GUI.Content, self)
@@ -1089,8 +1105,7 @@ class repository():
                 else:
                     self.Manager.Catalogs.Flags.get('Library').removeGames([self])
 
-            if self.GUI:
-                self.GUI.updateLibrary(self.Library)
+            self.LibrarySignal.emit(self.Library)
 
     def setOutdated(self, outdated, addToList=True):
         if self.Outdated != outdated:
@@ -1102,8 +1117,7 @@ class repository():
                 else:
                     self.Manager.Catalogs.Flags.get('Outdated').removeGames([self])
             
-            if self.GUI:
-                self.GUI.updateOutdated(self.Outdated)
+            self.OutdatedSignal.emit(self.Outdated)
 
     def setMissing(self, missing, addToList=True):
         if self.Missing != missing:
@@ -1115,6 +1129,8 @@ class repository():
                 else:
                     self.Manager.Catalogs.Flags.get('Missing').removeGames([self])
 
+            self.MissingSignal.emit(self.Missing)
+
     def setExcluding(self, excluding, addToList=True):
         if self.Excluding != excluding:
             self.Excluding = excluding
@@ -1125,8 +1141,7 @@ class repository():
                 else:
                     self.Manager.Catalogs.Flags.get('Excluding').removeGames([self])
             
-            if self.GUI:
-                self.GUI.updateExcluding(self.Excluding)
+            self.ExcludingSignal.emit(self.Excluding)
 
             self.updateMetaData()
 
@@ -1140,9 +1155,7 @@ class repository():
                 else:
                     self.Manager.Catalogs.Flags.get('Favorites').removeGames([self])
             
-            if self.GUI:
-                self.GUI.updateFavorites(self.Favorites)
-
+            self.FavoritesSignal.emit(self.Favorites)
             self.updateMetaData()
 
 ######### TODO Methods

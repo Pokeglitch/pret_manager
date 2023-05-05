@@ -38,11 +38,17 @@ CLI:
 - use -s for search option
 - use the same 'filter' function that the GUI current uses...
 -- -a, -ao, -aa, -an, etc
+- only create 'repositories' instances for games being managed
 
 Update README
 --------------------------
 finish artwork/tags
+- fix scaling
+
 IPS Patches
+
+
+option to have all logs (even build) to appear in app
 
 do more testing on branch tracking...
 - why does it fail to switch for purergb?
@@ -174,7 +180,7 @@ Associate Authors with a Team
 
 Filesystem Watcher?
 '''
-
+from src.game import *
 from src.base import *
 from src.catalogs import *
 from src.process import *
@@ -192,190 +198,12 @@ class GameQueue(HBox):
     def contextMenuEvent(self, event):
         GameContextMenu(self, event)
 
-class GameBaseContextMenu(ContextMenu):
-    def __init__(self, parent, event):
-        gui = parent.GameGUI
-        game = gui.Game
-        super().__init__(parent, event)
-        
-        if gui.isQueued:
-            self.addAction( gui.RemoveFromQueue )
-        else:
-            self.addAction( gui.AddToQueue )
-
-        if game.Favorites:
-            self.addAction( gui.RemoveFromFavorites )
-        else:
-            self.addAction( gui.AddToFavorites )
-
-        if game.Excluding:
-            self.addAction( gui.RemoveFromExcluding )
-        else:
-            self.addAction( gui.AddToExcluding )
-
-        addLists = []
-        removeLists = []
-
-        for list in parent.GUI.Manager.Catalogs.Lists.Entries.values():
-            if list.has(parent.GameGUI.Game):
-                removeLists.append(list)
-            else:
-                addLists.append(list)
-
-        self.addMenu( AddGameToListMenu(parent, addLists) )
-
-        if removeLists:
-            self.addMenu( RemoveGameFromListMenu(parent, removeLists) )
-
-        if not gui.GUI.Window.Process:
-            self.addAction( gui.ProcessAction )
-
-        # Todo - way to delete game data from disk
-        # - option to keep builds, releases
-
-class GameContextMenu(GameBaseContextMenu):
-    def __init__(self, parent, event):
-        super().__init__(parent, event)
-        self.start()
 
 class PanelContextMenu(GameBaseContextMenu):
     def __init__(self, parent, event):
         super().__init__(parent, event)
         self.Coords = parent.GUI.Panel.Display.mapToGlobal(QPoint(0, 0))
         self.start()
-
-class GameTile(VBox):
-    def __init__(self, gameGUI):
-        super().__init__(gameGUI.GUI)
-        self.setObjectName("Tile")
-        self.GameGUI = gameGUI
-
-        self.ArtworkContainer = Grid(self.GUI)
-
-        self.Cartridge = self.ArtworkContainer.label('', 1, 1)
-        self.Cartridge.setAlignment(Qt.AlignCenter)
-        self.CartridgePixmap = QPixmap('assets/images/cartridge.png').scaled(150, 150)
-        self.FadedCartridge = Faded(self.CartridgePixmap)
-        self.EmptyCartridgePixmap = QPixmap('assets/images/cartridge_empty.png').scaled(150, 150)
-        self.FadedEmptyCartridge = Faded(self.EmptyCartridgePixmap)
-
-        self.ArtworkWrapper = VBox(self.GUI)
-        self.ArtworkWrapper.addTo(self.ArtworkContainer, 1, 1)
-        self.ArtworkWrapper.addStretch()
-        self.ArtworkWrapperH = HBox(self.GUI)
-        self.ArtworkWrapperH.addTo(self.ArtworkWrapper)
-        self.ArtworkWrapper.addStretch()
-
-        self.ArtworkWrapperH.addStretch()
-        self.Artwork = self.ArtworkWrapperH.label('')
-        self.Artwork.setObjectName("Artwork")
-        self.Artwork.setAlignment(Qt.AlignCenter)
-        self.PixmapBase = QPixmap(self.GameGUI.Game.Boxart).scaled(92, 92)
-        self.ArtworkWrapperH.addStretch()
-
-        # create empty pixmap of same size as original 
-        self.Pixmap = QPixmap(self.PixmapBase.size())
-        self.Pixmap.fill(QColor("transparent"))
-
-        # draw rounded rect on new pixmap using original pixmap as brush
-        painter = QPainter(self.Pixmap)
-        painter.setRenderHint(QPainter.Antialiasing)
-        painter.setBrush(QBrush(self.PixmapBase))
-        painter.setPen(Qt.NoPen)
-        painter.drawRoundedRect(self.PixmapBase.rect(), 5, 5)
-
-        
-        self.Faded = Faded(self.Pixmap)
-
-        self.IconContainer = VBox(self.GUI)
-
-        self.FavoriteContainer = HBox(self.GUI)
-        self.FavoriteIcon = self.FavoriteContainer.label()
-        self.FavoritePixmap = QPixmap('assets/images/favorites.png').scaled(20,20)
-        self.FadedFavoritePixmap = Faded(self.FavoritePixmap)
-        self.FavoriteContainer.addStretch()
-        self.FavoriteContainer.addTo(self.IconContainer)
-        self.IconContainer.addStretch()
-
-        self.OutdatedContainer = HBox(self.GUI)
-        self.OutdatedContainer.addStretch()
-        self.OutdatedIcon = self.OutdatedContainer.label()
-        self.OutdatedPixmap = QPixmap('assets/images/outdated.png').scaled(25,25)
-        self.OutdatedContainer.addTo(self.IconContainer)
-
-        self.IconContainer.addTo(self.ArtworkContainer, 1, 1)
-
-        self.CartridgeTitleContainer = VBox(self.GUI)
-        self.CartridgeTitleContainer.addTo(self.ArtworkContainer, 1, 1)
-
-        self.TitleContainer = HBox(self.GUI)
-        self.TitleContainer.addTo(self.CartridgeTitleContainer)
-        self.TitleContainer.addStretch()
-        self.Title = self.TitleContainer.label(gameGUI.Game.FullTitle)
-        self.Title.setObjectName("CartridgeTitle")
-        self.Title.setAlignment(Qt.AlignCenter)
-        self.Title.setWordWrap(True)
-        self.TitleContainer.addStretch()
-
-        self.CartridgeTitleContainer.addStretch()
-
-        self.addStretch()
-        self.ArtworkContainer.addTo(self)
-        self.addStretch()
-
-    def updateLibrary(self, library):
-        self.updateExcluding(self.GameGUI.Game.Excluding)
-
-    def updateOutdated(self, outdated):
-        if outdated:
-            self.OutdatedIcon.setPixmap(self.OutdatedPixmap)
-        else:
-            self.OutdatedIcon.clear()
-
-    def updateExcluding(self, excluding):
-        if excluding:
-            self.Artwork.setPixmap(self.Faded)
-
-            if self.GameGUI.Game.Library:
-                self.Cartridge.setPixmap(self.FadedCartridge)
-            else:
-                self.Cartridge.setPixmap(self.FadedEmptyCartridge)
-
-            self.Title.setProperty("faded", True)
-
-            if self.GameGUI.Game.Favorites:
-                self.FavoriteIcon.setPixmap(self.FadedFavoritePixmap)
-
-        else:
-            self.Artwork.setPixmap(self.Pixmap)
-
-            if self.GameGUI.Game.Library:
-                self.Cartridge.setPixmap(self.CartridgePixmap)
-            else:
-                self.Cartridge.setPixmap(self.EmptyCartridgePixmap)
-
-            self.Title.setProperty("faded", False)
-
-            if self.GameGUI.Game.Favorites:
-                self.FavoriteIcon.setPixmap(self.FavoritePixmap)
-
-        self.Title.style().polish(self.Title)
-
-    def updateFavorites(self, favorite):
-        if favorite:
-            if self.GameGUI.Game.Excluding:
-                self.FavoriteIcon.setPixmap(self.FadedFavoritePixmap)
-            else:
-                self.FavoriteIcon.setPixmap(self.FavoritePixmap)
-        else:
-            self.FavoriteIcon.clear()
-
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.GUI.Panel.setActive(self.GameGUI)
-
-    def contextMenuEvent(self, event):
-        GameContextMenu(self, event)
 
 class TagsGUI(HBox):
     def __init__(self, parent, tags):
@@ -427,6 +255,8 @@ class GamePanel(VBox):
     def __init__(self, gameGUI):
         super().__init__(gameGUI.GUI)
         self.GameGUI = gameGUI
+        self.Game = gameGUI.Game
+
         self.Artwork = GamePanelArtwork(self)
         self.Tags = TagsGUI(self, gameGUI.Game.tags)
         
@@ -655,26 +485,13 @@ class GameGUI(QWidget):
         self.Tile = GameTile(self)
         self.Panel = GamePanel(self)
 
+        # TODO - these should also connect to signals
         self.setQueued(False)
-        self.updateExcluding(self.Game.Excluding)
-        self.updateFavorites(self.Game.Favorites)
-        self.updateOutdated(self.Game.Outdated)
-        self.updateLibrary(self.Game.Library)
 
-    def updateLibrary(self, library):
-        self.Tile.updateLibrary(library)
-
-    def updateOutdated(self, outdated):
-        self.Tile.updateOutdated(outdated)
+        self.Game.on('Excluding', self.updateExcluding)
 
     def updateExcluding(self, excluding):
-        self.Tile.updateExcluding(excluding)
         self.Panel.Artwork.updateExcluding(excluding)
-
-    def updateFavorites(self, favorite):
-        self.Tile.updateFavorites(favorite)
-        if self.GUI.Panel.Active == self:
-            self.GUI.Panel.Header.updateFavorites(favorite)
 
     def setQueued(self, queued):
         self.isQueued = queued
@@ -1237,14 +1054,15 @@ class Panel(VBox):
 
     def setActive(self, game):
         if self.Active:
+            self.Active.Game.off('Favorites', self.Header.updateFavorites)
             self.Active.setActive(False)
 
         self.Active = None if game == self.Active else game
 
         if self.Active:
+            self.Active.Game.on('Favorites', self.Header.updateFavorites)
             self.Active.setActive(True)
             self.Header.setText(self.Active.Game.FullTitle)
-            self.Header.updateFavorites(self.Active.Game.Favorites)
         else:
             self.Header.setText("Select a Game")
 

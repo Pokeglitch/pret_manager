@@ -1,6 +1,6 @@
 from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QObject, QUrl, QThreadPool, QRunnable, QMargins, QPoint, QRect, QSize
-from PyQt5.QtWidgets import QDialog, QAction, QMenu, QSlider, QStackedWidget, QLineEdit, QSplashScreen, QComboBox, QHeaderView, QTreeWidgetItem, QFileDialog, QTreeWidget, QApplication, QStyleOption, QStyle, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
-from PyQt5.QtGui import QBrush, QColor, QPixmap, QDesktopServices, QIcon, QPainter
+from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QDialog, QAction, QMenu, QSlider, QStackedWidget, QLineEdit, QSplashScreen, QComboBox, QHeaderView, QTreeWidgetItem, QFileDialog, QTreeWidget, QApplication, QStyleOption, QStyle, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
+from PyQt5.QtGui import QBrush, QColor, QImage, QPixmap, QDesktopServices, QIcon, QPainter
 import time, json
 
 threadpool = QThreadPool()
@@ -215,6 +215,15 @@ class ToggleButton(HBox):
         self.setProperty("active",value)
         self.updateStyle()
 
+class Scaled(QPixmap):
+    def __init__(self, path, dim):
+        super().__init__(dim, dim)
+        self.fill(Qt.transparent)
+        painter = QPainter(self)
+        painter.setRenderHints(QPainter.Antialiasing, QPainter.SmoothPixmapTransform)
+        painter.drawImage(self.rect(), QImage(path))
+        painter.end()
+
 class Faded(QPixmap):
     def __init__(self, pixmap):
         super().__init__(pixmap.size())
@@ -243,6 +252,41 @@ class Icon(HBox):
     def setActive(self, value):
         self.setProperty("active",value)
         self.updateStyle()
+
+class CenterH(HBox):
+    def __init__(self, center):
+        super().__init__(center.GUI)
+
+        self.addStretch()
+        self.add(center)
+        self.addStretch()
+
+class CenterV(VBox):
+    def __init__(self, center):
+        super().__init__(center.GUI)
+
+        self.addStretch()
+        self.add(center)
+        self.addStretch()
+
+class CenterVH(CenterV):
+    def __init__(self, center):
+        centerH = CenterH(center)
+        super().__init__(centerH)
+
+class CenterHV(CenterV):
+    def __init__(self, center):
+        centerV = CenterV(center)
+        super().__init__(centerV)
+
+class Label(QLabel):
+    def __init__(self, gui, text=''):
+        super().__init__(text)
+        self.GUI = gui
+        self.setAlignment(Qt.AlignCenter)
+
+    def updateStyle(self):
+        self.style().polish(self)
 
 class ContextMenu(QMenu):
     def __init__(self, parent, event):
