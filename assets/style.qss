@@ -577,7 +577,7 @@ GamePanelArtwork {
     padding: 0;
 }
 
-#PanelDisplay, GamePanel, #PanelOptions *, Field *, #Trees, #Trees *, #GameDescription {
+#PanelDisplay, GamePanel, GamePanelBody *, Field *, #Trees, #Trees *, GameDescription {
     background-color: #252526;
     color: #ffffff;
     border: none;
@@ -587,7 +587,7 @@ Panel QScrollArea, Panel VScroll {
     border: none;
 }
 
-#PanelOptions QComboBox {
+GamePanelBody QComboBox {
     padding: 5px;
     color:white;
     border-radius:5px;
@@ -595,23 +595,23 @@ Panel QScrollArea, Panel VScroll {
     background-color: #3a3a3b;
 }
 
-#PanelOptions QComboBox[processing=true] {
+GamePanelBody QComboBox[processing=true] {
     color: #616161;
     background-color: #313131;
 }
 
-#PanelOptions QComboBox::down-arrow {
+GamePanelBody QComboBox::down-arrow {
     background: none;
     border: none;
     image: url('assets/images/down_arrow.png');
 }
 
-#PanelOptions QComboBox::drop-down {
+GamePanelBody QComboBox::drop-down {
     border-bottom-left-radius: 5px;
     border-bottom-right-radius: 5px;
 }
 
-#PanelOptions QComboBox QAbstractItemView {
+GamePanelBody QComboBox QAbstractItemView {
     outline: 0px;
     border: 1px solid black;
     selection-background-color: #3a3a3b;

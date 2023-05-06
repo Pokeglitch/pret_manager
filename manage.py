@@ -605,6 +605,7 @@ class repository(QObject):
     ExcludingSignal = pyqtSignal(bool)
     FavoritesSignal = pyqtSignal(bool)
     LibrarySignal = pyqtSignal(bool)
+    BranchSignal = pyqtSignal()
 
     def __init__(self, manager, author, title, data):
         super().__init__()
@@ -700,7 +701,10 @@ class repository(QObject):
     def on(self, key, handler):
         if hasattr(self, key + 'Signal'):
             getattr(self, key + 'Signal').connect(handler)
-            handler( getattr(self, key) )
+            if hasattr(self, key):
+                handler( getattr(self, key) )
+            else:
+                handler()
 
     def off(self, key, handler):
         if hasattr(self, key + 'Signal'):
@@ -880,8 +884,7 @@ class repository(QObject):
             # TODO - handle if failed
             self.updateMetaData()
             
-            if self.Manager.GUI:
-                self.Manager.GUI.Branch.emit(self)
+            self.BranchSignal.emit()
 
     def set_RGBDS(self, RGBDS):
         if RGBDS != self.RGBDS:
@@ -906,8 +909,8 @@ class repository(QObject):
         if self.CurrentBranch != starting_branch:
             self.switch(starting_branch)
 
-        if self.GUI:
-            self.GUI.Panel.updateBranchDetails()
+        # TODO - only if a new branch was found?
+        self.BranchSignal.emit()
 
     def switch(self, *args):
         self.print('Switching to branch/commit: ' + ' '.join(args))
@@ -917,9 +920,13 @@ class repository(QObject):
         self.git.run('reset --hard')
 
         result = self.git.switch(*args)
-        # TODO - handle failed switch?
-        self.print('Switched to ' + ' '.join(args))
-        self.get_current_branch_info()
+
+        if result.returncode:
+            self.print('Failed to switch to ' + ' '.join(args))
+        else:
+            self.print('Switched to ' + ' '.join(args))
+            self.get_current_branch_info()
+
         return result
     
     def get_current_branch_info(self):
@@ -1211,8 +1218,7 @@ class repository(QObject):
         self.git.clone()
         self.get_current_branch_info()
         self.refresh()
-        if self.GUI:
-            self.GUI.Panel.updateBranchDetails()
+        self.BranchSignal.emit()
 
     def update(self, release_id=None):
         mkdir(self.path['base'])
@@ -1327,6 +1333,7 @@ class RGBDS(repository):
     def __init__(self, *args):
         super().__init__(*args)
 
+        # TODO - instead, have this stored in data.json....
         if not self.GitTags:
             self.refresh()
             self.updateMetaData()
@@ -1493,7 +1500,12 @@ if __name__ == '__main__':
     parser.add_argument('-process', '-p', nargs='*', help='The processes to run on the managed repositories')
     parser.add_argument('-build', '-b', nargs='*', help='Build options')
 
+    import time
+    start_time = time.time()
+
     pret_manager.handle_args()
+
+    print("--- %s seconds ---" % (time.time() - start_time))
     if pret_manager.App:
         pret_manager.App.init()
 else:

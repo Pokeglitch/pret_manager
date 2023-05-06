@@ -226,10 +226,17 @@ class Faded(QPixmap):
         painter.end()
 
 class Field(HBox):
-    def __init__(self, parent, left, right):
+    def __init__(self, parent, left, right, right_name='', right_handler=None):
         super().__init__(parent.GUI)
         self.Left = self.label(left+':')
         self.Right = self.label(right)
+        
+        if right_name:
+            self.Right.setObjectName(right_name)
+            
+        if right_handler:
+            self.Right.mouseDoubleClickEvent = right_handler
+
         self.addTo(parent)
 
 class Icon(HBox):
@@ -485,3 +492,21 @@ class OverwriteMessage(QDialog):
             self.reject()
         elif e.key() == Qt.Key.Key_Return or e.key() == Qt.Key.Key_Y:
             self.accept()
+
+class TagGUI(HBox):
+    def __init__(self, parent, name):
+        super().__init__(parent.GUI)
+        self.setObjectName('Tag')
+        self.Name = name
+        self.setProperty('which',name)
+        self.Label = self.label(name)
+        self.Label.setAlignment(Qt.AlignCenter)
+        
+        # TODO
+        #self.Label.setStyleSheet("background-color: #" + hex(abs(hash(name)))[2:8])
+
+        self.addTo(parent)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.GUI.Manager.Catalogs.Tags.get(self.Name).GUI.handleClick()

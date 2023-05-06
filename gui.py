@@ -4,7 +4,6 @@ import sys, webbrowser, json, re
 TODO:
 update 'build' handling same way as 'releases'
 
-
 ------
 Game Panel:
 - QLabels have a built in method to launch a url?
@@ -151,7 +150,8 @@ Associate Authors with a Team
 
 Filesystem Watcher?
 '''
-from src.game import *
+from src.gametile import *
+from src.gamepanel import *
 from src.base import *
 from src.catalogs import *
 from src.process import *
@@ -168,265 +168,6 @@ class GameQueue(HBox):
             
     def contextMenuEvent(self, event):
         GameContextMenu(self, event)
-
-
-class PanelContextMenu(GameBaseContextMenu):
-    def __init__(self, parent, event):
-        super().__init__(parent, event)
-        self.Coords = parent.GUI.Panel.Display.mapToGlobal(QPoint(0, 0))
-        self.start()
-
-class TagsGUI(HBox):
-    def __init__(self, parent, tags):
-        super().__init__(parent.GUI)
-        self.setObjectName('PanelTags')
-        self.addTo(parent)
-        self.addStretch()
-        self.Tags = [TagGUI(self, tag) for tag in tags]
-        self.addStretch()
-
-class TagGUI(HBox):
-    def __init__(self, parent, name):
-        super().__init__(parent.GUI)
-        self.setObjectName('Tag')
-        self.Name = name
-        self.setProperty('which',name)
-        self.Label = self.label(name)
-        self.Label.setAlignment(Qt.AlignCenter)
-        
-        # TODO
-        #self.Label.setStyleSheet("background-color: #" + hex(abs(hash(name)))[2:8])
-
-        self.addTo(parent)
-
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.GUI.Manager.Catalogs.Tags.get(self.Name).GUI.handleClick()
-
-class GamePanelArtwork(VBox):
-    def __init__(self, parent):
-        super().__init__(parent.GUI)
-        self.Label = self.label()
-        self.Label.setAlignment(Qt.AlignCenter)
-        
-        self.Pixmap = QPixmap(parent.GameGUI.Game.Boxart).scaled(300, 300)
-        self.Faded = Faded(self.Pixmap)
-
-        self.Container = HBox(self.GUI)
-        self.Container.addTo(parent)
-        self.addTo(self.Container)
-
-    def updateExcluding(self, excluding):
-        if excluding:
-            self.Label.setPixmap(self.Faded)
-        else:
-            self.Label.setPixmap(self.Pixmap)
-
-class GamePanel(VBox):
-    def __init__(self, gameGUI):
-        super().__init__(gameGUI.GUI)
-        self.GameGUI = gameGUI
-        self.Game = gameGUI.Game
-
-        self.Artwork = GamePanelArtwork(self)
-        self.Tags = TagsGUI(self, gameGUI.Game.tags)
-        
-        self.DescriptionContainer = HBox(self.GUI)
-        self.Description = self.DescriptionContainer.label(gameGUI.Game.Description)
-        self.Description.setAlignment(Qt.AlignCenter)
-        self.Description.setObjectName("GameDescription")
-        self.Description.setWordWrap(True)
-        self.DescriptionContainer.addTo(self)
-
-        # if git repo
-        self.GitOptions = VBox(self.GUI)
-        self.GitOptions.setObjectName('PanelOptions')
-        self.GitOptions.addTo(self)
-
-        self.Author = Field(self.GitOptions, 'Author', gameGUI.Game.author)
-        self.Author.Right.setObjectName('url')
-        self.Author.Right.mouseDoubleClickEvent = self.openAuthorURL
-
-        self.Repository = Field(self.GitOptions, 'Repository', gameGUI.Game.title)
-        self.Repository.Right.setObjectName('url')
-        self.Repository.Right.mouseDoubleClickEvent = self.openRepositoryURL
-
-        self.Branch = HBox(self.GUI)
-        self.Branch.label("Branch:")
-        self.BranchComboBox = QComboBox()
-        self.ignoreComboboxChanges = False
-        self.BranchComboBox.currentTextChanged.connect(self.handleBranchSelected)
-
-        self.GUI.Window.Processing.connect(self.handleProcessing)
-
-        self.Branch.add(self.BranchComboBox)
-        self.Branch.addTo(self.GitOptions)
-
-        self.Commit = Field(self.GitOptions, 'Commit', '-')
-        self.LastUpdate = Field(self.GitOptions, 'Last Update', '-')
-
-        self.SetRGBDSVersion = HBox(self.GUI)
-        self.SetRGBDSVersion.label("RGBDS:")
-        self.RGBDSComboBox = QComboBox()
-        
-        items = ["None"]
-        default_index = 0
-        
-        for version in self.GameGUI.Game.manager.RGBDS.ReleaseIDs:
-            version = version[1:]
-            if version == self.GameGUI.Game.rgbds and not default_index:
-                default_index = len(items)
-            # Custom takes priority
-            if version == self.GameGUI.Game.RGBDS:
-                default_index = len(items)
-
-            items.append(version)
-
-        items[default_index] += ' *'
-
-        self.RGBDSComboBox.addItems(items)
-        self.RGBDSComboBox.setCurrentIndex(default_index)
-
-        self.RGBDSComboBox.currentTextChanged.connect(self.handleRGBDSSelected)
-        self.SetRGBDSVersion.add(self.RGBDSComboBox)
-        self.SetRGBDSVersion.addTo(self.GitOptions)
-
-        self.updateBranchDetails()
-        
-        self.Trees = HBox(self.GUI)
-        self.Trees.addTo(self)
-        self.Trees.setObjectName("Trees")
-
-        self.Builds = VBox(self.GUI)
-        self.Builds.addTo(self.Trees, 1)
-        self.BuildTree = QTreeWidget()
-        self.BuildTree.setFocusPolicy(Qt.NoFocus)
-        self.BuildTree.header().setStretchLastSection(False)
-        self.BuildTree.header().setSectionResizeMode(QHeaderView.ResizeToContents)
-        self.BuildTree.header().hide()
-        self.BuildTree.setIndentation(10)
-        self.Builds.add(self.BuildTree)
-        self.BuildTree.itemDoubleClicked.connect(lambda e: hasattr(e,"Path") and QDesktopServices.openUrl(e.Path))
-        self.drawBuilds()
-
-        self.Releases = VBox(self.GUI)
-        self.Releases.addTo(self.Trees, 1)
-        self.ReleaseTree = QTreeWidget()
-        self.BuildTree.setFocusPolicy(Qt.NoFocus)
-        self.ReleaseTree.header().setStretchLastSection(False)
-        self.ReleaseTree.header().setSectionResizeMode(QHeaderView.ResizeToContents)
-        self.ReleaseTree.header().hide()
-        self.ReleaseTree.setIndentation(10)
-        self.Releases.add(self.ReleaseTree)
-        self.ReleaseTree.itemDoubleClicked.connect(lambda e: hasattr(e,"Path") and QDesktopServices.openUrl(e.Path))
-        self.drawReleases()
-
-        # if IPS
-        self.IPSOptions = VBox(self.GUI)
-        self.BaseROM = Field(self.IPSOptions, 'Base', '<Select Base ROM>')
-        #self.IPSOptions.addTo(self)
-
-        #self.addStretch()
-
-    def drawReleases(self):
-        self.ReleaseTree.clear()
-        releasesItem = QTreeWidgetItem(self.ReleaseTree)
-        releasesItem.setText(0, "Releases:")
-        releasesItem.setExpanded(True)
-
-        if self.GameGUI.Game.releases.keys():
-            releasesItem.Path = QUrl.fromLocalFile(self.GameGUI.Game.path['releases'])
-
-            releases = list(self.GameGUI.Game.releases.keys())
-            releases.sort()
-
-            for releaseName in reversed(releases):
-                releases = self.GameGUI.Game.releases[releaseName]
-                releaseItem = QTreeWidgetItem(releasesItem)
-                releaseItem.setText(0, re.match(r'^\d{4}-\d{2}-\d{2} - .* \((.*)\)$', releaseName).group(1))
-                releaseItem.Path = QUrl.fromLocalFile(self.GameGUI.Game.path['releases'] + releaseName)
-
-                for romName, path in releases.items():
-                    romItem = QTreeWidgetItem(releaseItem)
-                    romItem.setText(0, romName)
-                    romItem.Path = QUrl.fromLocalFile(str(path))
-        else:
-            noneItem = QTreeWidgetItem(releasesItem)
-            noneItem.setText(0, "None")
-
-    def drawBuilds(self):
-        self.BuildTree.clear()
-
-        buildsItem = QTreeWidgetItem(self.BuildTree)
-        buildsItem.setText(0, "Builds:")
-        buildsItem.setExpanded(True)
-        
-        if self.GameGUI.Game.builds.keys():
-            buildsItem.Path = QUrl.fromLocalFile(self.GameGUI.Game.path['builds'])
-
-            for branchName, branchBuilds in self.GameGUI.Game.builds.items():
-                branchItem = QTreeWidgetItem(buildsItem)
-                branchItem.setText(0, branchName)
-                branchItem.Path = QUrl.fromLocalFile(self.GameGUI.Game.path['builds'] + branchName)
-
-                builds = list(branchBuilds.keys())
-                builds.sort()
-
-                for buildName in reversed(builds):
-                    roms = branchBuilds[buildName]
-                    buildItem = QTreeWidgetItem(branchItem)
-                    buildItem.setText(0, buildName)
-                    buildItem.Path = QUrl.fromLocalFile(self.GameGUI.Game.path['builds'] + branchName + '/' + buildName)
-
-                    for romName, path in roms.items():
-                        romItem = QTreeWidgetItem(buildItem)
-                        romItem.setText(0, romName)
-                        romItem.Path = QUrl.fromLocalFile(str(path))
-        else:
-            noneItem = QTreeWidgetItem(buildsItem)
-            noneItem.setText(0, "None")
-
-    def openRepositoryURL(self, event):
-        webbrowser.open(self.GameGUI.Game.url)
-
-    def openAuthorURL(self, event):
-        webbrowser.open(self.GameGUI.Game.author_url)
-    
-    def updateBranchCommitDate(self):
-        if self.GameGUI.Game.CurrentBranch:
-            data = self.GameGUI.Game.Branches[self.GameGUI.Game.CurrentBranch]
-            self.Commit.Right.setText(data['LastCommit'][:8] if 'LastCommit' in data else '-')
-            self.LastUpdate.Right.setText(data['LastUpdate'][:19] if 'LastUpdate' in data else '-')
-        else:
-            self.Commit.Right.setText('-')
-            self.LastUpdate.Right.setText('-')
-
-    def updateBranchDetails(self):
-        self.updateBranchCommitDate()
-
-        self.ignoreComboboxChanges = True
-
-        self.BranchComboBox.clear()
-        self.BranchComboBox.addItems(self.GameGUI.Game.Branches.keys())
-
-        if self.GameGUI.Game.CurrentBranch:
-            self.BranchComboBox.setCurrentText(self.GameGUI.Game.CurrentBranch)
-
-        self.ignoreComboboxChanges = False
-        
-    def handleBranchSelected(self, branch):
-        if not self.GameGUI.Game.Missing and not self.GUI.Window.Process and not self.ignoreComboboxChanges and branch != self.GameGUI.Game.CurrentBranch:
-            self.GUI.switchBranch(self.GameGUI.Game, branch)
-
-            # todo - if it failed, change selection back to previous branch
-
-    def handleProcessing(self, processing):
-        self.BranchComboBox.setEnabled(not processing)
-        self.BranchComboBox.setProperty('processing', processing)
-        self.BranchComboBox.style().polish(self.BranchComboBox)
-
-    def handleRGBDSSelected(self, rgbds):
-        self.GameGUI.Game.set_RGBDS(rgbds.split(' ')[0])
 
 class GameGUI(QWidget):
     def __init__(self, GUI, game):
@@ -454,15 +195,10 @@ class GameGUI(QWidget):
         
         self.Queue = GameQueue(self)
         self.Tile = GameTile(self)
-        self.Panel = GamePanel(self)
+        self.Panel = None
 
         # TODO - these should also connect to signals
         self.setQueued(False)
-
-        self.Game.on('Excluding', self.updateExcluding)
-
-    def updateExcluding(self, excluding):
-        self.Panel.Artwork.updateExcluding(excluding)
 
     def setQueued(self, queued):
         self.isQueued = queued
@@ -474,6 +210,10 @@ class GameGUI(QWidget):
         self.Tile.setProperty("active",value)
         self.Queue.updateStyle()
         self.Tile.updateStyle()
+
+        if not self.Panel:
+            self.Panel = GamePanel(self)
+
         if value:
             self.Panel.addTo(self.GUI.Panel.Display)
         else:
