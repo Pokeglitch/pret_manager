@@ -244,7 +244,7 @@ class Icon(HBox):
         super().__init__(parent.GUI)
         self.Label = self.label()
         self.Label.setAlignment(Qt.AlignCenter)
-        self.Pixmap = QPixmap(image).scaled(dim, dim)
+        self.Pixmap = Scaled(image, dim)
         self.Label.setPixmap(self.Pixmap)
         self.addTo(parent)
 
@@ -391,9 +391,10 @@ class ClearQueue(Action):
 class ProcessAction(Action):
     def __init__(self, parent):
         super().__init__(parent, 'Process', parent.process)
+        
 class MenuIcon(Icon):
     def __init__(self, parent):
-        super().__init__(parent, 'assets/images/menu.png', 35)
+        super().__init__(parent, 'assets/images/menu.png', 36)
 
 class SaveListDialog(QDialog):
     log = pyqtSignal(str)

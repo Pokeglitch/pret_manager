@@ -157,6 +157,7 @@ class CatalogModes(VBox):
 class CatalogsTabs(VBox):
     def __init__(self, parent):
         super().__init__(parent.GUI)
+        self.Body = parent
 
         self.TabCount = 0
 
@@ -180,19 +181,20 @@ class CatalogsTabs(VBox):
     def setCatalog(self, tab):
         if tab != self.ActiveTab:
             self.ActiveTab.setActive(None)
-            self.Parent.Container.Stack.setCurrentIndex(tab.Index)
+            self.Body.Container.Stack.setCurrentIndex(tab.Index)
             self.ActiveTab = tab
 
 class CatalogIcon(Icon):
     def __init__(self, parent, image, index):
         self.Index = index
+        self.Tabs = parent
 
         super().__init__(parent.Container, image, 35)
 
     def mousePressEvent(self, e):
         if e.button() == Qt.LeftButton:
             self.setActive(True)
-            self.Parent.Parent.setCatalog(self)
+            self.Tabs.setCatalog(self)
 
 class CatalogsContainer(VBox):
     def __init__(self, parent):
@@ -233,7 +235,6 @@ class CatalogGUI(VBox):
             self.ListGUI.add(widget, *args)
         else:
             super().add(widget, *args)
-
 
 class CatalogsBody(HBox):
     def __init__(self, parent):

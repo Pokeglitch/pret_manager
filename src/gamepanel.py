@@ -13,6 +13,7 @@ class GamePanelArtworkPixmap(Scaled):
         self.Game = game
         self.Faded = Faded(self)
 
+# TODO - right click context menu
 class GamePanelArtwork(QLabel):
     def __init__(self, parent):
         super().__init__()
@@ -24,7 +25,7 @@ class GamePanelArtwork(QLabel):
 
         self.Game.on('Excluding', self.updateExcluding)
 
-        CenterH(self).addTo(parent)
+        parent.add(self)
 
     def updateExcluding(self, excluding):
         if excluding:
@@ -255,7 +256,85 @@ class PatchBody(GamePanelBody):
     def __init__(self, parent):
         super().__init__(parent)
         self.BaseROM = Field(self, 'Base', '<Select Base ROM>')
+
+class PanelIcon(QLabel):
+    def __init__(self, parent, name):
+        super().__init__()
+        self.setAlignment(Qt.AlignCenter)
+        self.GUI = parent.GUI
+        self.Game = parent.Game
+        self.Pixmap = Scaled('assets/images/{}.png'.format(name.lower()), 35)
+        self.Faded = Faded(self.Pixmap)
+
+        self.Game.on(name, self.update)
+
+        CenterH(self).addTo(parent)
+
+    def update(self, value):
+        self.setPixmap(self.Pixmap if value else self.Faded)
         
+class PanelIconFavorites(PanelIcon):
+    def __init__(self, parent):
+        super().__init__(parent, 'Favorites')
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.Game.setFavorites(not self.Game.Favorites)
+        
+class PanelIconLibrary(PanelIcon):
+    def __init__(self, parent):
+        super().__init__(parent, 'Library')
+
+    # TODO - either attempt to buid, or launch selected build?
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            pass
+        
+class PanelIconOutdated(PanelIcon):
+    def __init__(self, parent):
+        super().__init__(parent, 'Outdated')
+
+    # TODO - either check for updated, or download update?
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            pass
+
+class IconsContainer(VBox):
+    def __init__(self, parent):
+        super().__init__(parent.GUI)
+        self.Game = parent.Game
+
+        self.Favorites = PanelIconFavorites(self)
+        self.Library = PanelIconLibrary(self)
+        self.Outdated = PanelIconOutdated(self)
+
+        self.addStretch()
+        self.addTo(parent)
+
+class IconsColumn(VBox):
+    def __init__(self, parent):
+        super().__init__(parent.GUI)
+        self.Game = parent.Game
+
+        self.IconsContainer = IconsContainer(self)
+        
+        filler = HBox(self)
+        filler.addStretch()
+        filler.addTo(self)
+
+        self.addTo(parent)
+
+class ArtworkIconContainer(HBox):
+    def __init__(self, parent):
+        super().__init__(parent.GUI)
+        self.Game = parent.Game
+
+        self.addStretch() # left filler
+        self.Artwork = GamePanelArtwork(self)
+        self.IconsColumn = IconsColumn(self)
+        self.addTo(parent)
+
+
 # TODO - way to open directory to game
 class GamePanel(VBox):
     def __init__(self, gameGUI):
@@ -263,7 +342,7 @@ class GamePanel(VBox):
         self.GameGUI = gameGUI
         self.Game = gameGUI.Game
 
-        self.Artwork = GamePanelArtwork(self)
+        self.ArtworkIconContainer = ArtworkIconContainer(self)
         self.Tags = GameTags(self)
         self.Description = GameDescription(self)
         

@@ -292,15 +292,19 @@ class QueueContextMenu(ContextMenu):
         self.Coords = queue.ListContainer.mapToGlobal(QPoint(0, 0))
         self.start()
 
-
 class QueueHeaderMenuIcon(MenuIcon):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.Queue = parent.Queue
+
     def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton and not self.Parent.GUI.Queue.isEmpty:
+        if event.button() == Qt.LeftButton and not self.Queue.isEmpty:
             QueueContextMenu(self, event)
 
 class QueueHeaderMenu(HBox):
     def __init__(self, parent):
         super().__init__(parent.GUI)
+        self.Queue = parent.Queue
         self.Menu = QueueHeaderMenuIcon(self)
         self.addStretch()
         self.addTo(parent, 1, 1)
@@ -308,6 +312,8 @@ class QueueHeaderMenu(HBox):
 class QueueHeader(Grid):
     def __init__(self, parent):
         super().__init__(parent.GUI)
+        self.Queue = parent
+
         self.setObjectName("header-frame")
 
         self.Label = self.label('Queue', 1, 1)
@@ -695,23 +701,30 @@ class Tiles(VBox):
             self.GUI.startProcess(self.getData())
 
 class PanelHeaderMenuIcon(MenuIcon):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.Panel = parent.Panel
+
     @property
     def GameGUI(self):
-        return self.Parent.Parent.Parent.Parent.Active 
+        return self.Panel.Active 
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton and self.Parent.Parent.Parent.Parent.Active:
+        if event.button() == Qt.LeftButton and self.Panel.Active:
             PanelContextMenu(self, event)
 
 class PanelHeaderMenu(HBox):
     def __init__(self, parent):
         super().__init__(parent.GUI)
+        self.Panel = parent.Panel
         self.Menu = PanelHeaderMenuIcon(self)
         self.addTo(parent.IconsContainer)
 
 class PanelHeader(Grid):
     def __init__(self, parent):
         super().__init__(parent.GUI)
+        self.Panel = parent
+
         self.setObjectName("header-frame")
 
         
@@ -728,17 +741,15 @@ class PanelHeader(Grid):
         self.IconsContainer.addStretch()
 
         self.Right = HBox(self.GUI)
-        self.Favorite =  self.Right.label()
-        self.Favorite.setObjectName("favorite")
-        self.Favorite.mousePressEvent = parent.favoriteMousePress
-        self.StarPixmap = QPixmap('assets/images/favorites.png').scaled(35, 35)
-        self.FadedStar = Faded(self.StarPixmap)
-        self.Right.addTo(self.IconsContainer)
+        self.Close =  self.Right.label()
+        self.Close.setAlignment(Qt.AlignCenter)
+        self.Close.setObjectName("close")
+        self.Close.mousePressEvent = parent.closeMousePress
+        self.Pixmap = Scaled('assets/images/close.png', 20)
+        self.Close.setPixmap(self.Pixmap)
+        CenterV(self.Right).addTo(self.IconsContainer)
         
         self.addTo(parent, 10)
-
-    def updateFavorites(self, favorite):
-        self.Favorite.setPixmap(self.StarPixmap if favorite else self.FadedStar)
 
     def setText(self, text):
         self.Label.setText(text)
@@ -756,19 +767,17 @@ class Panel(VBox):
         self.setActive(None)
         self.addTo(GUI, 3)
 
-    def favoriteMousePress(self, event):
+    def closeMousePress(self, event):
         if event.button() == Qt.LeftButton and self.Active:
-            self.Active.toggleFavoritesHandler()
+            self.setActive(None)
 
     def setActive(self, game):
         if self.Active:
-            self.Active.Game.off('Favorites', self.Header.updateFavorites)
             self.Active.setActive(False)
 
         self.Active = None if game == self.Active else game
 
         if self.Active:
-            self.Active.Game.on('Favorites', self.Header.updateFavorites)
             self.Active.setActive(True)
             self.Header.setText(self.Active.Game.FullTitle)
         else:

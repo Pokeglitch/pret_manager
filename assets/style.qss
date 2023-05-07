@@ -20,23 +20,13 @@ QWidget#status * {
     padding: 5;
 }
 
-QWidget#status-header, QWidget#status-header > QLabel {
-    background-color: #000000;
-    color: #FFFFFF;
-}
-
-QLabel#header, QWidget#status-header > QLabel {
+QLabel#header {
     color: #ffffff;
     font-size: 22px;
     margin: 5;
 }
 
-QLabel#list-header {
-    font-size: 16px;
-    color: #ffffff;
-}
-
-QWidget#header-frame, QLabel#list-header, QWidget#status-header, QWidget#footer {
+QWidget#header-frame, QWidget#footer {
     border: 1px solid black;
     min-height:50px;
     max-height:50px;
@@ -184,12 +174,8 @@ Queue QScrollArea, #QueueFooter {
 }
 
 PanelHeader, PanelHeader QLabel, QueueHeader, QueueHeader QLabel {
-    background-color: #1e1e1e;
+    background-color: #252526;
     color: #ffffff;
-}
-
-#PanelHeaderIcons QLabel, QueueHeaderMenu * {
-    border-bottom: 1px solid black;
 }
 
 QueueHeader Button {
@@ -257,8 +243,8 @@ GameQueue, CatalogEntryGUI {
 }
 
 FlagListEntryGUI {
-    min-height: 30px;
-    max-height: 30px;
+    min-height: 40px;
+    max-height: 40px;
 }
 
 GameQueue *, CatalogEntryGUI * {
@@ -746,9 +732,22 @@ QMenu {
 
  QMenu::item:selected{
     background-color: #313131;
- } 
+ }
 
- MenuIcon > QLabel, #favorite {
+ MenuIcon > QLabel {
+    padding-left: 10px;
+    padding-right: 10px;
+    border-bottom: 1px solid black;
+}
+
+#close {
     margin-left: 10px;
     margin-right: 10px;
- }
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+}
+
+MenuIcon > QLabel:hover, #close:hover {
+    background-color: #313131;
+}
