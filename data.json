@@ -953,6 +953,16 @@
       ],
       "basis": "pret/pokegold",
       "description": "Remake of the Pokemon Lost Silver creepypasta."
+    },
+    "pokered-studio-edition": {
+      "title": "Red - Studio Edition",
+      "rgbds": "0.6.1",
+      "tags": [
+        "red",
+        "disasm"
+      ],
+      "basis": "pret/pokered",
+      "description": "Pokemon Red, but it looks like a GB Studio game"
     }
   },
   "aaaaaa123456789": {

@@ -176,7 +176,7 @@ class GameTrees(HBox):
         self.addTo(parent)
 
 class GameTree(VBox):
-    def __init__(self, parent):
+    def __init__(self, parent, key):
         super().__init__(parent.GUI)
         self.Game = parent.Game
 
@@ -187,12 +187,16 @@ class GameTree(VBox):
         self.Tree.header().hide()
         self.Tree.setIndentation(10)
         self.Tree.itemDoubleClicked.connect(lambda e: hasattr(e,"Path") and QDesktopServices.openUrl(e.Path))
-        self.draw()
+        
+        self.Game.on(key, self.draw)
 
         self.add(self.Tree)
         self.addTo(parent, 1)
 
 class BuildsTree(GameTree):
+    def __init__(self, parent):
+        super().__init__(parent, 'Build')
+
     def draw(self):
         self.Tree.clear()
 
@@ -226,6 +230,9 @@ class BuildsTree(GameTree):
             noneItem.setText(0, "None")
 
 class ReleasesTree(GameTree):
+    def __init__(self, parent):
+        super().__init__(parent, 'Release')
+
     def draw(self):
         self.Tree.clear()
         releasesItem = QTreeWidgetItem(self.Tree)

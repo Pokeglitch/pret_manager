@@ -840,9 +840,6 @@ class MainContents(HBox):
         self.Panel = Panel(self)
 
         self.Window.Logger.connect(self.addStatus)
-        self.Window.Build.connect(self.handleBuildSignal)
-        self.Window.Release.connect(self.handleReleaseSignal)
-        self.Window.Branch.connect(self.handleBranchSignal)
         self.Window.Processing.connect(self.onProcessing)
 
         self.addTo(window.Widget)
@@ -865,15 +862,6 @@ class MainContents(HBox):
         if not isBusy:
             self.Window.Process = None
 
-    def handleBranchSignal(self, game):
-        game.GUI.Panel.updateBranchCommitDate()
-
-    def handleBuildSignal(self, game):
-        game.GUI.Panel.drawBuilds()
-
-    def handleReleaseSignal(self, game):
-        game.GUI.Panel.drawReleases()
-
     def addStatus(self, msg):
         self.Process.Body.addStatusMessage(msg)
 
@@ -882,9 +870,6 @@ class MainContents(HBox):
 
 class PRET_Manager_GUI(QMainWindow):
     Logger = pyqtSignal(str)
-    Release = pyqtSignal(object)
-    Build = pyqtSignal(object)
-    Branch = pyqtSignal(object)
     Processing = pyqtSignal(bool)
 
     def __init__(self, manager):

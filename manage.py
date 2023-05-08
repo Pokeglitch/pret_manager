@@ -606,6 +606,8 @@ class repository(QObject):
     FavoritesSignal = pyqtSignal(bool)
     LibrarySignal = pyqtSignal(bool)
     BranchSignal = pyqtSignal()
+    BuildSignal = pyqtSignal()
+    ReleaseSignal = pyqtSignal()
 
     def __init__(self, manager, author, title, data):
         super().__init__()
@@ -1087,7 +1089,7 @@ class repository(QObject):
 
         if release_found:
             if self.GUI:
-                self.manager.GUI.Release.emit(self)
+                self.ReleaseSignal.emit()
             
             self.setLibrary(True)
         else:
@@ -1296,7 +1298,7 @@ class repository(QObject):
                     self.builds[self.CurrentBranch][self.build_name][file.name] = self.build_dir + file.name
 
                 if self.GUI:
-                    self.manager.GUI.Build.emit(self)
+                    self.BuildSignal.emit()
 
                 self.setLibrary(True)
 
