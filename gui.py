@@ -2,15 +2,14 @@ import sys, webbrowser, json, re
 
 '''
 TODO:
+Finish Options
+------
 update 'build' handling same way as 'releases'
 
 ------
 Game Panel:
-- QLabels have a built in method to launch a url?
-- replace fav button with X button to close
-- top left - fav, top right- crtridge, bottom right-update
--- dbl click cartridge to lauch preset gme or latest
--- dbl click updte to run update process
+- dbl click cartridge to lauch preset gme or latest
+- dbl click updte to run update process
 - click on author in panel to select in browser
 - show lists containing this game
 - Dont show process or build details for 'extras'
@@ -42,32 +41,18 @@ context menu:
 - option for each specific process in addition to 'all'
 
 - update search to include description and fulltitle
-
-Empty Panel shows settings & about
-- button to check for updates to pret_manager / apply
-- show rgbds options?
-- Settings:
-    - environment
-    - source location for cygwin/w64devkit
-    - option to have cygwin build instead of use prebuilt binaries
-    - save current process options as default (& apply now)
-    - save current browser as default (& apply now)
-    - option to refresh at start
-    - option to include releases when 'update'
-    - option to remove from queue after process
-    - option to always hide excluding games from browser
-    -- need to make sure this isnt true when 'exlcuding' is explicitly selected...
-
 --------
 
 CLI:
 - use -l to filter by list
 - use -s for search option
+- use -f to filter by flag
+- way to use a saved filter?
 - use the same 'filter' function that the GUI current uses...
 -- -a, -ao, -aa, -an, etc
 - only create 'repositories' instances for games being managed
 
-Update README
+Update README, Tutorial
 --------------------------
 finish artwork/tags
 
@@ -150,6 +135,7 @@ Associate Authors with a Team
 
 Filesystem Watcher?
 '''
+from src.panel import *
 from src.gametile import *
 from src.gamepanel import *
 from src.base import *
@@ -200,11 +186,13 @@ class GameGUI(QWidget):
         # TODO - these should also connect to signals
         self.setQueued(False)
 
+    # todo - emitter
     def setQueued(self, queued):
         self.isQueued = queued
         self.Tile.setProperty('queued', queued)
         self.Tile.updateStyle()
 
+    # todo - emitter
     def setActive(self, value):
         self.Queue.setProperty("active",value)
         self.Tile.setProperty("active",value)
@@ -214,11 +202,7 @@ class GameGUI(QWidget):
         if not self.Panel:
             self.Panel = GamePanel(self)
 
-        if value:
-            self.Panel.addTo(self.GUI.Panel.Display)
-        else:
-            self.Panel.addTo(None)
-
+    # todo - emitter
     def setProcessing(self, value):
         self.Queue.setProperty("processing",value)
         self.Tile.setProperty("processing",value)
@@ -262,10 +246,8 @@ class GameGUI(QWidget):
         self.GUI.saveList([self.Game])
 
 class QueueContextMenu(ContextMenu):
-    def __init__(self, parent, event):
-        super().__init__(parent, event)
-
-        queue = parent.GUI.Queue
+    def __init__(self, queue, event):
+        super().__init__(queue, event)
 
         self.addAction( queue.AddToFavorites )
         self.addAction( queue.RemoveFromFavorites )
@@ -276,7 +258,7 @@ class QueueContextMenu(ContextMenu):
         # Add to list/ remove from list (except itself)
         lists = []
 
-        for list in parent.GUI.Manager.Catalogs.Lists.Entries.values():
+        for list in queue.GUI.Manager.Catalogs.Lists.Entries.values():
             lists.append(list)
 
         self.addMenu( AddListToListMenu(queue, lists) )
@@ -299,7 +281,7 @@ class QueueHeaderMenuIcon(MenuIcon):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton and not self.Queue.isEmpty:
-            QueueContextMenu(self, event)
+            QueueContextMenu(self.Queue, event)
 
 class QueueHeaderMenu(HBox):
     def __init__(self, parent):
@@ -700,95 +682,6 @@ class Tiles(VBox):
         if self.All_Games:
             self.GUI.startProcess(self.getData())
 
-class PanelHeaderMenuIcon(MenuIcon):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.Panel = parent.Panel
-
-    @property
-    def GameGUI(self):
-        return self.Panel.Active 
-
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton and self.Panel.Active:
-            PanelContextMenu(self, event)
-
-class PanelHeaderMenu(HBox):
-    def __init__(self, parent):
-        super().__init__(parent.GUI)
-        self.Panel = parent.Panel
-        self.Menu = PanelHeaderMenuIcon(self)
-        self.addTo(parent.IconsContainer)
-
-class PanelHeader(Grid):
-    def __init__(self, parent):
-        super().__init__(parent.GUI)
-        self.Panel = parent
-
-        self.setObjectName("header-frame")
-
-        
-        self.Label = self.label('', 1, 1)
-        self.Label.setObjectName("header")
-        self.Label.setAlignment(Qt.AlignCenter)
-
-        self.IconsContainer = HBox(self.GUI)
-        self.IconsContainer.setObjectName("PanelHeaderIcons")
-        self.IconsContainer.addTo(self, 1, 1)
-
-        self.Menu = PanelHeaderMenu(self)
-        
-        self.IconsContainer.addStretch()
-
-        self.Right = HBox(self.GUI)
-        self.Close =  self.Right.label()
-        self.Close.setAlignment(Qt.AlignCenter)
-        self.Close.setObjectName("close")
-        self.Close.mousePressEvent = parent.closeMousePress
-        self.Pixmap = Scaled('assets/images/close.png', 20)
-        self.Close.setPixmap(self.Pixmap)
-        CenterV(self.Right).addTo(self.IconsContainer)
-        
-        self.addTo(parent, 10)
-
-    def setText(self, text):
-        self.Label.setText(text)
-
-class Panel(VBox):
-    def __init__(self, GUI):
-        super().__init__(GUI)
-        self.Header = PanelHeader(self)
-
-        self.Display = VScroll(GUI)
-        self.Display.setObjectName('PanelDisplay')
-        self.Display.addTo(self, 80)
-        
-        self.Active = None
-        self.setActive(None)
-        self.addTo(GUI, 3)
-
-    def closeMousePress(self, event):
-        if event.button() == Qt.LeftButton and self.Active:
-            self.setActive(None)
-
-    def setActive(self, game):
-        if self.Active:
-            self.Active.setActive(False)
-
-        self.Active = None if game == self.Active else game
-
-        if self.Active:
-            self.Active.setActive(True)
-            self.Header.setText(self.Active.Game.FullTitle)
-        else:
-            self.Header.setText("Select a Game")
-
-        self.Header.Right.setVisible(bool(self.Active))
-        self.Header.Menu.setVisible(bool(self.Active))
-
-    def applyPatch(self, event):
-        pass
-
 class ManagerProcess(QRunnable):
     def __init__(self, GUI):
         super().__init__()
@@ -798,6 +691,16 @@ class ManagerProcess(QRunnable):
 
     def finish(self):
         self.Window.Processing.emit(False)
+
+class RefreshPRETManager(ManagerProcess):
+    def run(self):
+        self.GUI.Manager.refresh()
+        self.finish()
+
+class UpdatePRETManager(ManagerProcess):
+    def run(self):
+        self.GUI.Manager.update()
+        self.finish()
 
 class SwitchBranch(ManagerProcess):
     def __init__(self, GUI, game, branch):
@@ -817,7 +720,6 @@ class ExecuteProcess(ManagerProcess):
     def run(self):
         self.GUI.Manager.run(self.Processes)
         self.finish()
-
 
 class MainContents(HBox):
     def __init__(self, window):
@@ -850,6 +752,16 @@ class MainContents(HBox):
     def switchBranch(self, game, branch):
         if not self.Window.Process:
             self.Window.Process = SwitchBranch(self, game, branch)
+            threadpool.start(self.Window.Process)
+
+    def refreshPRETManager(self):
+        if not self.Window.Process:
+            self.Window.Process = RefreshPRETManager(self)
+            threadpool.start(self.Window.Process)
+
+    def updatePRETManager(self):
+        if not self.Window.Process:
+            self.Window.Process = UpdatePRETManager(self)
             threadpool.start(self.Window.Process)
 
     def startProcess(self, games):

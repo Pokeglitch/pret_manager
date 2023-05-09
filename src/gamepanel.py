@@ -1,12 +1,6 @@
 import re, webbrowser
 from src.gamebase import *
 
-class PanelContextMenu(GameBaseContextMenu):
-    def __init__(self, parent, event):
-        super().__init__(parent, event)
-        self.Coords = parent.GUI.Panel.Display.mapToGlobal(QPoint(0, 0))
-        self.start()
-
 class GamePanelArtworkPixmap(Scaled):
     def __init__(self, game):
         super().__init__(game.Boxart, 300)

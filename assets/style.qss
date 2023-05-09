@@ -178,17 +178,20 @@ PanelHeader, PanelHeader QLabel, QueueHeader, QueueHeader QLabel {
     color: #ffffff;
 }
 
-QueueHeader Button {
+Queue Button {
+    font-size: 12px;
+    min-width: 200px;
+    max-width: 200px;
     background-color: #0E639C;
     color: #EEEEEE;
 }
 
-QueueHeader Button:hover {
+Queue Button:hover {
     background-color: #1176BA;
     color: #ffffff;
 }
 
-QueueHeader Button[disabled=true], QueueHeader Button[disabled=true]:hover, QueueHeader Button[processing=true], QueueHeader Button[processing=true]:hover {
+Queue Button[disabled=true], Queue Button[disabled=true]:hover, Queue Button[processing=true], Queue Button[processing=true]:hover {
     background-color: #094166;
     color: #bbbbbb
 }
@@ -201,15 +204,10 @@ Button:hover {
 Button {
     border: 1px solid black;
     border-radius: 10px;
-}
-
-Button {
     max-height: 30px;
     min-height: 30px;
     min-width: 60px;
     margin: 5;
-    background-color: #0E639C;
-
     background-color: #0E639C;
     color: #EEEEEE;
 }
@@ -218,7 +216,6 @@ Button[disabled=true], Button[disabled=true]:hover, Button[processing=true], But
     background-color: #094166;
     color: #bbbbbb
 }
-
 
 CatalogEntryGUI[mode="Not"] {
     background-color: #7b3131
@@ -563,17 +560,29 @@ GamePanelArtwork {
     padding: 0;
 }
 
-#PanelDisplay, GamePanel, GamePanelBody *, Field *, #Trees, #Trees *, GameDescription {
+PanelBody, GamePanel, GamePanelBody *, Field *, #Trees, #Trees *, GameDescription {
     background-color: #252526;
     color: #ffffff;
     border: none;
+    font-size:12px;
+}
+
+PanelOptions * {
+    color: #ffffff;
+    font-size:12px;
+}
+
+PanelButton {
+    min-width: 200px;
+    max-width: 200px;
+    padding: 0px;
 }
 
 Panel QScrollArea, Panel VScroll {
     border: none;
 }
 
-GamePanelBody QComboBox {
+PanelBody QComboBox {
     padding: 5px;
     color:white;
     border-radius:5px;
@@ -581,26 +590,44 @@ GamePanelBody QComboBox {
     background-color: #3a3a3b;
 }
 
-GamePanelBody QComboBox[processing=true] {
+PanelBody QComboBox[processing=true] {
     color: #616161;
     background-color: #313131;
 }
 
-GamePanelBody QComboBox::down-arrow {
+PanelBody QComboBox::down-arrow {
     background: none;
     border: none;
     image: url('assets/images/down_arrow.png');
 }
 
-GamePanelBody QComboBox::drop-down {
+PanelBody QComboBox::drop-down {
     border-bottom-left-radius: 5px;
     border-bottom-right-radius: 5px;
 }
 
-GamePanelBody QComboBox QAbstractItemView {
+PanelBody QComboBox QAbstractItemView {
     outline: 0px;
     border: 1px solid black;
     selection-background-color: #3a3a3b;
+}
+
+PanelHeading {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+EnvironmentsRow QLabel {
+    margin: 5px;
+    max-width:50px;
+    min-width: 50px;
+}
+
+EnvironmentComboBox {
+    max-width: 120px;
+    min-width: 120px;
+    margin: 5px;
+    font-size: 12px;
 }
 
 QLabel#url {
@@ -734,13 +761,7 @@ QMenu {
     background-color: #313131;
  }
 
- MenuIcon > QLabel {
-    padding-left: 10px;
-    padding-right: 10px;
-    border-bottom: 1px solid black;
-}
-
-#close {
+PanelHeaderClose {
     margin-left: 10px;
     margin-right: 10px;
     padding: 10px;
@@ -748,6 +769,12 @@ QMenu {
     border-radius: 5px;
 }
 
-MenuIcon > QLabel:hover, #close:hover {
+PanelHeaderClose:hover {
     background-color: #313131;
+}
+
+ MenuIcon > QLabel {
+    padding-left: 10px;
+    padding-right: 10px;
+    background: none;
 }

@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 
-import copy, subprocess, os, re, glob, platform, shutil, argparse, json, sys
+import os, re, argparse, json
 from pathlib import Path
 import gui
+from src.base import *
 from src.Environment import *
 from src.Files import *
 from PyQt5.QtCore import pyqtSignal, QObject
 
 build_extensions = ['gb','gbc','pocket','patch']
 release_extensions = build_extensions + ['ips','bps','bsp','zip']
-metadata_properties = ['Branches','GitTags','CurrentBranch','RGBDS','Excluding','Favorites']
+repo_metadata_properties = ['Branches','GitTags','CurrentBranch','RGBDS','Excluding','Favorites']
 rgbds_files = ['rgbasm','rgbfix','rgblink','rgbgfx']
 
 def error(msg):
@@ -184,7 +185,7 @@ class ListEntry(BaseListEntry):
 
     def write(self):
         with open(list_dir + self.Name + '.json', 'w') as f:
-            f.write(json.dumps(self.GameStructure))
+            f.write(json.dumps(self.GameStructure, indent=4))
 
     def erase(self):
         self.reset(True)
@@ -302,6 +303,7 @@ class Settings:
         # load base settings
         self.loadBase()
         self.reset()
+
         # try to load user settings
         self.load('data/settings.json')
 
@@ -344,8 +346,31 @@ class Settings:
         self.Active = {}
         self.store_values(self.Active, self.Base, True)
 
-class PRET_Manager:
+    def get(self, fullpath):
+        paths = fullpath.split('.')
+        data = self.Active
+        for path in paths:
+            data = data[path]
+        return data
+
+    def set(self, fullpath, value):
+        paths = fullpath.split('.')
+        data = self.Active
+        for path in paths[:-1]:
+            data = data[path]
+        
+        if data[paths[-1]] != value:
+            data[paths[-1]] = value
+            with open('data/settings.json', 'w') as f:
+                f.write(json.dumps(self.Active, indent=4))
+            
+            self.Manager.print('Updated Settings for {0}'.format(fullpath))
+
+class PRET_Manager(MetaData):
+    UpdateAvailableSignal = pyqtSignal(bool)
+
     def __init__(self):
+        super().__init__(['UpdateAvailable'])
         self.Manager = self
         self.Directory = games_dir
         
@@ -353,17 +378,23 @@ class PRET_Manager:
         self.GUI = None
         self.App = None
         self.Search = None
+        self.url = 'https://github.com/Pokeglitch/pret_manager'
 
         self.FlagLists = ["Library", "Favorites", "Excluding", "Outdated", "Missing"]
 
         self.Queue = []
 
         self.path = {
-            'repo' : '.'
+            'repo' : '.',
+            'base' : 'data/'
         }
 
         self.Settings = Settings(self)
         self.Environments = Environments(self)
+
+        self.UpdateAvailable = False
+        self.readMetaData()
+        self.Initialized = True
 
     def addFlagList(self, name):
         self.Catalogs.Flags.add(name)
@@ -386,10 +417,50 @@ class PRET_Manager:
 
         self.init()
         self.Search = SearchEntry(self)
+
+    def list(self, which):
+        obj = {}
+
+        data = self.git.list(which, self.url, Directory = '.')
+
+        for row in data:
+            # skip empty rows
+            if row:
+                row = row.split('\t')
+                commit = row[0]
+                name = row[1].split('/')[-1]
+
+                obj[name] = commit
+
+        return obj.items()
     
-    def fetch(self):
-        self.print('Fetching pret-manager')
-        self.git.fetch(CaptureOutput=True)
+    def refresh(self):
+        if not self.UpdateAvailable:
+            self.print('Refreshing pret-manager')
+            self.checkForUpdate()
+
+        if self.UpdateAvailable:
+            self.print('Update available')
+        else:
+            self.print('Already up to date')
+
+    def update(self):
+        if self.UpdateAvailable:
+            self.print('Updating pret-manager')
+            self.git.pull()
+            self.checkForUpdate()
+            if self.UpdateAvailable:
+                print('Failed to update')
+            else:
+                print('Updated successful. Restart to load changes')
+        else:
+            self.print('Already up to date')
+
+    def checkForUpdate(self):
+        data = dict(self.list('head'))
+        self.UpdateAvailable = data["master"] != self.git.head()
+        self.UpdateAvailableSignal.emit(self.UpdateAvailable)
+        self.updateMetaData()
 
     def print(self, msg):
         msg = 'pret-manager:\t' + str(msg)
@@ -397,10 +468,6 @@ class PRET_Manager:
 
         if self.GUI:
             self.GUI.Logger.emit(msg)
-
-    def update(self):
-        self.print('Updating pret-manager')
-        self.git.pull()
 
     def init(self):
         self.Catalogs = Catalogs(self)
@@ -599,7 +666,7 @@ class PRET_Manager:
             if self.Catalogs.Tags.has(tag):
                 self.keep_in_queue(self.Catalogs.Tags.get(tag).GameList)
 
-class repository(QObject):
+class repository(MetaData):
     MissingSignal = pyqtSignal(bool)
     OutdatedSignal = pyqtSignal(bool)
     ExcludingSignal = pyqtSignal(bool)
@@ -610,14 +677,13 @@ class repository(QObject):
     ReleaseSignal = pyqtSignal()
 
     def __init__(self, manager, author, title, data):
-        super().__init__()
+        super().__init__(repo_metadata_properties)
         self.manager = manager
         self.Manager = manager
 
         self.author = author
         self.title = title
         self.GUI = None
-        self.MetaData = {}
         self.Lists = []
 
         self.Branches = {}
@@ -665,7 +731,6 @@ class repository(QObject):
         if not os.path.exists(self.Boxart):
             self.Boxart = 'assets/images/gb.png'
 
-        self.Initialized = False
         self.Missing = None
         self.Outdated = None
         self.Excluding = False
@@ -700,77 +765,10 @@ class repository(QObject):
             self.init_GUI()
 
 ######### GUI Methods
-    def on(self, key, handler):
-        if hasattr(self, key + 'Signal'):
-            getattr(self, key + 'Signal').connect(handler)
-            if hasattr(self, key):
-                handler( getattr(self, key) )
-            else:
-                handler()
-
-    def off(self, key, handler):
-        if hasattr(self, key + 'Signal'):
-            getattr(self, key + 'Signal').disconnect(handler)
-
     def init_GUI(self):
         self.GUI = gui.GameGUI(self.manager.GUI.Content, self)
 
-######### Metadata Methods
-
-    def readMetaData(self):
-        path = self.path['base'] + 'metadata.json'
-        if os.path.exists(path):
-            with open(path, 'r') as f:
-                data = json.loads(f.read())
-
-            self.MetaData = {}
-            for prop in metadata_properties:
-                if prop in data:
-                    self.MetaData[prop] = data[prop]
-        else:
-            self.setOutdated(True)
-
-        for prop in metadata_properties:
-            self.getMetaDataProperty(prop)
-
-    def getMetaDataProperty(self, name):
-        if name in self.MetaData:
-            value = copy.deepcopy(self.MetaData[name])
-            if name in self.Manager.FlagLists:
-                getattr(self, "set" + name)(value)
-            else:
-                setattr(self, name, value)
-
-    def updateMetaData(self):
-        # dont update meta data if triggered during initialization
-        # (since some parameters are not assigned properly yet)
-        if self.Initialized:
-            metadataChanged = [self.updateMetaDataProperty(prop) for prop in metadata_properties]
-
-            if any(metadataChanged):
-                mkdir(self.path['base'])
-                with open(self.path['base'] + 'metadata.json', 'w') as f:
-                    f.write(json.dumps(self.MetaData, indent=4))
-
-    def updateMetaDataProperty(self, name):
-        value = copy.deepcopy( getattr(self, name) )
-
-        if name not in self.MetaData:
-            self.MetaData[name] = value
-            return True
-
-        if value != self.MetaData[name]:
-            if value:
-                self.MetaData[name] = value
-                return True
-            elif name in self.MetaData:
-                del self.MetaData[name]
-                return True
-                
-        return False
-
 ######### IO Methods
-
     def rmdir(self, path, msg=''):
         self.print(msg)
         self.print('Removing directory: ' + path)

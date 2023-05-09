@@ -1,7 +1,9 @@
 from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QObject, QUrl, QThreadPool, QRunnable, QMargins, QPoint, QRect, QSize
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QDialog, QAction, QMenu, QSlider, QStackedWidget, QLineEdit, QSplashScreen, QComboBox, QHeaderView, QTreeWidgetItem, QFileDialog, QTreeWidget, QApplication, QStyleOption, QStyle, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
 from PyQt5.QtGui import QBrush, QColor, QImage, QPixmap, QDesktopServices, QIcon, QPainter
-import time, json
+import time, json, copy, os
+
+from src.Files import *
 
 threadpool = QThreadPool()
 
@@ -184,6 +186,78 @@ class VScroll(VBox):
             parent.add(self.Scroll, *args)
         else:
             self.setParent(None)
+
+class Emitter(QObject):
+    def on(self, key, handler):
+        if hasattr(self, key + 'Signal'):
+            getattr(self, key + 'Signal').connect(handler)
+            if hasattr(self, key):
+                handler( getattr(self, key) )
+            else:
+                handler()
+
+    def off(self, key, handler):
+        if hasattr(self, key + 'Signal'):
+            getattr(self, key + 'Signal').disconnect(handler)
+
+class MetaData(Emitter):
+    def __init__(self, properties):
+        super().__init__()
+        self.MetaData = {}
+        self.MetaDataProperties = properties
+        self.Initialized = False
+
+    def readMetaData(self):
+        path = self.path['base'] + 'metadata.json'
+        if os.path.exists(path):
+            with open(path, 'r') as f:
+                data = json.loads(f.read())
+
+            self.MetaData = {}
+            for prop in self.MetaDataProperties:
+                if prop in data:
+                    self.MetaData[prop] = data[prop]
+        elif hasattr(self, 'setOutdated'):
+            self.setOutdated(True)
+
+        for prop in self.MetaDataProperties:
+            self.getMetaDataProperty(prop)
+
+    def getMetaDataProperty(self, name):
+        if name in self.MetaData:
+            value = copy.deepcopy(self.MetaData[name])
+            if name in self.Manager.FlagLists and hasattr(self, 'set'+name):
+                getattr(self, "set" + name)(value)
+            else:
+                setattr(self, name, value)
+
+    def updateMetaData(self):
+        # dont update meta data if triggered during initialization
+        # (since some parameters are not assigned properly yet)
+        if self.Initialized:
+            metadataChanged = [self.updateMetaDataProperty(prop) for prop in self.MetaDataProperties]
+
+            if any(metadataChanged):
+                mkdir(self.path['base'])
+                with open(self.path['base'] + 'metadata.json', 'w') as f:
+                    f.write(json.dumps(self.MetaData, indent=4))
+
+    def updateMetaDataProperty(self, name):
+        value = copy.deepcopy( getattr(self, name) )
+
+        if name not in self.MetaData:
+            self.MetaData[name] = value
+            return True
+
+        if value != self.MetaData[name]:
+            if value:
+                self.MetaData[name] = value
+                return True
+            elif name in self.MetaData:
+                del self.MetaData[name]
+                return True
+                
+        return False
 
 class Button(QLabel):
     def __init__(self, parent, text, handler):
@@ -457,7 +531,7 @@ class SaveListDialog(QDialog):
 
         path = 'data/lists/{0}.json'.format(name)
         with open(path, 'w') as f:
-            f.write(json.dumps(data))
+            f.write(json.dumps(data, indent=4))
 
         self.GUI.Manager.addList(name, data)
         self.log.emit('Saved List to ' + path)

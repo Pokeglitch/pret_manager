@@ -56,6 +56,9 @@ class ProcessToggleField(HBox):
 
         self.addTo(parent)
 
+    def set(self, value):
+        self.Toggle.Slider.setValue( int(value) )
+
     def value(self):
         return self.Toggle.Slider.value()
 
@@ -81,6 +84,20 @@ class ProcessOptions(VBox):
         self.CleanAfter = ProcessToggleField(self, 'Clean', settings["CleanAfter"])
 
         self.addTo(parent, 1)
+
+    def setSettings(self):
+        settings = self.GUI.Manager.Settings.Active["Process"]
+
+        for key, value in settings.items():
+            getattr(self, key).set(value)
+
+    def getSettings(self):
+        settings = {}
+
+        for key in ["Refresh", "Update", "CleanBefore", "Build", "CleanAfter"]:
+            settings[key] = bool(getattr(self, key).value())
+
+        return settings
 
     def compile(self):
         processes = ''
