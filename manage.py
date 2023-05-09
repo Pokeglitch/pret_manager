@@ -450,9 +450,9 @@ class PRET_Manager(MetaData):
             self.git.pull()
             self.checkForUpdate()
             if self.UpdateAvailable:
-                print('Failed to update')
+                self.print('Failed to update')
             else:
-                print('Updated successful. Restart to load changes')
+                self.print('Updated successful. Restart to load changes')
         else:
             self.print('Already up to date')
 
