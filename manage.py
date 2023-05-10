@@ -392,7 +392,6 @@ class PRET_Manager(MetaData):
         self.Settings = Settings(self)
         self.Environments = Environments(self)
 
-        # TODO - shouldnt these be settings?
         self.Outdated = False
         self.AutoRefresh = False
         self.AutoUpdate = False

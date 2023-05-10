@@ -755,18 +755,18 @@ class MainContents(HBox):
             self.Window.Process = SwitchBranch(self, game, branch)
             threadpool.start(self.Window.Process)
 
-    def restartPRETManager(self):
-        if not self.Window.Process:
+    def restartPRETManager(self, isAuto=False):
+        if not self.Window.Process or isAuto:
             QCoreApplication.quit()
             QProcess.startDetached(sys.executable, sys.argv)
 
-    def refreshPRETManager(self):
-        if not self.Window.Process:
+    def refreshPRETManager(self, isAuto=False):
+        if not self.Window.Process or isAuto:
             self.Window.Process = RefreshPRETManager(self)
             threadpool.start(self.Window.Process)
 
-    def updatePRETManager(self):
-        if not self.Window.Process:
+    def updatePRETManager(self, isAuto=False):
+        if not self.Window.Process or isAuto:
             self.Window.Process = UpdatePRETManager(self)
             threadpool.start(self.Window.Process)
 

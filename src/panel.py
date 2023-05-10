@@ -175,15 +175,15 @@ class PRETManagerOptions(PanelOptionsWidget):
 
     def checkAutoRefresh(self):
         if self.AutoCheckForUpdate.value():
-            self.GUI.refreshPRETManager()
+            self.GUI.refreshPRETManager(True)
 
     def checkAutoApply(self):
         if self.AutoApplyUpdate.value():
-            self.GUI.updatePRETManager()
+            self.GUI.updatePRETManager(True)
 
     def checkAutoRestart(self):
         if self.AutoRestart.value():
-            self.GUI.restartPRETManager()
+            self.GUI.restartPRETManager(True)
 
 class BrowserOptions(PanelOptionsWidget):
     def __init__(self, parent):
