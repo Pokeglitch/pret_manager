@@ -449,6 +449,7 @@ class PRET_Manager(MetaData):
 
         if self.Outdated:
             self.print('Update available')
+            self.Manager.GUI.UpdateFoundSignal.emit()
         else:
             self.print('Already up to date')
 
@@ -461,6 +462,7 @@ class PRET_Manager(MetaData):
                 self.print('Failed to update')
             else:
                 self.print('Updated successful. Restart to load changes')
+                self.Manager.GUI.UpdateAppliedSignal.emit()
         else:
             self.print('Already up to date')
 
