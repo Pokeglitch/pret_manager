@@ -1515,7 +1515,7 @@ if __name__ == '__main__':
 
     pret_manager.handle_args()
 
-    print("--- %s seconds ---" % (time.time() - start_time))
+    #print("--- %s seconds ---" % (time.time() - start_time))
     if pret_manager.App:
         pret_manager.App.init()
 else:
