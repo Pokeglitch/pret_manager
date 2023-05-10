@@ -207,7 +207,7 @@ class MetaData(Emitter):
         self.MetaDataProperties = properties
         self.Initialized = False
 
-    def readMetaData(self):
+    def readMetaData(self, autoSetOutdated=True):
         path = self.path['base'] + 'metadata.json'
         if os.path.exists(path):
             with open(path, 'r') as f:
@@ -217,7 +217,7 @@ class MetaData(Emitter):
             for prop in self.MetaDataProperties:
                 if prop in data:
                     self.MetaData[prop] = data[prop]
-        else:
+        elif autoSetOutdated:
             self.setOutdated(True)
 
         for prop in self.MetaDataProperties:
