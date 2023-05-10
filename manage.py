@@ -401,7 +401,6 @@ class PRET_Manager(MetaData):
         
     def setOutdated(self, outdated):
         if self.Outdated != outdated:
-            print(outdated)
             self.Outdated = outdated
             self.OutdatedSignal.emit(self.Outdated)
 
