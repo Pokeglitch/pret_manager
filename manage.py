@@ -150,9 +150,9 @@ class BaseListEntry(CatalogEntry):
 
         for game in games:
             if game in self.GameList:
-                game.removeFromList(self)
+                self.removeGame(game)
             else:
-                game.addToList(self)
+                self.addGame(game)
 
         self.addToFilter()
 
@@ -220,7 +220,7 @@ class SearchEntry(BaseListEntry):
         if self.PreviousText in text:
             gamesToExclude = []
             for game in self.GameList:
-                if text_lower not in game.name.lower():
+                if not game.search(text_lower):
                     gamesToExclude.append(game)
                     self.ExcludedGames.append(game)
             self.removeGames(gamesToExclude)
@@ -228,20 +228,20 @@ class SearchEntry(BaseListEntry):
         elif text in self.PreviousText:
             gamesToAdd = []
             for game in self.ExcludedGames[:]:
-                if text_lower in game.name.lower():
+                if game.search(text_lower):
                     gamesToAdd.append(game)
                     self.ExcludedGames.pop(self.ExcludedGames.index(game))
             self.addGames(gamesToAdd)
-        # text changed complete:
+        # text changed completely:
         else:
             gamesToToggle = []
             for game in self.ExcludedGames[:]:
-                if text_lower in game.name.lower():
+                if game.search(text_lower):
                     gamesToToggle.append(game)
                     self.ExcludedGames.pop(self.ExcludedGames.index(game))
 
             for game in self.GameList:
-                if text_lower not in game.name.lower():
+                if not game.search(text_lower):
                     gamesToToggle.append(game)
                     self.ExcludedGames.append(game)
 
@@ -777,6 +777,9 @@ class repository(MetaData):
 ######### GUI Methods
     def init_GUI(self):
         self.GUI = gui.GameGUI(self.manager.GUI.Content, self)
+
+    def search(self, string):
+        return string in self.FullTitle.lower() or string in self.Description.lower()
 
 ######### IO Methods
     def rmdir(self, path, msg=''):
