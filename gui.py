@@ -3,6 +3,8 @@ import sys, webbrowser, json, re
 '''
 TODO:
 Finish Options
+
+Search doesnt work if highlight and change text
 ------
 update 'build' handling same way as 'releases'
 
