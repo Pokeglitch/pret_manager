@@ -367,10 +367,10 @@ class Settings:
             self.Manager.print('Updated Settings for {0}'.format(fullpath))
 
 class PRET_Manager(MetaData):
-    UpdateAvailableSignal = pyqtSignal(bool)
+    OutdatedSignal = pyqtSignal(bool)
 
     def __init__(self):
-        super().__init__(['UpdateAvailable'])
+        super().__init__(['Outdated','AutoRefresh','AutoUpdate','AutoRestart'])
         self.Manager = self
         self.Directory = games_dir
         
@@ -392,9 +392,17 @@ class PRET_Manager(MetaData):
         self.Settings = Settings(self)
         self.Environments = Environments(self)
 
-        self.UpdateAvailable = False
+        self.Outdated = False
+        self.AutoRefresh = False
+        self.AutoUpdate = False
+        self.AutoRestart = False
         self.readMetaData()
         self.Initialized = True
+        
+    def setOutdated(self, outdated):
+        if self.Outdated != outdated:
+            self.Outdated = outdated
+            self.OutdatedSignal.emit(self.Outdated)
 
     def addFlagList(self, name):
         self.Catalogs.Flags.add(name)
@@ -435,21 +443,21 @@ class PRET_Manager(MetaData):
         return obj.items()
     
     def refresh(self):
-        if not self.UpdateAvailable:
+        if not self.Outdated:
             self.print('Refreshing pret-manager')
             self.checkForUpdate()
 
-        if self.UpdateAvailable:
+        if self.Outdated:
             self.print('Update available')
         else:
             self.print('Already up to date')
 
     def update(self):
-        if self.UpdateAvailable:
+        if self.Outdated:
             self.print('Updating pret-manager')
             self.git.pull()
             self.checkForUpdate()
-            if self.UpdateAvailable:
+            if self.Outdated:
                 self.print('Failed to update')
             else:
                 self.print('Updated successful. Restart to load changes')
@@ -458,8 +466,8 @@ class PRET_Manager(MetaData):
 
     def checkForUpdate(self):
         data = dict(self.list('head'))
-        self.UpdateAvailable = data["master"] != self.git.head()
-        self.UpdateAvailableSignal.emit(self.UpdateAvailable)
+        outdated = data["master"] != self.git.head()
+        self.setOutdated(outdated)
         self.updateMetaData()
 
     def print(self, msg):

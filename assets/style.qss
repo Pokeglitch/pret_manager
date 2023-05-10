@@ -698,9 +698,17 @@ QSlider::handle[active=true] {
     background: #ffffff;
 }
 
-ProcessToggleBG {
+
+Panel ToggleBG, Panel ToggleSlider {
+    padding: 0px;
+    margin-right: 10px;
+    margin-left: 10px;
+}
+
+
+ToggleBG {
     min-height: 14px;
-    max-height:14px;
+    max-height: 14px;
     background: white;
     border: 1px solid black;
     border-radius: 7px;
@@ -708,12 +716,12 @@ ProcessToggleBG {
     background: #bbbbbb;
 }
 
-ProcessToggleBG[active=true] {
+ToggleBG[active=true] {
     border: 1px solid black;
     background: #2a84c0;
 }
 
-ProcessToggle {
+Toggle {
     min-width:60px;
     max-width:60px;
 }
@@ -731,13 +739,13 @@ ProcessTitle, ProcessTitle * {
     max-height:50px;
 }
 
-ProcessToggleField > QLabel {
+ToggleField > QLabel {
     font-size:18px;
     color: white;
     margin-left: 10px;
 }
 
-ProcessToggleBG, ProcessToggleSlider {
+ToggleBG, ToggleSlider {
     margin-right: 10px;
 }
 

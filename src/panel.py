@@ -128,26 +128,64 @@ class ProcessPanelButton(PanelButton):
         if not self.property('disabled') and not self.property('processing'):
             super().mousePressEvent(event)
 
-class PanelOptionsWidet(VBox):
+class PanelOptionsWidget(VBox):
     def __init__(self, parent, name):
         super().__init__(parent.GUI)
         self.Panel = parent.Panel
         PanelHeading(self, name)
         self.addTo(parent)
 
-class PRETManagerOptions(PanelOptionsWidet):
+class OptionToggleField(ToggleField):
+    def __init__(self, parent, name, key):
+        self.Key = key
+        super().__init__(parent, name, getattr(parent.GUI.Manager, key), self.onToggle)
+
+    def onToggle(self, value):
+        setattr(self.GUI.Manager, self.Key, value)
+        self.GUI.Manager.updateMetaData()
+
+class PRETManagerOptions(PanelOptionsWidget):
     def __init__(self, parent):
         super().__init__(parent, 'pret manager')
-        self.CheckForUpdate = ProcessPanelButton(self, 'Check for Update', self.GUI.refreshPRETManager)
-        self.ApplyUpdate = ProcessPanelButton(self, 'Apply Updates', self.GUI.updatePRETManager)
-        self.GUI.Manager.on('UpdateAvailable', self.onUpdateAvailable)
 
-    def onUpdateAvailable(self, updateAvailable):
-        self.CheckForUpdate.setDisabled(updateAvailable)
-        self.ApplyUpdate.setDisabled(not updateAvailable)
+        container = HBox(self.GUI)
+        self.CheckForUpdate = ProcessPanelButton(container, 'Check for Update', self.GUI.refreshPRETManager)
+        self.AutoCheckForUpdate = OptionToggleField(container, 'Auto:', 'AutoRefresh')
+        CenterH(container).addTo(self)
+        self.GUI.Window.InitializedSignal.connect(self.checkAutoRefresh)
+
+        container = HBox(self.GUI)
+        self.ApplyUpdate = ProcessPanelButton(container, 'Apply Updates', self.GUI.updatePRETManager)
+        self.AutoApplyUpdate = OptionToggleField(container, 'Auto:', 'AutoUpdate')
+        CenterH(container).addTo(self)
+        self.GUI.Window.UpdateFoundSignal.connect(self.checkAutoApply)
+
+        container = HBox(self.GUI)
+        self.Restart = ProcessPanelButton(container, 'Restart', self.GUI.restartPRETManager)
+        self.AutoRestart = OptionToggleField(container, 'Auto:', 'AutoRestart')
+        CenterH(container).addTo(self)
+        self.GUI.Window.UpdateAppliedSignal.connect(self.checkAutoRestart)
+        
+        self.GUI.Manager.on('Outdated', self.onOutdated)
+
+    def onOutdated(self, outdated):
+        self.CheckForUpdate.setDisabled(outdated)
+        self.ApplyUpdate.setDisabled(not outdated)
         # TODO - outdated symbol?
 
-class BrowserOptions(PanelOptionsWidet):
+    def checkAutoRefresh(self):
+        if self.AutoCheckForUpdate.value():
+            self.GUI.refreshPRETManager()
+
+    def checkAutoApply(self):
+        if self.AutoApplyUpdate.value():
+            self.GUI.updatePRETManager()
+
+    def checkAutoRestart(self):
+        if self.AutoRestart.value():
+            self.GUI.restartPRETManager()
+
+class BrowserOptions(PanelOptionsWidget):
     def __init__(self, parent):
         super().__init__(parent, 'Browser')
         # TODO
@@ -155,7 +193,7 @@ class BrowserOptions(PanelOptionsWidet):
         # Set Current Browser as Default Browser
             # - Restore Default Browser
 
-class ProcessingOptions(PanelOptionsWidet):
+class ProcessingOptions(PanelOptionsWidget):
     def __init__(self, parent):
         super().__init__(parent, 'Processing')
 
@@ -164,8 +202,10 @@ class ProcessingOptions(PanelOptionsWidet):
         # Auto-update on start
         # Include Releases when 'Update'
         # Remove from Queue after Processed
-        self.SaveDefaultProcesses = PanelButton(self, 'Save Current as Default', self.saveDefaultProcesses)
-        self.RestoreDefaultProcesses = PanelButton(self, 'Restore Default', self.restoreDefaultProcesses)
+        container = HBox(self.GUI)
+        self.SaveDefaultProcesses = PanelButton(container, 'Save Current as Default', self.saveDefaultProcesses)
+        self.RestoreDefaultProcesses = PanelButton(container, 'Restore Default', self.restoreDefaultProcesses)
+        CenterH(container).addTo(self)
 
     def saveDefaultProcesses(self):
         processes = self.GUI.Process.Options.getSettings()
@@ -174,7 +214,7 @@ class ProcessingOptions(PanelOptionsWidet):
     def restoreDefaultProcesses(self):
         self.GUI.Process.Options.setSettings()
 
-class EnvironmentsOptions(PanelOptionsWidet):
+class EnvironmentsOptions(PanelOptionsWidget):
     def __init__(self, parent):
         super().__init__(parent, 'Environments')
 

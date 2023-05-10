@@ -1,67 +1,5 @@
 from src.base import *
 
-class ProcessToggleSlider(QSlider):
-    def __init__(self, parent):
-        super().__init__(Qt.Horizontal)
-        self.setMinimum(0)
-        self.setMaximum(1)
-        self.valueChanged.connect(parent.setActive)
-
-        parent.add(self, 1, 1)
-
-    def setActive(self, value):
-        self.setProperty("active", value)
-        self.style().polish(self)
-
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.setValue(1 - self.sliderPosition())
-
-class ProcessToggleBG(HBox):
-    def __init__(self, parent):
-        super().__init__(parent.GUI)
-        self.addTo(parent, 1, 1)
-
-    def setActive(self, value):
-        self.setProperty("active", value)
-        self.updateStyle()
-
-class ProcessToggle(Grid):
-    def __init__(self, parent, initialValue, handler=None):
-        super().__init__(parent.GUI)
-
-        self.Handler = None
-        self.BG = ProcessToggleBG(self)
-        self.Slider = ProcessToggleSlider(self)
-        self.Slider.setValue(int(initialValue))
-        self.Handler = handler
-
-        self.addTo(parent)
-
-    def setActive(self, value):
-        value = bool(value)
-
-        self.BG.setActive(value)
-        self.Slider.setActive(value)
-
-        if self.Handler:
-            self.Handler(value)
-
-class ProcessToggleField(HBox):
-    def __init__(self, parent, name, initialValue, handler=None):
-        super().__init__(parent.GUI)
-        self.Name = name
-        self.Label = self.label(name)
-        self.Toggle = ProcessToggle(self, initialValue, handler)
-
-        self.addTo(parent)
-
-    def set(self, value):
-        self.Toggle.Slider.setValue( int(value) )
-
-    def value(self):
-        return self.Toggle.Slider.value()
-
 class ProcessTitle(HBox):
     def __init__(self, parent):
         super().__init__(parent.GUI)
@@ -77,11 +15,11 @@ class ProcessOptions(VBox):
 
         settings = self.GUI.Manager.Settings.Active["Process"]
 
-        self.Refresh = ProcessToggleField(self, 'Refresh', settings["Refresh"])
-        self.Update = ProcessToggleField(self, 'Update', settings["Update"])
-        self.CleanBefore = ProcessToggleField(self, 'Clean', settings["CleanBefore"])
-        self.Build = ProcessToggleField(self, 'Build', settings["Build"])
-        self.CleanAfter = ProcessToggleField(self, 'Clean', settings["CleanAfter"])
+        self.Refresh = ToggleField(self, 'Refresh', settings["Refresh"])
+        self.Update = ToggleField(self, 'Update', settings["Update"])
+        self.CleanBefore = ToggleField(self, 'Clean', settings["CleanBefore"])
+        self.Build = ToggleField(self, 'Build', settings["Build"])
+        self.CleanAfter = ToggleField(self, 'Clean', settings["CleanAfter"])
 
         self.addTo(parent, 1)
 

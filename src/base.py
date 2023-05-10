@@ -1,4 +1,4 @@
-from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QObject, QUrl, QThreadPool, QRunnable, QMargins, QPoint, QRect, QSize
+from PyQt5.QtCore import Qt, QCoreApplication, QProcess, QPoint, pyqtSignal, QObject, QUrl, QThreadPool, QRunnable, QMargins, QPoint, QRect, QSize
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QDialog, QAction, QMenu, QSlider, QStackedWidget, QLineEdit, QSplashScreen, QComboBox, QHeaderView, QTreeWidgetItem, QFileDialog, QTreeWidget, QApplication, QStyleOption, QStyle, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
 from PyQt5.QtGui import QBrush, QColor, QImage, QPixmap, QDesktopServices, QIcon, QPainter
 import time, json, copy, os
@@ -217,7 +217,7 @@ class MetaData(Emitter):
             for prop in self.MetaDataProperties:
                 if prop in data:
                     self.MetaData[prop] = data[prop]
-        elif hasattr(self, 'setOutdated'):
+        else:
             self.setOutdated(True)
 
         for prop in self.MetaDataProperties:
@@ -226,7 +226,7 @@ class MetaData(Emitter):
     def getMetaDataProperty(self, name):
         if name in self.MetaData:
             value = copy.deepcopy(self.MetaData[name])
-            if name in self.Manager.FlagLists and hasattr(self, 'set'+name):
+            if name in self.Manager.FlagLists and hasattr(self, 'set' + name):
                 getattr(self, "set" + name)(value)
             else:
                 setattr(self, name, value)
@@ -258,7 +258,6 @@ class MetaData(Emitter):
                 return True
                 
         return False
-
 class Button(QLabel):
     def __init__(self, parent, text, handler):
         super().__init__(text)
@@ -585,3 +584,65 @@ class TagGUI(HBox):
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.GUI.Manager.Catalogs.Tags.get(self.Name).GUI.handleClick()
+
+class ToggleSlider(QSlider):
+    def __init__(self, parent):
+        super().__init__(Qt.Horizontal)
+        self.setMinimum(0)
+        self.setMaximum(1)
+        self.valueChanged.connect(parent.setActive)
+
+        parent.add(self, 1, 1)
+
+    def setActive(self, value):
+        self.setProperty("active", value)
+        self.style().polish(self)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.setValue(1 - self.sliderPosition())
+
+class ToggleBG(HBox):
+    def __init__(self, parent):
+        super().__init__(parent.GUI)
+        self.addTo(parent, 1, 1)
+
+    def setActive(self, value):
+        self.setProperty("active", value)
+        self.updateStyle()
+
+class Toggle(Grid):
+    def __init__(self, parent, initialValue, handler=None):
+        super().__init__(parent.GUI)
+
+        self.Handler = None
+        self.BG = ToggleBG(self)
+        self.Slider = ToggleSlider(self)
+        self.Slider.setValue(int(initialValue))
+        self.Handler = handler
+
+        self.addTo(parent)
+
+    def setActive(self, value):
+        value = bool(value)
+
+        self.BG.setActive(value)
+        self.Slider.setActive(value)
+
+        if self.Handler:
+            self.Handler(value)
+
+class ToggleField(HBox):
+    def __init__(self, parent, name, initialValue, handler=None):
+        super().__init__(parent.GUI)
+        self.Name = name
+        self.Label = self.label(name)
+        self.Toggle = Toggle(self, initialValue, handler)
+
+        self.addTo(parent)
+
+    def set(self, value):
+        self.Toggle.Slider.setValue( int(value) )
+
+    def value(self):
+        return self.Toggle.Slider.value()

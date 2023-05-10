@@ -6,6 +6,7 @@ Finish Options
 ------
 update 'build' handling same way as 'releases'
 
+Refresh should get branches?
 ------
 Game Panel:
 - dbl click cartridge to lauch preset gme or latest
@@ -754,6 +755,11 @@ class MainContents(HBox):
             self.Window.Process = SwitchBranch(self, game, branch)
             threadpool.start(self.Window.Process)
 
+    def restartPRETManager(self):
+        if not self.Window.Process:
+            QCoreApplication.quit()
+            QProcess.startDetached(sys.executable, sys.argv)
+
     def refreshPRETManager(self):
         if not self.Window.Process:
             self.Window.Process = RefreshPRETManager(self)
@@ -783,6 +789,9 @@ class MainContents(HBox):
 class PRET_Manager_GUI(QMainWindow):
     Logger = pyqtSignal(str)
     Processing = pyqtSignal(bool)
+    InitializedSignal = pyqtSignal()
+    UpdateFoundSignal = pyqtSignal()
+    UpdateAppliedSignal = pyqtSignal()
 
     def __init__(self, manager):
         super().__init__()
@@ -823,6 +832,7 @@ class PRET_Manager_App(QApplication):
     def init(self):
         self.Splash.close()
         self.Manager.GUI.show()
+        self.Manager.GUI.InitializedSignal.emit()
         self.exec()
 
 def init(manager):
