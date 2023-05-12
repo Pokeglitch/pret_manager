@@ -829,8 +829,11 @@ class repository(MetaData):
 ######### Make Methods
 
     def clean(self):
-        self.print('Cleaning')
-        return self.make.clean()
+        if self.Missing:
+            self.print('Cannot clean missing repository')
+        else:
+            self.print('Cleaning')
+            self.make.clean()
 
 ######### Git Methods
 
@@ -1210,7 +1213,12 @@ class repository(MetaData):
     def build(self, *args):
         # if the repository doesnt exist, then update
         if not os.path.exists(self.path['repo']):
+            self.print('Repository not found. Updating')
             self.update()
+
+            if self.Missing:
+                self.print('Cannot build missing repository')
+                return
 
         if len(args):
             self.switch(*args)
@@ -1249,16 +1257,25 @@ class repository(MetaData):
 
     def init_repo(self):
         self.print("Initializing repository")
-        self.git.clone()
-        self.get_current_branch_info()
-        self.refresh()
-        self.BranchSignal.emit()
+        result = self.git.clone()
+        if result.returncode:
+            self.print('Could not clone repository')
+        else:
+            self.get_current_branch_info()
+            self.refresh()
+            self.BranchSignal.emit()
 
     def update(self, release_id=None):
         mkdir(self.path['base'])
 
         if not os.path.exists(self.path['repo']):
             self.init_repo()
+
+            # if it did not clone the repo, then exit
+            if not os.path.exists(self.path['repo']):
+                return
+             
+            self.setMissing(False)
         else:
             self.update_repo()
     
@@ -1273,7 +1290,7 @@ class repository(MetaData):
 
         self.updateMetaData()
 
-        self.setMissing(False)
+        # todo - handle if update fails
         self.setOutdated(False)
 
         return releases_found
