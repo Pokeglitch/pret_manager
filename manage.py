@@ -307,6 +307,16 @@ class Settings:
         # try to load user settings
         self.load('data/settings.json')
 
+        # validate the paths if windows
+        if platform.system() == 'Windows':
+            cygwinPath = self.get('Environment.cygwin')
+            if cygwinPath and not os.path.exists(cygwinPath):
+                self.set('Environment.cygwin', None)
+
+            w64devkitPath = self.get('Environment.w64devkit')
+            if w64devkitPath and not os.path.exists(w64devkitPath):
+                self.set('Environment.w64devkit', None)
+
     def loadBase(self):
         self.Base = {}
         self.load('assets/settings.json', True)
@@ -329,7 +339,8 @@ class Settings:
                 self.Manager.print('Invalid Settings key: ' + fullname)
                 return
             
-            if type(value) != type(target[key]):
+            # Expect same type, or None
+            if type(value) != type(target[key]) and value is not None:
                 self.Manager.print('Invalid Settings value for "' + fullname + '". Expected: ' + str(type(target[key])) + ', Received: ' + str(type(value)))
                 return
 
@@ -368,6 +379,8 @@ class Settings:
 
 class PRET_Manager(MetaData):
     OutdatedSignal = pyqtSignal(bool)
+    CygwinPathSignal = pyqtSignal(str)
+    w64devkitPathSignal = pyqtSignal(str)
 
     def __init__(self):
         super().__init__(['Outdated','AutoRefresh','AutoUpdate','AutoRestart'])
@@ -399,6 +412,14 @@ class PRET_Manager(MetaData):
         self.readMetaData(False)
         self.Initialized = True
         
+    def setw64devkitPath(self, path):
+        self.Settings.set('Environment.w64devkit', path)
+        self.w64devkitPathSignal.emit( str(path) )
+        
+    def setCygwinPath(self, path):
+        self.Settings.set('Environment.cygwin', path)
+        self.CygwinPathSignal.emit( str(path) )
+
     def setOutdated(self, outdated):
         if self.Outdated != outdated:
             self.Outdated = outdated

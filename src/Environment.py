@@ -7,25 +7,37 @@ def addToInput(options, *inputs):
     else:
         options["input"] = ';'.join(inputs)
 
+class EmptyReturn:
+    def __init__(self):
+        self.returncode = 1
+
 class Environment:
-    def __init__(self, environments, type):
+    def __init__(self, environments, name, type):
         self.Environments = environments
+        self.Name = name
         self.Type = type
 
     def path(self, path):
         return clean_path(path)
     
     def run(self, command, options):
-        process = subprocess.run(command, **options)
-        
-        if 'capture_output' in options and options['capture_output']:
-            return process.stdout.split('\n')
-        else:
-            return process
+        try:
+            process = subprocess.run(command, **options)
+            
+            if 'capture_output' in options and options['capture_output']:
+                return process.stdout.split('\n')
+            else:
+                return process
+        except Exception:
+            self.Environments.Manager.print('Error executing ' + self.Name + ' Environment')
+            if 'capture_output' in options and options['capture_output']:
+                return ['']
+            else:
+                return EmptyReturn()
 
 class AppEnvironment(Environment):
-    def __init__(self, environments, app, type):
-        super().__init__(environments, type)
+    def __init__(self, environments, name, app, type):
+        super().__init__(environments, name, type)
         self.App = app
 
     def path(self, path):
@@ -33,40 +45,61 @@ class AppEnvironment(Environment):
 
     def run(self, command, options):
         addToInput(options, command)
-        return super().run(self.App, options)
+
+        if callable(self.App):
+            app = self.App()
+        else:
+            app = self.App
+
+        return super().run(app, options)
  
 class Linux(AppEnvironment):
-    def __init__(self, environments, app):
-        super().__init__(environments, app, 'linux')
+    def __init__(self, environments, name, app):
+        super().__init__(environments, name, app, 'linux')
     
 class WSL(Linux):
-    def __init__(self, environments):
-        super().__init__(environments, 'wsl -u root')
+    def __init__(self, environments, name):
+        super().__init__(environments, name, 'wsl -u root')
 
     def path(self, path):
         return re.sub(r'^([^:]+):/',lambda p: '/mnt/{0}/'.format(p.group(1).lower()), super().path(path))
 
 class Windows(AppEnvironment):
-    def __init__(self, environments, app):
-        super().__init__(environments, app, environments.WindowsBit)
+    def __init__(self, environments, name, app):
+        super().__init__(environments, name, app, environments.WindowsBit)
 
     def run(self, command, options):
         addToInput(options, 'cd "' + self.path(options['cwd']) + '"')
         return super().run(command, options)
 
-# TODO - customizable cygwin installation directory
-# todo - option to build or use windows binaries
 class Cygwin(Windows):
-    def __init__(self, environments):
-        super().__init__(environments, 'c:/cygwin64/bin/bash.exe --login')
+    def __init__(self, environments, name):
+        super().__init__(environments, name, self.getApp)
+
+    def getApp(self):
+        path = self.Environments.Manager.Settings.get('Environment.cygwin')
+
+        if path and not os.path.exists(path):
+            self.Environments.Manager.setCygwinPath(None)
+            path = None
+        
+        return path + ' --login' if path else ''
 
     def path(self, path):
         return re.sub(r'^([^:]+):/',lambda p: '/cygdrive/{0}/'.format(p.group(1).lower()), super().path(path))
 
-# TODO - customizable w64devkit installation directory
 class w64devkit(Windows):
-    def __init__(self, environments):
-        super().__init__(environments, 'C:/w64devkit/w64devkit.exe')
+    def __init__(self, environments, name):
+        super().__init__(environments, name, self.getApp)
+
+    def getApp(self):
+        path = self.Environments.Manager.Settings.get('Environment.w64devkit')
+        
+        if path and not os.path.exists(path):
+            self.Environments.Manager.setw64devkitPath(None)
+            path = None
+
+        return path or ''
 
 class Command:
     def __init__(self, command, environments, **kwargs):
@@ -208,11 +241,11 @@ class Environments:
             self.WindowsBit = None
 
         self.Map = {
-            "windows" : Environment(self, self.WindowsBit),
-            "linux" : Linux(self, 'sh'),
-            "wsl" : WSL(self),
-            "cygwin" : Cygwin(self),
-            'w64devkit' : w64devkit(self)
+            "windows" : Environment(self, 'Windows', self.WindowsBit),
+            "linux" : Linux(self, 'Linux', 'sh'),
+            "wsl" : WSL(self, 'WSL'),
+            "cygwin" : Cygwin(self, 'Cygwin'),
+            'w64devkit' : w64devkit(self, 'w64devkit')
         }
 
     def get(self, command):

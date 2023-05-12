@@ -171,7 +171,9 @@ class PRETManagerOptions(PanelOptionsWidget):
     def onOutdated(self, outdated):
         self.CheckForUpdate.setDisabled(outdated)
         self.ApplyUpdate.setDisabled(not outdated)
-        # TODO - outdated symbol?
+        # TODO
+        # show outdated symbol
+        # show update applied symbol
 
     def checkAutoRefresh(self):
         if self.AutoCheckForUpdate.value():
@@ -202,6 +204,7 @@ class ProcessingOptions(PanelOptionsWidget):
         # Auto-update on start
         # Include Releases when 'Update'
         # Remove from Queue after Processed
+        # Replace previous builds
         container = HBox(self.GUI)
         self.SaveDefaultProcesses = PanelButton(container, 'Save Current as Default', self.saveDefaultProcesses)
         self.RestoreDefaultProcesses = PanelButton(container, 'Restore Default', self.restoreDefaultProcesses)
@@ -224,12 +227,69 @@ class EnvironmentsOptions(PanelOptionsWidget):
         self.TarComboBox = EnvironmentsRow(self, 'tar')
         self.MakComboBox = EnvironmentsRow(self, 'make', ['Windows'])
 
-        # TODO
-        # Default Path for Cygwin
-            # Option to have Cygwin build instead of use prebuilt binaries
-        # Default Path for w64devkit
+        container = HBox(self.GUI)
+        self.CygwinButton = PanelButton(container, 'Select Cygwin Path', self.selectCygwinPath)
+        self.CygwinPath = container.label()
+        container.addStretch()
+        self.setCygwinPath()
+        self.GUI.Manager.CygwinPathSignal.connect(self.updateCygwinPath)
+        container.addTo(self)
 
-# TODO - Separate widgets for each section
+        # TODO
+        # Option to have Cygwin build instead of use prebuilt binaries
+
+        container = HBox(self.GUI)
+        self.w64devkitButton = PanelButton(container, 'Select w64devkit Path', self.selectw64devkitPath)
+        self.w64devkitPath = container.label()
+        container.addStretch()
+        self.setw64devkitPath()
+        self.GUI.Manager.w64devkitPathSignal.connect(self.updatew64devkitPath)
+        container.addTo(self)
+
+    def selectCygwinPath(self):
+        path = self.GUI.Manager.Settings.get('Environment.cygwin')
+
+        if path:
+            dir = '/'.join(path.split('/')[:-1])
+        else:
+            dir = '.'
+
+        path, _ = QFileDialog.getOpenFileName(self, "Select Cygwin Executable", dir)
+        if path:
+            self.GUI.Manager.Settings.set('Environment.cygwin', path)
+            self.setCygwinPath()
+
+    def setCygwinPath(self):
+        path = str(self.GUI.Manager.Settings.get('Environment.cygwin'))
+        self.updateCygwinPath(path)
+
+    def updateCygwinPath(self, path):
+        if len(path) > 30:
+            path = path[:15] + '...' + path[-15:]
+        self.CygwinPath.setText(path)
+
+    def selectw64devkitPath(self):
+        path = self.GUI.Manager.Settings.get('Environment.w64devkit')
+
+        if path:
+            dir = '/'.join(path.split('/')[:-1])
+        else:
+            dir = '.'
+
+        path, _ = QFileDialog.getOpenFileName(self, "Select w64devkit Executable", dir)
+        if path:
+            self.GUI.Manager.Settings.set('Environment.w64devkit', path)
+            self.setw64devkitPath()
+
+    def setw64devkitPath(self):
+        path = str(self.GUI.Manager.Settings.get('Environment.w64devkit'))
+        self.updatew64devkitPath(path)
+
+    def updatew64devkitPath(self, path):
+        if len(path) > 30:
+            path = path[:15] + '...' + path[-15:]
+        self.w64devkitPath.setText(path)
+
 class PanelOptions(VBox):
     def __init__(self, parent):
         super().__init__(parent.GUI)

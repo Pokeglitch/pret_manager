@@ -7,7 +7,7 @@
         "CleanAfter" : true
     },
     "Environment" : {
-        "cygwin" : "c:/cygwin64/bin/bash.exe",
+        "cygwin" : "C:/cygwin64/bin/bash.exe",
         "w64devkit" : "C:/w64devkit/w64devkit.exe",
         "git" : "main",
         "gh" : "main",

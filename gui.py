@@ -3,15 +3,20 @@ import sys, webbrowser, json, re
 '''
 TODO:
 Finish Options
-
-Search doesnt work if highlight and change text
+- option to have all logs (even build) to appear in app
 ------
 update 'build' handling same way as 'releases'
 
+memoize the rgbds builds so doesnt have to 'update' on first open
+
 Refresh should get branches?
 ------
+dbl click:
+https://wiki.python.org/moin/PyQt/Distinguishing%20between%20click%20and%20double%20click
+
 Game Panel:
 - dbl click cartridge to lauch preset gme or latest
+-- dbl click Tile to do same
 - dbl click updte to run update process
 - click on author in panel to select in browser
 - show lists containing this game
@@ -33,9 +38,6 @@ Game Panel:
 
 Option to change current commit, or build specific commit
 
-Option for specific Make targets to run
-- check box for which ones to always include when build
-
 -------------
 
 context menu:
@@ -43,9 +45,25 @@ context menu:
 -- or specifically, a repo, build(s), release(s)
 - option for each specific process in addition to 'all'
 
-- update search to include description and fulltitle
---------
+-------
+Show when process is active
+- button to kill process
+-------
+Specific build fixes:
 
+fix branch switching for purergb
+- clean/reset not enough?
+Fix polished crystal building
+
+some makefiles require rgbds to be in a folder in the repo
+- bw3g
+-------
+Bugs:
+- quickly changing search terms makes some cartridges popup in windows
+- when selecting Outdated and NOT missing, and then 'updating':
+-- NOT missing gets unselected
+-- closes/crashes without error...
+-------
 CLI:
 - use -l to filter by list
 - use -s for search option
@@ -55,22 +73,17 @@ CLI:
 -- -a, -ao, -aa, -an, etc
 - only create 'repositories' instances for games being managed
 
-Update README, Tutorial
+Update README, Tutorial, Future Work
 --------------------------
 finish artwork/tags
 
-IPS Patches
+IPS Patches / manuals
+- use a separate repo, with a different branch for each game
 
-option to have all logs (even build) to appear in app
+support local/custom repositories
 
-fix branch switching for purergb
-- clean/reset not enough?
-Fix polished crystal building
-
-some makefiles require rgbds to be in a folder in the repo
-- bw3g
-
-option to kill process
+-------
+Environments:
 
 'tar' in linux wont extract a zip file
 -- only permit 'tar' to be used with wsl, otherwise it uses main
@@ -78,16 +91,14 @@ option to kill process
 fallback plan when gh isnt available
 - simply add the details to data.json, and download via http
 
-support local/custom repositories
-
-Add predefined processes to run (i.e. only pull/build pret & pokeglitch)
-
 - auto-detect if wsl/cygwin/w64devkit is installed
 -- auto download w64devkit if not ?
 - install missing python, node, & linux packages/libraries
 -- pyenv local <version> ?
 
-- meta data should include successful/failed commit attempts
+Add predefined processes to run (i.e. only pull/build pret & pokeglitch)
+
+-----
 
 GUI:
 - Catalog/Tile/Queue Sorting:
@@ -104,23 +115,21 @@ Filter:
 -- Add way to load a filter
 
 Lists:
-- hande importing corrupt lists
+- hande when list is corrupted during import
 - Way to load a list
 - show size of each list next to name
 
 Game:
-- Way to launch most recent build/release
--- or, set which is the default 'launch'
-
 - Way to copy selected builds/releases to another location
-
-- Tile:
--- Double click to launch
---- https://wiki.python.org/moin/PyQt/Distinguishing%20between%20click%20and%20double%20click
+- meta data should include successful/failed commit attempts
+- Option for specific Make targets to run
+-- check box for which ones to always include when build
 
 - Panel:
 -- can open/close multiple panels
 ---------
+improve opening time
+
 Tree view of all forks
 - since some forked shinpokomon, crystal16 etc
 - or, just a deriviate count for each...
