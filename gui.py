@@ -2,6 +2,18 @@ import sys, webbrowser, json, re
 
 '''
 TODO:
+Processing:
+- Use the new sequence attributes to make sure actions are duplicated
+-- dont refresh or update if already did earlier
+---- if not, but necessary, then auto do so
+--- dont clean twice if already cleaned by no build
+---- 'build' should reset .didClean
+
+- Show when process is active in processing widget
+-- button to kill process
+
+- Context menu should have options for each specific process in addition to 'all'
+------
 Finish Options
 - option to have all logs (even build) to appear in app
 ------
@@ -43,11 +55,7 @@ Option to change current commit, or build specific commit
 context menu:
 - way to delete a game(s) from disk
 -- or specifically, a repo, build(s), release(s)
-- option for each specific process in addition to 'all'
 
--------
-Show when process is active
-- button to kill process
 -------
 Specific build fixes:
 
@@ -158,11 +166,18 @@ class GameQueue(HBox):
     def __init__(self, gameGUI):
         super().__init__(gameGUI.GUI)
         self.GameGUI = gameGUI
+        self.Game = gameGUI.Game
         self.label(gameGUI.Game.FullTitle)
+
+        self.Game.on('Processing', self.setProcessing)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.GUI.Panel.setActive(self.GameGUI)
+
+    def setProcessing(self, value):
+        self.setProperty("processing",value)
+        self.updateStyle()
             
     def contextMenuEvent(self, event):
         GameContextMenu(self, event)
@@ -213,13 +228,6 @@ class GameGUI(QWidget):
 
         if not self.Panel:
             self.Panel = GamePanel(self)
-
-    # todo - emitter
-    def setProcessing(self, value):
-        self.Queue.setProperty("processing",value)
-        self.Tile.setProperty("processing",value)
-        self.Queue.updateStyle()
-        self.Tile.updateStyle()
 
     def process(self):
         self.GUI.startProcess([self.Game])

@@ -150,9 +150,15 @@ class GameTile(Grid):
         self.Title = GameTileTitleContainer(self)
         self.IconContainer = GameTileIcons(self)
 
+        self.Game.on('Processing', self.setProcessing)
+
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.GUI.Panel.setActive(self.GameGUI)
+
+    def setProcessing(self, value):
+        self.setProperty("processing",value)
+        self.updateStyle()
 
     def contextMenuEvent(self, event):
         GameContextMenu(self, event)

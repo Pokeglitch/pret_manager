@@ -269,14 +269,6 @@ CatalogEntryGUI[mode="Or"]:hover, *[bg=green]:hover {
     background-color: #315c1b;
 }
 
-GameQueue[processing="true"], CatalogEntryGUI[processing="true"], GameTile[processing="true"] {
-    background-color: #1b5780;
-}
-
-GameQueue[processing="true"]:hover, CatalogEntryGUI[processing="true"]:hover, GameTile[processing="true"]:hover {
-    background-color: #226592;
-}
-
 GameTile[queued="true"] {
     border: 2px solid #000000;
     min-width:130px;
@@ -298,8 +290,17 @@ GameTile[active="true"] {
     border: 1px solid #000000;
     background-color: #555555;
 }
+
 GameTile[active="true"]:hover {
     background-color: #606060;
+}
+
+GameQueue[processing="true"], CatalogEntryGUI[processing="true"], GameTile[processing="true"] {
+    background-color: #1b5780;
+}
+
+GameQueue[processing="true"]:hover, CatalogEntryGUI[processing="true"]:hover, GameTile[processing="true"]:hover {
+    background-color: #226592;
 }
 
 GameTile {

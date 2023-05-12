@@ -571,35 +571,12 @@ class PRET_Manager(MetaData):
         
         self.run(processes, args.build)
 
-    def run(self, processes, build_options=[]):
+    def run(self, sequence, *build_options):
         if not self.Queue:
             self.print('Queue is empty')
-        elif processes:
+        elif sequence:
             for repo in self.Queue:
-                if repo.Excluding:
-                    self.print('Excluding ' + repo.name)
-                    continue
-
-                if repo.GUI:
-                    repo.GUI.setProcessing(True)
-
-                self.print('Processing ' + repo.name)
-
-                for process in processes:
-                    if process == 'b':
-                        repo.build(*build_options)
-                    elif process == 'c':
-                        repo.clean()
-                    elif process == 'r':
-                        repo.refresh()
-                    elif process == 'u':
-                        repo.update()
-
-                    repo.updateMetaData()
-
-                self.print('Finished Processing ' + repo.name)
-                if repo.GUI:
-                    repo.GUI.setProcessing(False)
+                repo.process(sequence, build_options)
         else:
             self.print('No actions to process')
 
@@ -706,6 +683,7 @@ class repository(MetaData):
     BranchSignal = pyqtSignal()
     BuildSignal = pyqtSignal()
     ReleaseSignal = pyqtSignal()
+    ProcessingSignal = pyqtSignal(bool)
 
     def __init__(self, manager, author, title, data):
         super().__init__(repo_metadata_properties)
@@ -754,6 +732,8 @@ class repository(MetaData):
             'builds' : dir + 'builds/'
         }
 
+        self.resetSequence()
+
         self.git = Git(self)
         self.github = Github(self)
         self.make = Make(self)
@@ -801,6 +781,42 @@ class repository(MetaData):
 
     def search(self, string):
         return string in self.FullTitle.lower() or string in self.Description.lower()
+
+######### Processing Methods
+    def setProcessing(self, value):
+        self.Processing = value
+        self.ProcessingSignal.emit(value)
+
+    def resetSequence(self):
+        self.didRefresh = False
+        self.didUpdate = False
+        self.didClean = False
+        self.didBuild = False
+        self.Processing = False
+
+    def process(self, sequence, build_options):
+        if self.Excluding:
+            self.print('Excluding ' + self.name)
+            return
+        
+        self.print('Processing Starting')
+        self.setProcessing(True)
+
+        for process in sequence:
+            if process == 'b':
+                self.build(*build_options)
+            elif process == 'c':
+                self.clean()
+            elif process == 'r':
+                self.refresh()
+            elif process == 'u':
+                self.update()
+
+            self.updateMetaData()
+
+        self.print('Processing Finished')
+        self.setProcessing(False)
+        self.resetSequence()
 
 ######### IO Methods
     def rmdir(self, path, msg=''):
@@ -1006,7 +1022,7 @@ class repository(MetaData):
             data = self.get_branch_data(branch)
             data['LastRemoteCommit'] = commit
 
-            if 'LastCommit' not in data or data['LastCommit'] != commit:
+            if self.check_branch_outdated(branch):
                 self.setOutdated(True)
 
     def parse_branches(self):
@@ -1047,6 +1063,7 @@ class repository(MetaData):
 
                 if "release" not in data:
                     data["release"] = legal_name(datetime.split('T')[0] + ' - ' + title + ' (' + tag + ')')
+                    self.setOutdated(True)
     
     def parse_releases(self):
         self.releases = {}
