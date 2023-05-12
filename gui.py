@@ -13,15 +13,17 @@ Processing:
 -- button to kill process
 
 - Context menu should have options for each specific process in addition to 'all'
-------
-Finish Options
-- option to have all logs (even build) to appear in app
+
+fix branch switching for purergb
+- clean/reset not enough?
+Fix polished crystal building
+
+some makefiles require rgbds to be in a folder in the repo
+- bw3g
 ------
 update 'build' handling same way as 'releases'
 
 memoize the rgbds builds so doesnt have to 'update' on first open
-
-Refresh should get branches?
 ------
 dbl click:
 https://wiki.python.org/moin/PyQt/Distinguishing%20between%20click%20and%20double%20click
@@ -48,23 +50,10 @@ Game Panel:
 -Show all releases & git tags in tree, even if no downloads
 -- can right click to download, switch to, delete, or build if missing
 
-Option to change current commit, or build specific commit
-
--------------
-
 context menu:
 - way to delete a game(s) from disk
 -- or specifically, a repo, build(s), release(s)
 
--------
-Specific build fixes:
-
-fix branch switching for purergb
-- clean/reset not enough?
-Fix polished crystal building
-
-some makefiles require rgbds to be in a folder in the repo
-- bw3g
 -------
 Bugs:
 - quickly changing search terms makes some cartridges popup in windows
@@ -130,13 +119,16 @@ Lists:
 Game:
 - Way to copy selected builds/releases to another location
 - meta data should include successful/failed commit attempts
+- Option to change current commit, or build specific commit
 - Option for specific Make targets to run
 -- check box for which ones to always include when build
 
-- Panel:
--- can open/close multiple panels
+Panel:
+- can open/close multiple panels (tabs along right side)
 ---------
-improve opening time
+Improve opening time
+- only create instances when called
+- thumbnails for images
 
 Tree view of all forks
 - since some forked shinpokomon, crystal16 etc

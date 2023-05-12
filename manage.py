@@ -950,9 +950,11 @@ class repository(MetaData):
 
     def update_branches(self):
         starting_branch = self.CurrentBranch
+        branchUpdated = False
 
         if self.check_branch_outdated(starting_branch):
             self.pull()
+            branchUpdated = True
 
         for branchName in self.Branches:
             if self.check_branch_outdated(branchName):
@@ -962,8 +964,8 @@ class repository(MetaData):
         if self.CurrentBranch != starting_branch:
             self.switch(starting_branch)
 
-        # TODO - only if a new branch was found?
-        self.BranchSignal.emit()
+        if branchUpdated:
+            self.BranchSignal.emit()
 
     def switch(self, *args):
         self.print('Switching to branch/commit: ' + ' '.join(args))
@@ -1018,12 +1020,20 @@ class repository(MetaData):
         return self.Branches[branch]
 
     def refresh_branches(self):
+        newBranch = False
         for branch, commit in self.list('head'):
             data = self.get_branch_data(branch)
+
+            if not data:
+                newBranch = True
+
             data['LastRemoteCommit'] = commit
 
             if self.check_branch_outdated(branch):
                 self.setOutdated(True)
+                
+        if newBranch:
+            self.BranchSignal.emit()
 
     def parse_branches(self):
         if not self.Branches or any([self.check_branch_outdated(branch) for branch in self.Branches]):
@@ -1280,7 +1290,6 @@ class repository(MetaData):
         else:
             self.get_current_branch_info()
             self.refresh()
-            self.BranchSignal.emit()
 
     def update(self, release_id=None):
         mkdir(self.path['base'])

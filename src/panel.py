@@ -63,15 +63,6 @@ class PanelHeader(HBox):
     def setText(self, text):
         self.Label.setText(text)
 
-# TODO - attach to Environment? simply disable if Linux
-EnvironmentOptions = {
-        'Windows' : 'main',
-        'Default Linux' : 'linux',
-        'WSL' : 'wsl',
-        'Cygwin' : 'cygwin',
-        'w64devkit' : 'w64devkit'
-}
-
 class EnvironmentsRow(HBox):
     def __init__(self, parent, key, skip=[]):
         super().__init__(parent.GUI)
@@ -85,18 +76,19 @@ class EnvironmentsRow(HBox):
 class EnvironmentComboBox(QComboBox):
     def __init__(self, parent, key, skip=[]):
         super().__init__()
+        self.GUI = parent.GUI
         self.Key = 'Environment.' + key
-        self.Settings = parent.GUI.Manager.Settings
+        self.Settings = self.GUI.Manager.Settings
 
         default = self.Settings.get(self.Key)
-        for name, value in EnvironmentOptions.items():
+        for name, value in self.GUI.Manager.Environments.Options.items():
             if name not in skip:
                 self.addItem(name)
                 if value == default:
                     self.setCurrentText(name)
 
         self.currentTextChanged.connect(self.onTextChanged)
-        parent.GUI.Window.Processing.connect(self.handleProcessing)
+        self.GUI.Window.Processing.connect(self.handleProcessing)
         parent.add(self)
 
     def handleProcessing(self, processing):
@@ -105,7 +97,7 @@ class EnvironmentComboBox(QComboBox):
         self.style().polish(self)
 
     def onTextChanged(self, text):
-        self.Settings.set(self.Key, EnvironmentOptions[text])
+        self.Settings.set(self.Key, self.GUI.Manager.Environments.Options[text])
 
 class PanelHeading(QLabel):
     def __init__(self, parent, text):
@@ -173,7 +165,7 @@ class PRETManagerOptions(PanelOptionsWidget):
         self.ApplyUpdate.setDisabled(not outdated)
         # TODO
         # show outdated symbol
-        # show update applied symbol
+        # show update applied symbol (i..e restart needed)
 
     def checkAutoRefresh(self):
         if self.AutoCheckForUpdate.value():
@@ -205,6 +197,7 @@ class ProcessingOptions(PanelOptionsWidget):
         # Include Releases when 'Update'
         # Remove from Queue after Processed
         # Replace previous builds
+        # Show all logs in status widget (i.e. all build messages)
         container = HBox(self.GUI)
         self.SaveDefaultProcesses = PanelButton(container, 'Save Current as Default', self.saveDefaultProcesses)
         self.RestoreDefaultProcesses = PanelButton(container, 'Restore Default', self.restoreDefaultProcesses)

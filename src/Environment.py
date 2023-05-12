@@ -248,6 +248,14 @@ class Environments:
             'w64devkit' : w64devkit(self, 'w64devkit')
         }
 
+        self.Options = {
+            'Windows' : 'main',
+            'Default Linux' : 'linux',
+            'WSL' : 'wsl',
+            'Cygwin' : 'cygwin',
+            'w64devkit' : 'w64devkit'
+        }
+
     def get(self, command):
         # if main environment is linux, then all commands use Linux environment
         if self.Main == 'linux':
