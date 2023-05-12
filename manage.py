@@ -788,10 +788,10 @@ class repository(MetaData):
         self.ProcessingSignal.emit(value)
 
     def resetSequence(self):
-        self.didRefresh = False
-        self.didUpdate = False
-        self.didClean = False
-        self.didBuild = False
+        self.Refreshed = False
+        self.Cleaned = False
+        # TODO
+        self.Updated = False
         self.Processing = False
 
     def process(self, sequence, build_options):
@@ -845,11 +845,20 @@ class repository(MetaData):
 ######### Make Methods
 
     def clean(self):
-        if self.Missing:
-            self.print('Cannot clean missing repository')
-        else:
-            self.print('Cleaning')
-            self.make.clean()
+        if not self.Cleaned:
+            if self.Missing:
+
+                if not self.Updated:
+                    self.print('Repository not found. Updating')
+                    self.update()
+                
+                if self.Missing:
+                    self.print('Cannot clean missing repository')
+            else:
+                self.print('Cleaning')
+                self.make.clean()
+
+            self.Cleaned = True
 
 ######### Git Methods
 
@@ -970,10 +979,6 @@ class repository(MetaData):
     def switch(self, *args):
         self.print('Switching to branch/commit: ' + ' '.join(args))
 
-        # todo - move to Git class
-        self.git.run('clean -f')
-        self.git.run('reset --hard')
-
         result = self.git.switch(*args)
 
         if result.returncode:
@@ -1002,11 +1007,13 @@ class repository(MetaData):
 ######### Refresh Methods
 
     def refresh(self):
-        self.refresh_branches()
-        self.refresh_tags()
-        self.refresh_releases()
+        if not self.Refreshed:
+            self.refresh_branches()
+            self.refresh_tags()
+            self.refresh_releases()
 
-        self.clean_directory()
+            self.clean_directory()
+            self.Refreshed = True
 
     def clean_directory(self):
         self.clean_releases()
@@ -1239,13 +1246,18 @@ class repository(MetaData):
 
     def build(self, *args):
         # if the repository doesnt exist, then update
-        if not os.path.exists(self.path['repo']):
-            self.print('Repository not found. Updating')
-            self.update()
+        if self.Missing:
+
+            if not self.Updated:
+                self.print('Repository not found. Updating')
+                self.update()
 
             if self.Missing:
                 self.print('Cannot build missing repository')
                 return
+
+        # Unset the cleaned flag
+        self.Cleaned = False
 
         if len(args):
             self.switch(*args)
@@ -1290,18 +1302,19 @@ class repository(MetaData):
         else:
             self.get_current_branch_info()
             self.refresh()
+            self.setMissing(False)
 
     def update(self, release_id=None):
+        self.Updated = True
+
         mkdir(self.path['base'])
 
-        if not os.path.exists(self.path['repo']):
+        if self.Missing:
             self.init_repo()
 
-            # if it did not clone the repo, then exit
-            if not os.path.exists(self.path['repo']):
+            # if still missing, then exit
+            if self.Missing:
                 return
-             
-            self.setMissing(False)
         else:
             self.update_repo()
     
@@ -1415,6 +1428,16 @@ class RGBDS(repository):
             self.refresh()
             self.updateMetaData()
 
+    def refresh(self):
+        result = super().refresh()
+        self.Refreshed = False
+        return result
+
+    def update(self, *args):
+        result = super().update(*args)
+        self.Updated = False
+        return result
+
     def init_GUI(self):
         pass
 
@@ -1465,7 +1488,7 @@ class RGBDS(repository):
     def build(self, version):
         # If the version is not in the list of releases, then update
         if version not in self.releases:
-            self.print('RGBDS version not found: ' + version)
+            self.print('RGBDS release not found: ' + version)
 
             # update and get the specific release
             if not self.update(version):
@@ -1554,7 +1577,7 @@ class RGBDS(repository):
     def use(self, version):
         environment = self.Manager.Environments.get('make')
         if version not in self.builds[environment.Type]:
-            self.print('RGBDS version not found: ' + version)
+            self.print('RGBDS build not found: ' + version)
             self.print('Building RGBDS version: ' + version)
 
             if not self.build(version):

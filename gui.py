@@ -2,21 +2,10 @@ import sys, webbrowser, json, re
 
 '''
 TODO:
-Processing:
-- Use the new sequence attributes to make sure actions are duplicated
--- dont refresh or update if already did earlier
----- if not, but necessary, then auto do so
---- dont clean twice if already cleaned by no build
----- 'build' should reset .didClean
-
 - Show when process is active in processing widget
 -- button to kill process
 
 - Context menu should have options for each specific process in addition to 'all'
-
-fix branch switching for purergb
-- clean/reset not enough?
-Fix polished crystal building
 
 some makefiles require rgbds to be in a folder in the repo
 - bw3g
@@ -78,7 +67,6 @@ IPS Patches / manuals
 - use a separate repo, with a different branch for each game
 
 support local/custom repositories
-
 -------
 Environments:
 
@@ -90,8 +78,12 @@ fallback plan when gh isnt available
 
 - auto-detect if wsl/cygwin/w64devkit is installed
 -- auto download w64devkit if not ?
+
 - install missing python, node, & linux packages/libraries
 -- pyenv local <version> ?
+
+- check if C version is installed or not
+-- for polished crystal
 
 Add predefined processes to run (i.e. only pull/build pret & pokeglitch)
 

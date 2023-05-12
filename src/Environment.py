@@ -127,7 +127,7 @@ class Command:
         }
 
         if 'input' in kwargs:
-            parameters['input']  = kwargs['input'] 
+            parameters['input']  = kwargs['input']
 
         return self.Environments.get(self.Command).run(self.Command + ' ' + ' '.join(args), parameters)
 
@@ -174,7 +174,7 @@ class Git(GameCommand):
         return self.run('fetch', *args, **options)
 
     def switch(self, *args, **options):
-        return self.run('switch', *args, **options)
+        return self.run('switch -f', *args, **options)
 
     def list(self, which, *args, **options):
         return self.run('ls-remote --' + which, *args, CaptureOutput=True, **options)
@@ -187,9 +187,6 @@ class Git(GameCommand):
 
     def head(self, *args, **options):
         return self.run('rev-parse HEAD', *args, CaptureOutput=True, **options)[0]
-
-    def switch(self, *args, **options):
-        return self.run('switch', *args, **options)
 
     def sub_url(self, *args, **options):
         return self.run('submodule set-url', *args, **options)
