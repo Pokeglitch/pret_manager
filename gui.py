@@ -2,16 +2,9 @@ import sys
 
 '''
 TODO:
-- Dont permit "executing Process" if no actions
-
-- Context menu should have options for each specific process in addition to 'all'
-
 some makefiles require rgbds to be in a folder in the repo
 - bw3g
 ------
-make tags 2 columns
-- one hardware based, one content based
-
 update 'build' handling same way as 'releases'
 
 memoize the rgbds builds so doesnt have to 'update' on first open
@@ -65,6 +58,11 @@ Update README, Tutorial, Future Work
 
 Compile to executable for release:
 https://nuitka.net/
+--------------------------
+UX Improvements:
+- Dont permit "Process" if no actions selected
+- Context menu should have options for each specific process in addition to 'all'
+
 --------------------------
 finish artwork/tags
 

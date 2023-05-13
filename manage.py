@@ -256,7 +256,10 @@ class Catalog:
         self.Name = name
         self.EntryClass = entryClass
         self.Entries = {}
-        self.GUI = gui.CatalogGUI(self) if self.Manager.GUI else None
+        self.GUI = self.build_GUI() if self.Manager.GUI else None
+
+    def build_GUI(self):
+        return gui.CatalogGUI(self)
 
     def get(self, entry):
         return self.Entries[entry] if self.has(entry) else None
@@ -288,6 +291,9 @@ class AuthorCatalog(Catalog):
 class TagCatalog(Catalog):
     def __init__(self, catalogs):
         super().__init__(catalogs, 'Tags', TagEntry)
+
+    def build_GUI(self):
+        return gui.TagCatalogGUI(self)
 
 class Catalogs:
     def __init__(self, manager):

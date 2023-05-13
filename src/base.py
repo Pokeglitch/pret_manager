@@ -5,7 +5,7 @@ import time, json, copy, os
 
 from src.Files import *
 
-threadpool = QThreadPool()
+OfficialTags = ['red','green','blue','yellow','gold','silver','crystal','spaceworld','tcg1','tcg2','official','binary','disasm','vc-patch','analogue','debug','extras']
 
 def listToDict(list):
     data = {}
@@ -575,9 +575,6 @@ class TagGUI(HBox):
         self.setProperty('which',name)
         self.Label = self.label(name)
         self.Label.setAlignment(Qt.AlignCenter)
-        
-        # TODO
-        #self.Label.setStyleSheet("background-color: #" + hex(abs(hash(name)))[2:8])
 
         self.addTo(parent)
 

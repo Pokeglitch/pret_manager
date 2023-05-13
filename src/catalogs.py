@@ -215,26 +215,54 @@ class CatalogGUI(VBox):
         self.ID = ID[:-1]
         self.List = {}
 
-        self.ListContainer = VScroll(parent.GUI)
+        self.ListContainer = VScroll(self.GUI)
         self.ListContainer.addTo(self)
-
-        self.ListGUI = VBox(parent.GUI)
-        self.ListGUI.addTo(self.ListContainer)
+        self.drawContent()
         self.ListContainer.addStretch()
 
         self.Tab = data.Manager.GUI.Content.Catalogs.Body.Tabs.addTab(ID)
 
         parent.Stack.addWidget(self)
 
-    def addElement(self, name):
-        self.Class(self, name)
+    def drawContent(self):
+        self.ListContent = VBox(self.GUI)
+        self.ListContent.addTo(self.ListContainer)
 
     def add(self, widget, *args):
         if hasattr(widget,'Name'):
             self.List[widget.Name] = widget
-            self.ListGUI.add(widget, *args)
+            self.addToContent(widget, *args)
         else:
             super().add(widget, *args)
+
+    def addToContent(self, widget, *args):
+        self.ListContent.add(widget, *args)
+
+class TagCatalogGUI(CatalogGUI):   
+    def drawContent(self):
+        self.ListContent = HBox(self.GUI)
+        self.ListContent.addTo(self.ListContainer)
+
+        self.Col1Container = VBox(self.GUI)
+        self.Col1 = VBox(self.GUI)
+        self.Col1.addTo(self.Col1Container)
+        self.Col1Container.addStretch()
+        self.Col1Container.addTo(self.ListContent)
+
+        self.Col2Container = VBox(self.GUI)
+        self.Col2 = VBox(self.GUI)
+        self.Col2.addTo(self.Col2Container)
+        self.Col2Container.addStretch()
+        self.Col2Container.addTo(self.ListContent)
+        
+        self.Col1Widgets = [self.Col1.label(tag) for tag in OfficialTags]
+
+    def addToContent(self, widget, *args):
+        if widget.Name in OfficialTags:
+            index = OfficialTags.index(widget.Name)
+            self.Col1.Layout.replaceWidget(self.Col1Widgets[index], widget, *args)
+        else:
+            self.Col2.add(widget, *args)
 
 class CatalogsBody(HBox):
     def __init__(self, parent):

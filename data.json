@@ -6,8 +6,8 @@
       "tags": [
         "crystal",
         "disasm",
-        "Base",
-        "Work in Progress"
+        "base",
+        "WiP"
       ],
       "basis": "pret/pokecrystal",
       "description": "Ancient Engine rebased onto current pokecrystal"
@@ -57,8 +57,8 @@
       "tags": [
         "crystal",
         "disasm",
-        "Quality of Life",
-        "Complete"
+        "QoL",
+        "complete"
       ],
       "basis": "pret/pokecrystal",
       "description": "A hack of Pokemon Crystal with Red and Leaf (from Pokemon FireRed & LeafGreen) as the player character."
@@ -69,10 +69,10 @@
       "tags": [
         "crystal",
         "disasm",
-        "Work in Progress",
-        "Remake",
-        "New Region",
-        "New Story"
+        "WiP",
+        "remake",
+        "new-region",
+        "new-story"
       ],
       "basis": "TastySnax12/pokecrystal16-493-plus",
       "description": "Generation 2 demake of Pokemon Platinum"
@@ -82,10 +82,10 @@
       "tags": [
         "crystal",
         "disasm",
-        "Work in Progress",
-        "Remake",
-        "New Region",
-        "New Story"
+        "WiP",
+        "remake",
+        "new-region",
+        "new-story"
       ],
       "basis": "TastySnax12/pokecrystal16-493-plus",
       "description": "Generation 2 demake of Pokemon Platinum"
@@ -98,8 +98,8 @@
       "tags": [
         "red",
         "disasm",
-        "Remake",
-        "Complete"
+        "remake",
+        "complete"
       ],
       "basis": "pret/pokered",
       "description": "Remake of the Pokemon Black creepypasta."
@@ -111,8 +111,8 @@
       "tags": [
         "crystal",
         "disasm",
-        "New Region",
-        "New Story"
+        "new-region",
+        "new-story"
       ]
     }
   },
@@ -133,10 +133,10 @@
       "tags": [
         "crystal",
         "disasm",
-        "New Region",
-        "New Story",
-        "Remake",
-        "Work in Progress"
+        "new-region",
+        "new-story",
+        "remake",
+        "WiP"
       ],
       "basis": "pret/pokecrystal"
     }
@@ -148,9 +148,9 @@
       "tags": [
         "red",
         "disasm",
-        "New Story",
-        "Complete",
-        "Fakemon"
+        "new-story",
+        "complete",
+        "fakemon"
       ],
       "basis": "tshadowknight/Pokemon-Roaming-Red",
       "description": "Open world Pokemon Red ROM hack, featuring fan-made Pokemon from the Pokemon Factory of the 90s and early 00s."
@@ -221,8 +221,8 @@
       "tags": [
         "yellow",
         "disasm",
-        "Asset Swap",
-        "Work in Progress"
+        "asset-swap",
+        "WiP"
       ],
       "basis": "pret/pokeyellow"
     }
@@ -282,9 +282,9 @@
       "rgbds": "0.6.1",
       "tags": [
         "crystal",
-        "disassembly",
-        "Enhancement",
-        "Asset Swap"
+        "disasm",
+        "upgrade",
+        "asset-swap"
       ]
     }
   },
@@ -371,7 +371,7 @@
       "tags": [
         "red",
         "disasm",
-        "Translation"
+        "translation"
       ],
       "basis": "pret/pokered"
     }
@@ -502,9 +502,9 @@
       "tags": [
         "crystal",
         "disasm",
-        "Remake",
-        "New Region",
-        "New Story"
+        "remake",
+        "new-region",
+        "new-story"
       ]
     },
     "pokeorange": {
@@ -522,7 +522,7 @@
       "tags": [
         "red",
         "disasm",
-        "Quality of Life"
+        "QoL"
       ]
     }
   },
@@ -546,7 +546,8 @@
       "rgbds": "0.2.5",
       "tags": [
         "red",
-        "disasm"
+        "disasm",
+        "obsolete"
       ]
     }
   },
@@ -630,7 +631,7 @@
       "tags": [
         "red",
         "disasm",
-        "Asset Swap"
+        "asset-swap"
       ],
       "basis": "pret/pokered"
     },
@@ -640,7 +641,7 @@
         "gold",
         "silver",
         "disasm",
-        "Asset Swap"
+        "asset-swap"
       ],
       "basis": "pret/pokegold"
     }
@@ -683,7 +684,7 @@
       "tags": [
         "crystal",
         "disasm",
-        "Base"
+        "base"
       ]
     },
     "gold97": {
@@ -692,9 +693,9 @@
       "tags": [
         "crystal",
         "disasm",
-        "New Region",
-        "New Story",
-        "Complete"
+        "new-region",
+        "new-story",
+        "complete"
       ],
       "basis": "lvl-3-g/gold97_upload"
     }
@@ -740,8 +741,8 @@
       "tags": [
         "crystal",
         "disasm",
-        "Enhancement",
-        "Base"
+        "upgrade",
+        "base"
       ],
       "basis": "aaaaaa123456789/pokecrystal-16"
     }
@@ -770,8 +771,8 @@
         "gold",
         "silver",
         "binary",
-        "Translation",
-        "Complete"
+        "translation",
+        "complete"
       ]
     }
   },
@@ -839,7 +840,7 @@
       "tags": [
         "red",
         "disasm",
-        "Complete"
+        "complete"
       ]
     },
     "tpp_burning_red": {
@@ -875,8 +876,8 @@
         "green",
         "blue",
         "disasm",
-        "Quality of Life",
-        "Enhancement"
+        "QoL",
+        "upgrade"
       ],
       "basis": "Vortyne/pureRGB"
     }
@@ -890,7 +891,7 @@
         "green",
         "blue",
         "disasm",
-        "Quality of Life"
+        "QoL"
       ]
     }
   },
@@ -901,8 +902,8 @@
         "gold",
         "silver",
         "disasm",
-        "Proof of Concept",
-        "Asset Swap"
+        "PoC",
+        "asset-swap"
       ],
       "basis": "ZoomTen/pokegold-mapless",
       "description": "Pokemon Gold with all maps replaced with the prototype backup maps from October 6, 1998. All events are removed."
@@ -913,7 +914,7 @@
         "gold",
         "silver",
         "disasm",
-        "Base"
+        "base"
       ],
       "basis": "pret/pokegold",
       "description": "Pokemon Gold & Silver with all maps and events removed."
@@ -924,8 +925,8 @@
         "gold",
         "silver",
         "binary",
-        "Enhancement",
-        "Complete"
+        "upgrade",
+        "complete"
       ],
       "description": "Pokemon Gold & Silver with MSU-1 audio on Super Game Boy."
     },
@@ -935,8 +936,8 @@
         "red",
         "blue",
         "disasm",
-        "Enhancement",
-        "Proof of Concept"
+        "upgrade",
+        "PoC"
       ],
       "basis": "pret/pokered",
       "description": "Pokemon Red with Super Game Boy audio. Includes MSU-1 enhancement branch."
@@ -947,9 +948,9 @@
       "tags": [
         "silver",
         "disasm",
-        "New Story",
-        "Remake",
-        "Proof of Concept"
+        "new-story",
+        "remake",
+        "PoC"
       ],
       "basis": "pret/pokegold",
       "description": "Remake of the Pokemon Lost Silver creepypasta."
@@ -972,7 +973,7 @@
       "tags": [
         "crystal",
         "disasm",
-        "Base"
+        "base"
       ],
       "basis": "pret/pokecrystal"
     }
@@ -1012,8 +1013,8 @@
       "tags": [
         "red",
         "disasm",
-        "Translation",
-        "Work in Progress"
+        "translation",
+        "WiP"
       ],
       "basis": "pret/pokered"
     }
@@ -1076,8 +1077,8 @@
       "tags": [
         "yellow",
         "disasm",
-        "Enhancement",
-        "Base"
+        "upgrade",
+        "base"
       ]
     },
     "CrystalComplete": {
@@ -1093,8 +1094,8 @@
       "tags": [
         "yellow",
         "disasm",
-        "Enhancement",
-        "Asset Swap"
+        "upgrade",
+        "asset-swap"
       ]
     }
   },
@@ -1105,9 +1106,9 @@
       "tags": [
         "gold",
         "disasm",
-        "New Region",
-        "New Story",
-        "Complete"
+        "new-region",
+        "new-story",
+        "complete"
       ],
       "basis": "lvl-3-g/Gold97SGB"
     },
@@ -1118,8 +1119,8 @@
         "red",
         "blue",
         "disasm",
-        "Enhancement",
-        "Base"
+        "upgrade",
+        "base"
       ],
       "basis": "pret/pokered"
     }
@@ -1323,9 +1324,9 @@
       "tags": [
         "crystal",
         "disasm",
-        "New Region",
-        "New Story",
-        "Complete"
+        "new-region",
+        "new-story",
+        "complete"
       ],
       "basis": "pret/pokecrystal",
       "description": "The legacy version of Pokemon Gold 97, based on Pokemon Crystal."
@@ -1336,9 +1337,9 @@
       "tags": [
         "gold",
         "disasm",
-        "New Region",
-        "New Story",
-        "Complete"
+        "new-region",
+        "new-story",
+        "complete"
       ],
       "basis": "pret/pokegold",
       "description": "The updated version of Pokemon Gold 97, based on Pokemon Gold. Featuring Super Game Boy support."
@@ -1393,8 +1394,8 @@
       "tags": [
         "crystal",
         "disasm",
-        "New Story",
-        "New Region"
+        "new-story",
+        "new-region"
       ]
     },
     "pokecoral": {
@@ -1403,8 +1404,8 @@
       "tags": [
         "crystal",
         "disasm",
-        "New Story",
-        "New Region"
+        "new-story",
+        "new-region"
       ]
     }
   },
@@ -1415,9 +1416,9 @@
       "tags": [
         "crystal",
         "disasm",
-        "New Region",
-        "New Story",
-        "Work in Progress"
+        "new-region",
+        "new-story",
+        "WiP"
       ],
       "basis": "aaaaaa123456789/pokecrystal-16",
       "description": "Based on Pokemon Crystal. New storyline based off the Pokemon Gold & Silver prototype maps from October and November 1998. Featuring cut Pokemon."
@@ -1532,7 +1533,7 @@
       "tags": [
         "gold",
         "disasm",
-        "Complete"
+        "complete"
       ],
       "basis": "pret/pokegold"
     }
@@ -1540,7 +1541,7 @@
   "theresamai": {
     "pokemon_battle_ASM": {
       "tags": [
-        "extra"
+        "extras"
       ],
       "description": "x86 ASM program simulating a Pokemon battle. Submitted as part of a course. Why is this here?"
     }
@@ -1584,7 +1585,7 @@
       "tags": [
         "crystal",
         "disasm",
-        "Base"
+        "base"
       ],
       "basis": "aaaaaa123456789/pokecrystal16"
     },

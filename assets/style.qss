@@ -364,15 +364,15 @@ QWidget#Tiles {
 }
 
 QWidget#Tag {
-    min-height: 10px;
-    max-height: 10px;
-    min-width: 50px;
-    max-width: 50px;
-    border-radius: 5px;
+    min-height: 20px;
+    max-height: 20px;
+    min-width: 64px;
+    max-width: 64px;
+    border-radius: 8px;
     border: 1px solid black;
+    padding: 0px;
     margin:2px;
 }
-
 
 TagGUI {
     background-color: #ffffff;
@@ -384,11 +384,11 @@ TagGUI * {
 }
 
 TagGUI[which=red] {
-    background-color: #da0000;
+    background-color: #e43232;
 }
 
 TagGUI[which=red]:hover {
-    background-color: #f30000;
+    background-color: #e64646;
 }
 
 TagGUI[which=green] {
@@ -400,11 +400,11 @@ TagGUI[which=green]:hover {
 }
 
 TagGUI[which=blue] {
-    background-color: #0030ff;
+    background-color: #275abf;
 }
 
 TagGUI[which=blue]:hover {
-    background-color: #2f56ff;
+    background-color: #2c65d5;
 }
 
 TagGUI[which=yellow] {
@@ -549,6 +549,118 @@ TagGUI[which=analogue]:hover {
 
 TagGUI[which=analogue]:hover * {
     color: #ffffff;
+}
+
+TagGUI[which=base] {
+    background-color: #2CD5A0;
+}
+
+TagGUI[which=base]:hover {
+    background-color: #56ddb3;
+}
+
+TagGUI[which=WiP] {
+    background-color: #a95d6b;
+}
+
+TagGUI[which=WiP]:hover {
+    background-color: #ba7d88;
+}
+
+TagGUI[which=QoL] {
+    background-color: #73ddd0;
+}
+
+TagGUI[which=QoL]:hover {
+    background-color: #8fe3d9;
+}
+
+TagGUI[which=complete] {
+    background-color: #e4cabd;
+}
+
+TagGUI[which=complete]:hover {
+    background-color: #fee4d7;
+}
+
+TagGUI[which=remake] {
+    background-color: #94b0c9;
+}
+
+TagGUI[which=remake]:hover {
+    background-color: #aec9e3;
+}
+
+TagGUI[which=new-region] {
+    background-color: #934d68;
+}
+
+TagGUI[which=new-region]:hover {
+    background-color: #a87086;
+}
+
+TagGUI[which=new-story] {
+    background-color: #002d5b;
+}
+
+TagGUI[which=new-story] * {
+    color: #d8d8d8;
+}
+
+TagGUI[which=new-story]:hover {
+    background-color: #003a76;
+}
+
+TagGUI[which=translation] {
+    background-color: #2d89e5;
+}
+
+TagGUI[which=translation]:hover {
+    background-color: #47a3ff;
+}
+
+TagGUI[which=fakemon] {
+    background-color: #603336;
+}
+
+TagGUI[which=fakemon] * {
+    color: #d8d8d8;
+}
+
+TagGUI[which=fakemon]:hover {
+    background-color: #794044;
+}
+
+TagGUI[which=upgrade] {
+    background-color: #abd110;
+}
+
+TagGUI[which=upgrade]:hover {
+    background-color: #c4eb29;
+}
+
+TagGUI[which=asset-swap] {
+    background-color: #e5dd80;
+}
+
+TagGUI[which=asset-swap]:hover {
+    background-color: #fff69a;
+}
+
+TagGUI[which=PoC] {
+    background-color: #fa8072;
+}
+
+TagGUI[which=PoC]:hover {
+    background-color: #fb998e;
+}
+
+TagGUI[which=obsolete] {
+    background-color: #dcdcc6;
+}
+
+TagGUI[which=obsolete]:hover {
+    background-color: #f5f5dc;
 }
 
 GamePanelArtwork {
