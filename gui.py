@@ -2,12 +2,17 @@ import sys
 
 '''
 TODO:
-some makefiles require rgbds to be in a folder in the repo
-- bw3g
-------
 update 'build' handling same way as 'releases'
 
-memoize the rgbds builds so doesnt have to 'update' on first open
+'tar' in linux wont extract a zip file
+-- only permit 'tar' to be used with wsl, otherwise it uses main
+
+Bugs:
+- quickly changing search terms makes some cartridges popup in windows
+- when selecting Outdated and NOT missing, and then 'updating':
+-- NOT missing gets unselected
+-- closes/crashes without error...
+
 ------
 dbl click:
 https://wiki.python.org/moin/PyQt/Distinguishing%20between%20click%20and%20double%20click
@@ -39,116 +44,13 @@ context menu:
 -- or specifically, a repo, build(s), release(s)
 
 -------
-Bugs:
-- quickly changing search terms makes some cartridges popup in windows
-- when selecting Outdated and NOT missing, and then 'updating':
--- NOT missing gets unselected
--- closes/crashes without error...
--------
-CLI:
-- use -l to filter by list
-- use -s for search option
-- use -f to filter by flag
-- way to use a saved filter?
-- use the same 'filter' function that the GUI current uses...
--- -a, -ao, -aa, -an, etc
-- only create 'repositories' instances for games being managed
-
-Update README, Tutorial, Future Work
+Update README, Tutorial
 
 Compile to executable for release:
 https://nuitka.net/
---------------------------
-UX Improvements:
-- Dont permit "Process" if no actions selected
-- Context menu should have options for each specific process in addition to 'all'
 
---------------------------
-finish artwork/tags
-
-IPS Patches / manuals
-- use a separate repo, with a different branch for each game
-
-support local/custom repositories
 -------
-Environments:
 
-- What happens if terminate in middle of rgbds build?
-
-- Clean up the parameter handling for Popen
-
-'tar' in linux wont extract a zip file
--- only permit 'tar' to be used with wsl, otherwise it uses main
-
-fallback plan when gh isnt available
-- simply add the details to data.json, and download via http
-
-- auto-detect if wsl/cygwin/w64devkit is installed
--- auto download w64devkit if not ?
-
-- install missing python, node, & linux packages/libraries
--- pyenv local <version> ?
-
-- check if C version is installed or not
--- for polished crystal
-
-Add predefined processes to run (i.e. only pull/build pret & pokeglitch)
-
------
-
-GUI:
-- Catalog/Tile/Queue Sorting:
--- date of last update, alphabet, etc
---- Also, can hide missing/excluding, etc
-
-Browser:
-- Show number of items in browser
-
-Filter:
-- Button to clear filter
-- Button to 'invert' the filter
-- Add way to Save the filter options (catalogs for each mode & search term)
--- Add way to load a filter
-
-Lists:
-- hande when list is corrupted during import
-- Way to load a list
-- show size of each list next to name
-
-Game:
-- Way to copy selected builds/releases to another location
-- meta data should include successful/failed commit attempts
-- Option to change current commit, or build specific commit
-- Option for specific Make targets to run
--- check box for which ones to always include when build
-
-Panel:
-- can open/close multiple panels (tabs along right side)
----------
-Upgrade pyqt6/pyside6
-
-Improve opening time
-- only create instances when called
-- thumbnails for images
-
-Tree view of all forks
-- since some forked shinpokomon, crystal16 etc
-- or, just a deriviate count for each...
-
-Way to create/handle Groups of Tags (i.e. Gen1, Gen2, TCG)
-- tag can be a list, or an object
--- if object, the sub tags will be the exact same array at the real tag
---- can have nested subtags
-
-Multiple Themes
-
-Safely copy files by first making a backup, or restoring it if corrupt
-
-Associate Authors with a Team
-
-Filesystem Watcher?
-
-Git GUI like giggle?
 '''
 from src.panel import *
 from src.gametile import *
