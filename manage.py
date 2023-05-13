@@ -719,6 +719,7 @@ class repository(MetaData):
         self.GUI = None
         self.Lists = []
 
+        self.Data = data
         self.Branches = {}
         self.GitTags = {}
         self.CurrentBranch = None
@@ -1447,10 +1448,18 @@ class RGBDS(repository):
     def __init__(self, *args):
         super().__init__(*args)
 
-        # TODO - instead, have this stored in data.json....
         if not self.GitTags:
-            self.refresh()
+            self.GitTags = self.Data['releases']
+            self.parse_releases()
             self.updateMetaData()
+
+    # dont add to any list
+    def setOutdated(self, outdated, addToList=True):
+        super().setOutdated(outdated, False)
+
+    # dont add to any list
+    def setMissing(self, missing, addToList=True):
+        super().setMissing(missing, False)
 
     def refresh(self):
         result = super().refresh()
