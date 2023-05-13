@@ -1,15 +1,17 @@
-import sys, webbrowser, json, re
+import sys
 
 '''
 TODO:
-- Show when process is active in processing widget
--- button to kill process
+- Dont permit "executing Process" if no actions
 
 - Context menu should have options for each specific process in addition to 'all'
 
 some makefiles require rgbds to be in a folder in the repo
 - bw3g
 ------
+make tags 2 columns
+- one hardware based, one content based
+
 update 'build' handling same way as 'releases'
 
 memoize the rgbds builds so doesnt have to 'update' on first open
@@ -18,7 +20,7 @@ dbl click:
 https://wiki.python.org/moin/PyQt/Distinguishing%20between%20click%20and%20double%20click
 
 Game Panel:
-- dbl click cartridge to lauch preset gme or latest
+- dbl click cartridge to lauch preset game or latest
 -- dbl click Tile to do same
 - dbl click updte to run update process
 - click on author in panel to select in browser
@@ -60,6 +62,9 @@ CLI:
 - only create 'repositories' instances for games being managed
 
 Update README, Tutorial, Future Work
+
+Compile to executable for release:
+https://nuitka.net/
 --------------------------
 finish artwork/tags
 
@@ -69,6 +74,10 @@ IPS Patches / manuals
 support local/custom repositories
 -------
 Environments:
+
+- What happens if terminate in middle of rgbds build?
+
+- Clean up the parameter handling for Popen
 
 'tar' in linux wont extract a zip file
 -- only permit 'tar' to be used with wsl, otherwise it uses main
@@ -118,6 +127,8 @@ Game:
 Panel:
 - can open/close multiple panels (tabs along right side)
 ---------
+Upgrade pyqt6/pyside6
+
 Improve opening time
 - only create instances when called
 - thumbnails for images
@@ -138,6 +149,8 @@ Safely copy files by first making a backup, or restoring it if corrupt
 Associate Authors with a Team
 
 Filesystem Watcher?
+
+Git GUI like giggle?
 '''
 from src.panel import *
 from src.gametile import *
@@ -686,44 +699,59 @@ class Tiles(VBox):
         if self.All_Games:
             self.GUI.startProcess(self.getData())
 
-class ManagerProcess(QRunnable):
+class ManagerThread(QThread):
     def __init__(self, GUI):
         super().__init__()
         self.GUI = GUI
         self.Window = GUI.Window
         self.Window.Processing.emit(True)
+        self.finished.connect(self.finish)
+        self.start()
 
     def finish(self):
         self.Window.Processing.emit(False)
 
-class RefreshPRETManager(ManagerProcess):
+class RefreshPRETManager(ManagerThread):
     def run(self):
         self.GUI.Manager.refresh()
-        self.finish()
 
-class UpdatePRETManager(ManagerProcess):
+class UpdatePRETManager(ManagerThread):
     def run(self):
         self.GUI.Manager.update()
-        self.finish()
 
-class SwitchBranch(ManagerProcess):
+class SwitchBranch(ManagerThread):
     def __init__(self, GUI, game, branch):
-        super().__init__(GUI)
         self.Game = game
         self.Branch = branch
 
+        super().__init__(GUI)
+
     def run(self):
         self.Game.set_branch(self.Branch)
-        self.finish()
 
-class ExecuteProcess(ManagerProcess):
-    def __init__(self, GUI):
+class ExecuteProcess(ManagerThread):
+    def __init__(self, GUI, games):
+        self.Games = games
+        self.Game = None
+        self.Sequence = GUI.Process.Options.compile()
+
         super().__init__(GUI)
-        self.Processes = self.GUI.Process.Options.compile()
 
     def run(self):
-        self.GUI.Manager.run(self.Processes)
-        self.finish()
+        if not self.Games:
+            self.GUI.Manager.print('No games to process')
+        elif self.Sequence:
+            for game in self.Games:
+                self.Game = game
+                game.process(self.Sequence, [])
+        else:
+            self.GUI.Manager.print('No actions to process')
+
+    def finish(self):
+        if self.Game:
+            self.Game.setProcessing(False)
+
+        super().finish()
 
 class MainContents(HBox):
     def __init__(self, window):
@@ -756,7 +784,6 @@ class MainContents(HBox):
     def switchBranch(self, game, branch):
         if not self.Window.Process:
             self.Window.Process = SwitchBranch(self, game, branch)
-            threadpool.start(self.Window.Process)
 
     def restartPRETManager(self, isAuto=False):
         if not self.Window.Process or isAuto:
@@ -766,21 +793,17 @@ class MainContents(HBox):
     def refreshPRETManager(self, isAuto=False):
         if not self.Window.Process or isAuto:
             self.Window.Process = RefreshPRETManager(self)
-            threadpool.start(self.Window.Process)
 
     def updatePRETManager(self, isAuto=False):
         if not self.Window.Process or isAuto:
             self.Window.Process = UpdatePRETManager(self)
-            threadpool.start(self.Window.Process)
 
     def startProcess(self, games):
         if not self.Window.Process:
-            self.GUI.Manager.add_to_queue(games)
-            self.Window.Process = ExecuteProcess(self)
-            threadpool.start(self.Window.Process)
+            self.Window.Process = ExecuteProcess(self, games[:])
 
-    def onProcessing(self, isBusy):
-        if not isBusy:
+    def onProcessing(self, processing):
+        if not processing:
             self.Window.Process = None
 
     def addStatus(self, msg):
@@ -808,6 +831,17 @@ class PRET_Manager_GUI(QMainWindow):
         
         with open('./assets/style.qss') as f:
             self.setStyleSheet(f.read())
+
+        self.TerminateProcess = TerminateProcess(self)
+
+    def terminateProcess(self):
+        if self.Process:
+            self.Process.terminate()
+            self.Manager.terminateProcess()
+            
+class TerminateProcess(Action):
+    def __init__(self, parent):
+        super().__init__(parent, "Terminate", parent.terminateProcess)
 
 class PRET_Manager_App(QApplication):
     def __init__(self, manager, *args):

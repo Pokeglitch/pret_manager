@@ -731,13 +731,20 @@ Process QScrollBar, Process QAbstractScrollArea{
     background-color: black;
 }
 
-ProcessTitle, ProcessTitle * {
-    font-size:22px;
-    color: white;
+ProcessTitle {
     border-top: 1px solid black;
     border-bottom: 1px solid black;
     min-height:50px;
     max-height:50px;
+}
+
+ProcessTitle > QLabel {
+    font-size:22px;
+    color: white;
+}
+
+ProcessTitle[processing=true] {
+    background-color: #1b5780;
 }
 
 ToggleField > QLabel {

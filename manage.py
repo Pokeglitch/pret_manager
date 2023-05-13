@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
-import os, re, argparse, json
+import os, re, argparse, json, signal
 from pathlib import Path
 import gui
 from src.base import *
 from src.Environment import *
 from src.Files import *
-from PyQt5.QtCore import pyqtSignal, QObject
+from PyQt5.QtCore import pyqtSignal
 
 build_extensions = ['gb','gbc','pocket','patch']
 release_extensions = build_extensions + ['ips','bps','bsp','zip']
@@ -388,6 +388,7 @@ class PRET_Manager(MetaData):
         self.Directory = games_dir
         
         self.All = []
+        self.Process = None
         self.GUI = None
         self.App = None
         self.Search = None
@@ -419,6 +420,23 @@ class PRET_Manager(MetaData):
     def setCygwinPath(self, path):
         self.Settings.set('Environment.cygwin', path)
         self.CygwinPathSignal.emit( str(path) )
+
+    def terminateProcess(self):
+        self.print('Terminating Process')
+        
+        if self.Process:
+            if platform.system() == 'Windows':
+                sig = signal.CTRL_BREAK_EVENT
+            else:
+                sig = signal.SIGBREAK
+
+            os.kill(self.Process.pid, sig)
+            self.setProcess(None)
+
+    def setProcess(self, process, msg=''):
+        self.Process = process
+        if msg:
+            self.print(msg)
 
     def setOutdated(self, outdated):
         if self.Outdated != outdated:
@@ -783,14 +801,17 @@ class repository(MetaData):
         return string in self.FullTitle.lower() or string in self.Description.lower()
 
 ######### Processing Methods
-    def setProcessing(self, value):
-        self.Processing = value
-        self.ProcessingSignal.emit(value)
+    def setProcessing(self, processing):
+        if self.Processing and not processing:
+            self.updateMetaData()
+
+        self.Processing = processing
+        self.ProcessingSignal.emit(processing)
+        self.resetSequence()
 
     def resetSequence(self):
         self.Refreshed = False
         self.Cleaned = False
-        # TODO
         self.Updated = False
         self.Processing = False
 
@@ -812,11 +833,8 @@ class repository(MetaData):
             elif process == 'u':
                 self.update()
 
-            self.updateMetaData()
-
         self.print('Processing Finished')
         self.setProcessing(False)
-        self.resetSequence()
 
 ######### IO Methods
     def rmdir(self, path, msg=''):

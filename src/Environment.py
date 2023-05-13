@@ -22,14 +22,39 @@ class Environment:
     
     def run(self, command, options):
         try:
-            process = subprocess.run(command, **options)
+            parameters = {
+                'creationflags' : subprocess.CREATE_NEW_PROCESS_GROUP
+            }
+            input = ''
+
+            for key, value in options.items():
+                if key == 'capture_output':
+                    if value:
+                        parameters['stdout'] = subprocess.PIPE
+                elif key == 'input':
+                    input = value
+                    parameters['stdin'] = subprocess.PIPE
+                else:
+                    parameters[key] = value
+
+            process = subprocess.Popen(command, **parameters)
+            self.Environments.Manager.setProcess(process)
             
+            if input:
+                process.communicate(input)
+
+            while process.poll() is None:
+                pass
+
+            self.Environments.Manager.setProcess(None)
+
             if 'capture_output' in options and options['capture_output']:
-                return process.stdout.split('\n')
+                return process.stdout.read().split('\n')
             else:
                 return process
+            
         except Exception:
-            self.Environments.Manager.print('Error executing ' + self.Name + ' Environment')
+            self.Environments.Manager.setProcess(None, 'Error executing ' + self.Name + ' Environment')
             if 'capture_output' in options and options['capture_output']:
                 return ['']
             else:

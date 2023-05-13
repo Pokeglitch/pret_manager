@@ -1,11 +1,27 @@
 from src.base import *
 
+class ProcessContextMenu(ContextMenu):
+    def __init__(self, parent, event):
+        super().__init__(parent, event)
+        self.addAction( parent.GUI.Window.TerminateProcess )
+        self.start()
+
 class ProcessTitle(HBox):
     def __init__(self, parent):
         super().__init__(parent.GUI)
         self.Label = self.label("Process")
         self.Label.setAlignment(Qt.AlignCenter)
+
+        self.GUI.Window.Processing.connect(self.setProcessing)
         self.addTo(parent)
+
+    def setProcessing(self, value):
+        self.setProperty("processing",value)
+        self.updateStyle()
+
+    def contextMenuEvent(self, event):
+        if self.GUI.Window.Process:
+            ProcessContextMenu(self, event)
 
 class ProcessOptions(VBox):
     def __init__(self, parent):
