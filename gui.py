@@ -8,11 +8,13 @@ update 'build' handling same way as 'releases'
 -- only permit 'tar' to be used with wsl, otherwise it uses main
 
 Bugs:
-- quickly changing search terms makes some cartridges popup in windows
 - when selecting Outdated and NOT missing, and then 'updating':
 -- NOT missing gets unselected
--- closes/crashes without error...
+-- sometimes closes/crashes without error...
 
+- Pure RGB still has the overwrite local files issues when updating...
+
+- Dont mark as updated if it any failed...
 ------
 dbl click:
 https://wiki.python.org/moin/PyQt/Distinguishing%20between%20click%20and%20double%20click
@@ -481,6 +483,8 @@ class Tiles(VBox):
             else:
                 if game.GUI.Tile.Parent != self.Content:
                     game.GUI.Tile.addTo(self.Content)
+
+        self.GUI.Manager.App.processEvents()
 
     def saveList(self):
         self.GUI.saveList(self.All_Games)

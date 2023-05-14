@@ -942,6 +942,17 @@
       "basis": "pret/pokered",
       "description": "Pokemon Red with Super Game Boy audio. Includes MSU-1 enhancement branch."
     },
+    "znmpa": {
+      "title": "Zilo and Monty's Pokemon Adventure",
+      "rgbds": "0.2.5",
+      "tags": [
+        "red",
+        "blue",
+        "disasm"
+      ],
+      "basis": "pret/pokered",
+      "description": "ROM hack involving Sonic OC"
+    },
     "pokelostsilver": {
       "title": "Lost Silver",
       "rgbds": "0.6.0-rc2",

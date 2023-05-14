@@ -193,7 +193,7 @@ class Git(GameCommand):
         return self.run('branch -a', *args, **options)
 
     def pull(self, *args, **options):
-        return self.run('pull --all', *args, **options)
+        return self.run('pull --all --force', *args, **options)
     
     def fetch(self, *args, **options):
         return self.run('fetch', *args, **options)

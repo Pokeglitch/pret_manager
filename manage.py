@@ -206,6 +206,9 @@ class FlagListEntry(BaseListEntry):
 class SearchEntry(BaseListEntry):
     def __init__(self, manager):
         super().__init__(manager, "Search")
+        self.Queue = []
+        self.Active = False
+
         self.ExcludedGames = []
         self.addGames(self.Manager.All)
 
@@ -215,39 +218,53 @@ class SearchEntry(BaseListEntry):
         return gui.SearchBox(self)
 
     def onTextChanged(self, text):
-        text_lower = text.lower()
-        # if the search term was added to:
-        if self.PreviousText in text:
-            gamesToExclude = []
-            for game in self.GameList:
-                if not game.search(text_lower):
-                    gamesToExclude.append(game)
-                    self.ExcludedGames.append(game)
-            self.removeGames(gamesToExclude)
-        # if the search term was reduced:
-        elif text in self.PreviousText:
-            gamesToAdd = []
-            for game in self.ExcludedGames[:]:
-                if game.search(text_lower):
-                    gamesToAdd.append(game)
-                    self.ExcludedGames.pop(self.ExcludedGames.index(game))
-            self.addGames(gamesToAdd)
-        # text changed completely:
-        else:
-            gamesToToggle = []
-            for game in self.ExcludedGames[:]:
-                if game.search(text_lower):
-                    gamesToToggle.append(game)
-                    self.ExcludedGames.pop(self.ExcludedGames.index(game))
+        self.Queue.append(text)
+        # if not currently active, then process
+        if not self.Active:
+            self.processQueue()
 
-            for game in self.GameList:
-                if not game.search(text_lower):
-                    gamesToToggle.append(game)
-                    self.ExcludedGames.append(game)
+    def processQueue(self):
+        self.Active = len(self.Queue)
+        while( self.Active ):
+            text = self.Queue[0]
 
-            self.toggleGames(gamesToToggle)
+            text_lower = text.lower()
 
-        self.PreviousText = text
+            # if the search term was added to:
+            if self.PreviousText in text:
+                gamesToExclude = []
+                for game in self.GameList:
+                    if not game.search(text_lower):
+                        gamesToExclude.append(game)
+                        self.ExcludedGames.append(game)
+                self.removeGames(gamesToExclude)
+            # if the search term was reduced:
+            elif text in self.PreviousText:
+                gamesToAdd = []
+                for game in self.ExcludedGames[:]:
+                    if game.search(text_lower):
+                        gamesToAdd.append(game)
+                        self.ExcludedGames.pop(self.ExcludedGames.index(game))
+                self.addGames(gamesToAdd)
+            # text changed completely:
+            else:
+                gamesToToggle = []
+                for game in self.ExcludedGames[:]:
+                    if game.search(text_lower):
+                        gamesToToggle.append(game)
+                        self.ExcludedGames.pop(self.ExcludedGames.index(game))
+
+                for game in self.GameList:
+                    if not game.search(text_lower):
+                        gamesToToggle.append(game)
+                        self.ExcludedGames.append(game)
+
+                self.toggleGames(gamesToToggle)
+
+
+            self.PreviousText = text
+            self.Queue.pop(0)
+            self.Active = len(self.Queue)
 
 class Catalog:
     def __init__(self, catalogs, name, entryClass):
@@ -840,6 +857,7 @@ class repository(MetaData):
             elif process == 'u':
                 self.update()
 
+        self.updateMetaData()
         self.print('Processing Finished')
         self.setProcessing(False)
 
@@ -1457,9 +1475,17 @@ class RGBDS(repository):
     def setOutdated(self, outdated, addToList=True):
         super().setOutdated(outdated, False)
 
-    # dont add to any list
     def setMissing(self, missing, addToList=True):
         super().setMissing(missing, False)
+
+    def setLibrary(self, library, addToList=True):
+        super().setLibrary(library, False)
+
+    def setExcluding(self, excluding, addToList=True):
+        super().setExcluding(excluding, False)
+
+    def setFavorites(self, favorites, addToList=True):
+        super().setFavorites(favorites, False)
 
     def refresh(self):
         result = super().refresh()
