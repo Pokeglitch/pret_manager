@@ -3,7 +3,6 @@
 ## GUI
 
 ### Filter
-  * Clear Filter
   * Invert Filter
   * Save / Load Filter
   * Set Default Filter / Utilize Default Filter

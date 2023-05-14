@@ -8,12 +8,10 @@ update 'build' handling same way as 'releases'
 -- only permit 'tar' to be used with wsl, otherwise it uses main
 
 Bugs:
-- when selecting Outdated and NOT missing, and then 'updating':
--- NOT missing gets unselected
--- sometimes closes/crashes without error...
+Test when two lists are auto updated at same time, since both will call tiles.refresh()
+- missing and outdated...
 
 - Pure RGB still has the overwrite local files issues when updating...
-
 - Dont mark as updated if it any failed...
 ------
 dbl click:

@@ -165,7 +165,11 @@ class BaseListEntry(CatalogEntry):
 
     def addToFilter(self):
         if self.GUI and self.GUI.Mode:
-            getattr(self.Manager.GUI.Content.Tiles, 'add' + self.GUI.Mode.upper())(self.GUI, False)
+            mode = self.GUI.Mode.upper()
+            # dont add as new since it will erase other filters
+            if mode == 'NEW':
+                mode = 'OR'
+            getattr(self.Manager.GUI.Content.Tiles, 'add' + mode)(self.GUI, False)
             self.Manager.GUI.Content.Tiles.refresh()
 
     def write(self):
