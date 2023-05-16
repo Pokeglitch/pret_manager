@@ -1568,7 +1568,6 @@ class RGBDS(repository):
             if not get_dirs(self.path['builds']):
                 self.rmdir(self.path['builds'], 'Build directory is empty')
 
-
     def build(self, version):
         # If the version is not in the list of releases, then update
         if version not in self.releases:

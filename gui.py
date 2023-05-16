@@ -185,7 +185,7 @@ class QueueContextMenu(ContextMenu):
         if not queue.GUI.Window.Process:
             self.addAction( queue.ProcessAction )
 
-        self.Coords = queue.ListContainer.mapToGlobal(QPoint(0, 0))
+        self.Coords = queue.ListContainer.Scroll.mapToGlobal(QPoint(0, 0))
         self.start()
 
 class QueueHeaderMenuIcon(MenuIcon):
