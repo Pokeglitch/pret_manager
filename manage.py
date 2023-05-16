@@ -72,9 +72,7 @@ class AuthorEntry(CatalogEntry):
         author_dir = games_dir + self.Name
         # if the author directory exists, but is empty, remove
         if os.path.exists(author_dir) and not get_dirs(author_dir):
-            self.Manager.print('No games found for Author: ' + self.Name)
-            self.Manager.print('Removing directory: ' + author_dir)
-            rmdir(author_dir)
+            self.rmdir(author_dir, 'No games found for Author: ' + self.Name)
 
     def getGame(self, title):
         return self.GameStructure[title]
@@ -817,7 +815,6 @@ class repository(MetaData):
 
             self.updateMetaData()
                 
-
         if self.manager.GUI:
             self.init_GUI()
 
@@ -946,46 +943,64 @@ class repository(MetaData):
         return obj.items()
 
 ######### Builds Methods
+    def get_build_data(self, branchName, dirName):
+        if branchName not in self.builds:
+            self.builds[branchName] = {}
+        
+        if dirName not in self.builds[branchName]:
+            self.builds[branchName][dirName] = {}
+
+        return self.builds[branchName][dirName]
 
     def parse_builds(self):
         self.builds = {}
+
+        for branchName in get_dirs(self.path['builds']):
+            branch_dir = self.path['builds'] + branchName
+            
+            for dirName in get_dirs(branch_dir):
+                # if the dir name matches the template, then it is a build
+                if re.match(r'^\d{4}-\d{2}-\d{2} [a-fA-F\d]{8} \([^)]+\)$',dirName):
+                    build_dir = branch_dir + '/' + dirName
+                    files = get_builds(build_dir)
+                    # if builds exist in the directory:
+                    if files:
+                        self.store_build(branchName, dirName, files)
+
+    def store_build(self, branchName, dirName, files):
+        data = self.get_build_data(branchName, dirName)
+
+        for file in files:
+            data[file.name] = file
+        
+        self.setLibrary(True)
+
+    def clean_builds(self):
         if os.path.exists(self.path['builds']):
-            for branch in get_dirs(self.path['builds']):
-                branch_dir = self.path['builds'] + branch
+            for branchName in get_dirs(self.path['builds']):
+                branch_dir = self.path['builds'] + branchName
                 for dirname in get_dirs(branch_dir):
-                    build_path = branch_dir + '/' + dirname
+                    build_dir = branch_dir + '/' + dirname
+                    error_message = ''
+
                     # if the dir name matches the template, then it is a build
                     if re.match(r'^\d{4}-\d{2}-\d{2} [a-fA-F\d]{8} \([^)]+\)$',dirname):
-                        builds = get_builds(build_path)
-                        # if builds exist in the directory:
-                        if builds:
-                            if branch not in self.builds:
-                                self.builds[branch] = {}
-
-                            self.builds[branch][dirname] = {}
-                            for build in builds:
-                                self.builds[branch][dirname][build.name] = build
-
-                            self.setLibrary(True)
-                        else:
-                            self.print('Missing valid build files in pre-existing directory: ' + branch + '/' + dirname)
-                            self.print('Removing directory: ' + build_path)
-                            rmdir(build_path)
+                        # if no builds exist in the directory:
+                        if not get_builds(build_dir):
+                            error_message = 'Missing valid build files in pre-existing directory: ' + branchName + '/' + dirname
                     else:
-                        self.print('Invalid build directory name: ' + dirname)
-                        self.print('Removing directory: ' + build_path)
-                        rmdir(build_path)
+                        error_message = 'Invalid build directory name: ' + dirname
+                    
+                    if error_message:
+                        self.rmdir(build_dir, error_message)
 
                 # if the branch directory is empty, then delete
                 if not get_dirs(branch_dir):
-                    self.print('Branch directory has no builds: ' + branch)
-                    self.print('Removing directory: ' + branch_dir)
-                    rmdir(branch_dir)
+                    self.rmdir(branch_dir, 'Branch directory has no builds: ' + branchName)
             
             # if the builds directory is empty, then delete
             if not get_dirs(self.path['builds']):
-                self.print('Build directory is empty. Removing: ' + self.path['builds'])
-                rmdir(self.path['builds'])
+                self.rmdir(self.path['builds'], 'Build directory is empty')
 
     def set_branch(self, branch):
         if branch != self.CurrentBranch:
@@ -1064,6 +1079,7 @@ class repository(MetaData):
 
     def clean_directory(self):
         self.clean_releases()
+        self.clean_builds()
 
 ######### Branch Methods
 
@@ -1310,16 +1326,14 @@ class repository(MetaData):
             self.switch(*args)
 
         version = self.RGBDS or self.rgbds
+
+        if not self.CurrentBranch:
+            self.get_current_branch_info()
+            
         self.get_build_info(version)
 
-        # if the build directory exists but doesnt contain valid files, then remove
-        if os.path.exists(self.build_dir) and not get_builds(self.build_dir):
-            self.print('Missing valid build files in pre-existing directory: ' + self.build_name)
-            self.print('Removing directory: ' + self.build_dir)
-            rmdir(self.build_dir)
-
         # only build if commit not already built
-        if os.path.exists(self.build_dir):
+        if self.CurrentBranch in self.builds and self.build_name in self.builds[self.CurrentBranch]:
             self.print('Commit has already been built: ' + self.build_name)
         # if rgbds version is known and configured, switch to and make:
         elif version and version != "None": 
@@ -1425,17 +1439,10 @@ class repository(MetaData):
                 names = copy_files(files, self.build_dir)
                 self.print('Placed build file(s) in ' + self.CurrentBranch + '/' + self.build_name + ': ' + ', '.join(names))
                 
-                if self.CurrentBranch not in self.builds:
-                    self.builds[self.CurrentBranch] = {}
-
-                self.builds[self.CurrentBranch][self.build_name] = {}
-                for file in files:
-                    self.builds[self.CurrentBranch][self.build_name][file.name] = self.build_dir + file.name
+                self.store_build(self.CurrentBranch, self.build_name, files)
 
                 if self.GUI:
                     self.BuildSignal.emit()
-
-                self.setLibrary(True)
 
                 return True
             else:
@@ -1511,6 +1518,8 @@ class RGBDS(repository):
         self.releases[tag] = files[0].parts[-2]
 
     def parse_releases(self):
+        self.clean_releases()
+
         super().parse_releases()
 
         self.ReleaseIDs = []
@@ -1519,33 +1528,45 @@ class RGBDS(repository):
                 self.ReleaseIDs.insert(0, tag)
 
     def parse_builds(self):
+        self.clean_builds()
+
         self.builds = {
             'linux' : {},
             'win64' : {},
             'win32' : {}
         }
         
-        if os.path.exists(self.path['builds']):
-            for version in get_dirs(self.path['builds']):
-                version_dir = self.path['builds'] + version + '/'
-                for type in get_dirs(version_dir):
-                    build_dir = version_dir + type
-                    # if the bulid dir doesnt have the expected files, then delete
+        for version in get_dirs(self.path['builds']):
+            version_dir = self.path['builds'] + version
+
+            for type in get_dirs(version_dir):
+                if type in self.builds:
+                    build_dir = version_dir + '/' + type
+
                     if get_all_files(build_dir):
                         self.builds[type][version] = build_dir
-                    else:
-                        self.print('Missing valid build files in pre-existing directory: ' + version + '/' + type)
-                        self.print('Removing directory: ' + build_dir)
-                        rmdir(build_dir)
+
+    def clean_builds(self):
+        if os.path.exists(self.path['builds']):
+            for version in get_dirs(self.path['builds']):
+                version_dir = self.path['builds'] + version
+                for type in get_dirs(version_dir):
+                    build_dir = version_dir + '/' + type
+                    error_message = ''
+
+                    if type not in ['linux', 'win64', 'win32']:
+                        error_message = 'Invalid build type: ' + type
+                    elif not get_all_files(build_dir):
+                        error_message = 'Missing valid build files in pre-existing directory: ' + version + '/' + type
+                    
+                    if error_message:
+                        self.rmdir(build_dir, error_message)
 
                 if not get_dirs(version_dir):
-                    self.print('Version directory has no builds: ' + version)
-                    self.print('Removing directory: ' + version_dir)
-                    rmdir(version_dir)
+                    self.rmdir(version_dir, 'Version directory has no builds: ' + version)
 
             if not get_dirs(self.path['builds']):
-                self.print('Build directory is empty. Removing: ' + self.path['builds'])
-                rmdir(self.path['builds'])
+                self.rmdir(self.path['builds'], 'Build directory is empty')
 
 
     def build(self, version):
@@ -1579,9 +1600,7 @@ class RGBDS(repository):
 
             # if the keyfile is not found, delete the directory so it will re-extract
             if not keyfile_path:
-                self.print('Missing keyfile in pre-extracted directory: ' + keyfile)
-                self.print('Removing directory: ' + extraction_dir)
-                rmdir(extraction_dir)
+                self.rmdir(extraction_dir, 'Missing keyfile in pre-extracted directory: ' + keyfile)
                 extraction_dir_path = []
         
         # if the extraction dir doesnt exist, then extract
@@ -1609,9 +1628,7 @@ class RGBDS(repository):
 
             # if the keyfile is not found, delete the directory so it will re-extract
             if not keyfile_path:
-                self.print('Missing keyfile in extraction directory: ' + keyfile)
-                self.print('Removing directory: ' + extraction_dir)
-                rmdir(extraction_dir)
+                self.rmdir(extraction_dir, 'Missing keyfile in extraction directory: ' + keyfile)
                 # TODO - redownload release?
                 return False
 

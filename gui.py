@@ -2,17 +2,14 @@ import sys
 
 '''
 TODO:
-update 'build' handling same way as 'releases'
-
 'tar' in linux wont extract a zip file
 -- only permit 'tar' to be used with wsl, otherwise it uses main
 
 Bugs:
-Test when two lists are auto updated at same time, since both will call tiles.refresh()
-- missing and outdated...
-
 - Pure RGB still has the overwrite local files issues when updating...
 - Dont mark as updated if it any failed...
+
+Check remaining TODOs throughout source
 ------
 dbl click:
 https://wiki.python.org/moin/PyQt/Distinguishing%20between%20click%20and%20double%20click
