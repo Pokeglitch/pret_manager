@@ -55,6 +55,7 @@ class RepositoryBody(GamePanelBody):
         super().__init__(parent)
         self.Author = AuthorField(self)
         self.Repository = RepositoryField(self)
+        self.Basis = BasisField(self)
         self.Branches = GameBranches(self)
         self.Commit = Field(self, 'Commit', '-')
         self.LastUpdate = Field(self, 'Last Update', '-')
@@ -76,7 +77,6 @@ class AuthorField(HBox):
     def __init__(self, parent):
         super().__init__(parent.GUI)
         self.Game = parent.Game
-        #super().__init__(parent, 'Author', self.Game.author, 'url', self.openURL)
 
         self.Left = self.label('Author:', 1)
 
@@ -84,7 +84,7 @@ class AuthorField(HBox):
 
         self.Author = self.Right.label(self.Game.author)
         self.Author.setAlignment(Qt.AlignCenter)
-        self.Author.setObjectName('PanelAuthor')
+        self.Author.setObjectName('PanelClickable')
         self.Author.mousePressEvent = self.selectAuthor
 
         self.Folder = Icon(self.Right, 'assets/images/folder_15.png', 15)
@@ -111,14 +111,67 @@ class AuthorField(HBox):
         if event.button() == Qt.LeftButton:
             webbrowser.open(self.Game.author_url)
 
-# TODO - instead, open directory, and have an icon to launch url
-class RepositoryField(Field):
+class RepositoryField(HBox):
     def __init__(self, parent):
+        super().__init__(parent.GUI)
         self.Game = parent.Game
-        super().__init__(parent, 'Repository', self.Game.title, 'url', self.openURL)
 
-    def openURL(self, e):
-        webbrowser.open(self.Game.url)
+        self.Left = self.label('Repository:', 1)
+
+        self.Right = HBox(self.GUI)
+
+        self.Author = self.Right.label(self.Game.title)
+        self.Author.setAlignment(Qt.AlignCenter)
+
+        self.Folder = Icon(self.Right, 'assets/images/folder_15.png', 15)
+        self.Folder.mouseDoubleClickEvent = self.openFolder
+
+        self.URL = Icon(self.Right, 'assets/images/new_window.png', 15)
+        self.URL.mouseDoubleClickEvent = self.openURL
+        
+        self.Right.addStretch()
+        self.Right.addTo(self, 1)
+
+        self.addTo(parent)
+
+    def openFolder(self, event):
+        if event.button() == Qt.LeftButton:
+            path = QUrl.fromLocalFile(self.Game.path["repo"])
+            QDesktopServices.openUrl(path)
+
+    def openURL(self, event):
+        if event.button() == Qt.LeftButton:
+            webbrowser.open(self.Game.url)
+
+class BasisField(HBox):
+    def __init__(self, parent):
+        super().__init__(parent.GUI)
+        self.Game = parent.Game
+
+        self.Left = self.label('Basis:', 1)
+
+        hasBasis = 'basis' in self.Game.Data
+        basis = self.Game.Data["basis"] if hasBasis else '-'
+
+        self.Right = HBox(self.GUI)
+        self.Basis = self.Right.label(basis)
+        self.Basis.setAlignment(Qt.AlignCenter)
+        self.Right.addStretch()
+        self.Right.addTo(self, 1)
+
+        self.BasisGame = None
+        if hasBasis:
+            self.Basis.setObjectName('PanelClickable')
+            self.Basis.mousePressEvent = self.selectBasis
+            [author, title] = basis.split('/')
+            self.BasisGame = self.GUI.Manager.Catalogs.Authors.get(author).getGame(title)
+
+        self.addTo(parent)
+
+
+    def selectBasis(self, event):
+        if self.BasisGame and event.button() == Qt.LeftButton:
+            self.GUI.Panel.setActive(self.BasisGame.GUI)
 
 class GameBranches(HBox):
     def __init__(self, parent):
@@ -311,15 +364,28 @@ class PanelIconFavorites(PanelIcon):
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.Game.setFavorites(not self.Game.Favorites)
+
+class PanelIconFolder(Icon):
+    def __init__(self, parent):
+        super().__init__(parent, 'assets/images/folder.png', 35)
+        self.GUI = parent.GUI
+        self.Game = parent.Game
+        CenterH(self).addTo(parent)
+
+    def mouseDoubleClickEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            path = QUrl.fromLocalFile(self.Game.path['base'])
+            QDesktopServices.openUrl(path)
         
 class PanelIconLibrary(PanelIcon):
     def __init__(self, parent):
         super().__init__(parent, 'Library')
+        self.isDoubleClick = False
 
-    # TODO - either attempt to buid, or launch selected build?
-    def mousePressEvent(self, event):
+    def mouseDoubleClickEvent(self, event):
         if event.button() == Qt.LeftButton:
             pass
+            # TODO - launch most recent build, or preset build
         
 class PanelIconOutdated(PanelIcon):
     def __init__(self, parent):
@@ -330,7 +396,7 @@ class PanelIconOutdated(PanelIcon):
         if event.button() == Qt.LeftButton:
             pass
 
-class IconsContainer(VBox):
+class IconsRight(VBox):
     def __init__(self, parent):
         super().__init__(parent.GUI)
         self.Game = parent.Game
@@ -340,29 +406,26 @@ class IconsContainer(VBox):
         self.Outdated = PanelIconOutdated(self)
 
         self.addStretch()
-        self.addTo(parent)
+        CenterH(self).addTo(parent)
 
-class IconsColumn(VBox):
+class IconsLeft(VBox):
     def __init__(self, parent):
         super().__init__(parent.GUI)
         self.Game = parent.Game
 
-        self.IconsContainer = IconsContainer(self)
-        
-        filler = HBox(self)
-        filler.addStretch()
-        filler.addTo(self)
+        self.Folder = PanelIconFolder(self)
 
-        self.addTo(parent)
+        self.addStretch()
+        CenterH(self).addTo(parent)
 
 class ArtworkIconContainer(HBox):
     def __init__(self, parent):
         super().__init__(parent.GUI)
         self.Game = parent.Game
 
-        self.addStretch() # left filler
+        self.IconsLeft = IconsLeft(self)
         self.Artwork = GamePanelArtwork(self)
-        self.IconsColumn = IconsColumn(self)
+        self.IconsRight = IconsRight(self)
         self.addTo(parent)
 
 

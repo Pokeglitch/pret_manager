@@ -16,12 +16,8 @@ https://wiki.python.org/moin/PyQt/Distinguishing%20between%20click%20and%20doubl
 
 Game Panel:
 - dbl click cartridge to lauch preset game or latest
--- dbl click Tile to do same
-- dbl click updte to run update process
-- click on author in panel to select in browser
-- show lists containing this game
-- Dont show process or build details for 'extras'
-- add basis & double click to switch the basis fron game panel
+
+Options for Auto-refresh/Auto-Update
 
 - rename Builds to Branches, and show all possible branches
 -- checkmarks nexts to ones to track
@@ -37,9 +33,15 @@ Game Panel:
 -- can right click to download, switch to, delete, or build if missing
 
 context menu:
+- launch game
 - way to delete a game(s) from disk
 -- or specifically, a repo, build(s), release(s)
 - all process actions
+- set/reset auto-refresh
+- set/reset auto-update
+
+- show lists containing this game
+- Dont show process or build details for 'extras'
 -------
 Update README, Tutorial
 
