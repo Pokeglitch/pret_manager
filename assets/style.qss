@@ -748,6 +748,22 @@ QLabel#url {
     text-decoration: underline;
 }
 
+#PanelAuthor {
+    min-height: 20px;
+    max-height: 20px;
+    min-width: 64px;
+    max-width: 64px;
+    border-radius: 8px;
+    border: 1px solid black;
+    padding: 0px;
+    margin:2px;
+    background: #3a3a3b;
+}
+
+#PanelAuthor:hover {
+    background-color: #505050;
+}
+
 QTreeWidget {
     border: none;
 }

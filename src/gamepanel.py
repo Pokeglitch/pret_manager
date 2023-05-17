@@ -72,14 +72,44 @@ class RepositoryBody(GamePanelBody):
             self.Commit.Right.setText('-')
             self.LastUpdate.Right.setText('-')
 
-# TODO - instead, show in Browser, and have an icon to launch url
-class AuthorField(Field):
+class AuthorField(HBox):
     def __init__(self, parent):
+        super().__init__(parent.GUI)
         self.Game = parent.Game
-        super().__init__(parent, 'Author', self.Game.author, 'url', self.openURL)
+        #super().__init__(parent, 'Author', self.Game.author, 'url', self.openURL)
 
-    def openURL(self, e):
-        webbrowser.open(self.Game.author_url)
+        self.Left = self.label('Author:', 1)
+
+        self.Right = HBox(self.GUI)
+
+        self.Author = self.Right.label(self.Game.author)
+        self.Author.setAlignment(Qt.AlignCenter)
+        self.Author.setObjectName('PanelAuthor')
+        self.Author.mousePressEvent = self.selectAuthor
+
+        self.Folder = Icon(self.Right, 'assets/images/folder_15.png', 15)
+        self.Folder.mouseDoubleClickEvent = self.openFolder
+
+        self.URL = Icon(self.Right, 'assets/images/new_window.png', 15)
+        self.URL.mouseDoubleClickEvent = self.openURL
+        
+        self.Right.addStretch()
+        self.Right.addTo(self, 1)
+
+        self.addTo(parent)
+
+    def selectAuthor(self, event):
+        if event.button() == Qt.LeftButton:
+            self.GUI.Manager.Catalogs.Authors.get(self.Game.author).GUI.handleClick()
+
+    def openFolder(self, event):
+        if event.button() == Qt.LeftButton:
+            path = QUrl.fromLocalFile(self.GUI.Manager.Directory + self.Game.author)
+            QDesktopServices.openUrl(path)
+
+    def openURL(self, event):
+        if event.button() == Qt.LeftButton:
+            webbrowser.open(self.Game.author_url)
 
 # TODO - instead, open directory, and have an icon to launch url
 class RepositoryField(Field):
