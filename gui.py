@@ -39,15 +39,12 @@ Game Panel:
 context menu:
 - way to delete a game(s) from disk
 -- or specifically, a repo, build(s), release(s)
-
+- all process actions
 -------
 Update README, Tutorial
 
 Compile to executable for release:
 https://nuitka.net/
-
--------
-
 '''
 from src.panel import *
 from src.gametile import *

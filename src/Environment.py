@@ -26,10 +26,12 @@ class Environment:
                 'creationflags' : subprocess.CREATE_NEW_PROCESS_GROUP
             }
             input = ''
+            stdout = False
 
             for key, value in options.items():
                 if key == 'capture_output':
                     if value:
+                        stdout = True
                         parameters['stdout'] = subprocess.PIPE
                 elif key == 'input':
                     input = value
@@ -40,22 +42,20 @@ class Environment:
             process = subprocess.Popen(command, **parameters)
             self.Environments.Manager.setProcess(process)
             
-            if input:
-                process.communicate(input)
+            output = ''
+            if input or stdout:
+                output, err = process.communicate(input)
 
             while process.poll() is None:
                 pass
 
             self.Environments.Manager.setProcess(None)
 
-            if 'capture_output' in options and options['capture_output']:
-                return process.stdout.read().split('\n')
-            else:
-                return process
+            return output.split('\n') if stdout else process
             
         except Exception:
             self.Environments.Manager.setProcess(None, 'Error executing ' + self.Name + ' Environment')
-            if 'capture_output' in options and options['capture_output']:
+            if stdout:
                 return ['']
             else:
                 return EmptyReturn()
@@ -172,13 +172,14 @@ class Github(Command):
     def download(self, id, destination):
         # view assets
         assets = json.loads(self.run('release view --json assets {0} -R {1}'.format(id, self.Game.url))[0])["assets"]
-        
+
         destination = self.path(destination)
 
         if assets:
             self.run('release download {0} -R {1} -D "{2}" -p "*"'.format(id, self.Game.url, destination))
         else:
             # todo - add option to build
+            # dont download at all?
             self.run('release download {0} -R {1} -D "{2}" -A zip'.format(id, self.Game.url, destination))
 
 class Git(GameCommand):
