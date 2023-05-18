@@ -36,7 +36,7 @@ class GameBaseContextMenu(ContextMenu):
             self.addMenu( RemoveGameFromListMenu(parent, removeLists) )
 
         if not gui.GUI.Window.Process:
-            self.addAction( gui.ProcessAction )
+            self.addMenu( ProcessesMenu(parent, gui) )
 
         # Todo - way to delete game data from disk
         # - option to keep builds, releases

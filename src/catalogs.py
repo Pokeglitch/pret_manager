@@ -47,7 +47,7 @@ class CatalogEntryContextMenu(ContextMenu):
             self.addAction( parent.EraseAction )
         
         if games and not parent.GUI.Window.Process:
-            self.addAction( parent.ProcessAction )
+            self.addMenu( ProcessesMenu(parent) )
 
         self.start()
 
@@ -99,7 +99,12 @@ class CatalogEntryGUI(HBox):
             self.setMode(mode)
 
     def process(self):
-        self.GUI.startProcess(self.getData())
+        if self.Data.GameList:
+            self.GUI.startProcess(self.getData())
+
+    def specificProcess(self, sequence):
+        if self.Data.GameList:
+            self.GUI.startSpecificProcess(sequence, self.getData())
 
     def addToQueueHandler(self):
         self.GUI.Queue.addGames(self.getData())

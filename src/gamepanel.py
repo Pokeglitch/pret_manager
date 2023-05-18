@@ -104,8 +104,7 @@ class AuthorField(HBox):
 
     def openFolder(self, event):
         if event.button() == Qt.LeftButton:
-            path = QUrl.fromLocalFile(self.GUI.Manager.Directory + self.Game.author)
-            QDesktopServices.openUrl(path)
+            openDir(self.GUI.Manager.Directory + self.Game.author)
 
     def openURL(self, event):
         if event.button() == Qt.LeftButton:
@@ -136,8 +135,7 @@ class RepositoryField(HBox):
 
     def openFolder(self, event):
         if event.button() == Qt.LeftButton:
-            path = QUrl.fromLocalFile(self.Game.path["repo"])
-            QDesktopServices.openUrl(path)
+            openDir(self.Game.path["repo"])
 
     def openURL(self, event):
         if event.button() == Qt.LeftButton:
@@ -374,8 +372,7 @@ class PanelIconFolder(Icon):
 
     def mouseDoubleClickEvent(self, event):
         if event.button() == Qt.LeftButton:
-            path = QUrl.fromLocalFile(self.Game.path['base'])
-            QDesktopServices.openUrl(path)
+            openDir(self.Game.path['base'])
         
 class PanelIconLibrary(PanelIcon):
     def __init__(self, parent):

@@ -7,6 +7,12 @@ from src.Files import *
 
 OfficialTags = ['red','green','blue','yellow','gold','silver','crystal','spaceworld','tcg1','tcg2','official','binary','disasm','vc-patch','analogue','debug','extras']
 
+
+def openDir(path):
+    if os.path.exists(path):
+        link = QUrl.fromLocalFile(path)
+        QDesktopServices.openUrl(link)
+
 def listToDict(list):
     data = {}
     for game in list:
@@ -436,6 +442,7 @@ class RemoveListFromListMenu(QMenu):
 
         for list in lists:
             self.addAction( RemoveListFromList(parent, list))
+            
 
 class AddListToList(Action):
     def __init__(self, parent, list):
@@ -461,9 +468,21 @@ class ClearQueue(Action):
     def __init__(self, parent):
         super().__init__(parent, 'Clear Queue', parent.erase)
 
+
+class ProcessesMenu(QMenu):
+    def __init__(self, parent, target=None):
+        super().__init__("Process", parent)
+        if target is None:
+            target = parent
+        self.addAction( target.ProcessAction )
+        self.addAction( Action(parent, 'Refresh', lambda: target.specificProcess('r')))
+        self.addAction( Action(parent, 'Update', lambda: target.specificProcess('u')))
+        self.addAction( Action(parent, 'Clean', lambda: target.specificProcess('c')))
+        self.addAction( Action(parent, 'Build', lambda: target.specificProcess('b')))
+
 class ProcessAction(Action):
     def __init__(self, parent):
-        super().__init__(parent, 'Process', parent.process)
+        super().__init__(parent, 'Current Sequence', parent.process)
         
 class MenuIcon(Icon):
     def __init__(self, parent):

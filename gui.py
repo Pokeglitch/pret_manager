@@ -11,11 +11,9 @@ Bugs:
 
 Check remaining TODOs throughout source
 ------
-dbl click:
-https://wiki.python.org/moin/PyQt/Distinguishing%20between%20click%20and%20double%20click
-
 Game Panel:
 - dbl click cartridge to lauch preset game or latest
+- Folder icons should be faded if folder does not exist
 
 Options for Auto-refresh/Auto-Update
 
@@ -36,7 +34,6 @@ context menu:
 - launch game
 - way to delete a game(s) from disk
 -- or specifically, a repo, build(s), release(s)
-- all process actions
 - set/reset auto-refresh
 - set/reset auto-update
 
@@ -125,6 +122,9 @@ class GameGUI(QWidget):
     def process(self):
         self.GUI.startProcess([self.Game])
 
+    def specificProcess(self, sequence):
+        self.GUI.startSpecificProcess(sequence, [self.Game])
+
     def addToQueueHandler(self):
         self.GUI.Queue.addGame(self)
 
@@ -181,8 +181,8 @@ class QueueContextMenu(ContextMenu):
 
         self.addAction( queue.ClearAction )
         
-        if not queue.GUI.Window.Process:
-            self.addAction( queue.ProcessAction )
+        if queue.List and not queue.GUI.Window.Process:
+            self.addMenu( ProcessesMenu(queue) )
 
         self.Coords = queue.ListContainer.Scroll.mapToGlobal(QPoint(0, 0))
         self.start()
@@ -288,6 +288,10 @@ class Queue(VBox):
     def process(self):
         if self.List:
             self.GUI.startProcess(self.getData())
+            
+    def specificProcess(self, sequence):
+        if self.List:
+            self.GUI.startSpecificProcess(sequence, self.getData())
 
     def saveList(self):
         self.GUI.saveList(self.getData())
@@ -337,7 +341,7 @@ class TilesContextMenu(ContextMenu):
             self.addAction( tiles.ClearAction )
 
         if not tiles.isEmpty and not tiles.GUI.Window.Process:
-            self.addAction( tiles.ProcessAction )
+            self.addMenu( ProcessesMenu(tiles) )
 
         self.Coords = tiles.Content.Scroll.mapToGlobal(QPoint(0, 0))
         self.start()
@@ -596,6 +600,10 @@ class Tiles(VBox):
     def process(self, event):
         if self.All_Games:
             self.GUI.startProcess(self.getData())
+            
+    def specificProcess(self, sequence):
+        if self.All_Games:
+            self.GUI.startSpecificProcess(sequence, self.getData())
 
 class ManagerThread(QThread):
     def __init__(self, GUI):
@@ -628,10 +636,10 @@ class SwitchBranch(ManagerThread):
         self.Game.set_branch(self.Branch)
 
 class ExecuteProcess(ManagerThread):
-    def __init__(self, GUI, games):
+    def __init__(self, GUI, sequence, games):
         self.Games = games
         self.Game = None
-        self.Sequence = GUI.Process.Options.compile()
+        self.Sequence = sequence
 
         super().__init__(GUI)
 
@@ -698,7 +706,12 @@ class MainContents(HBox):
 
     def startProcess(self, games):
         if not self.Window.Process:
-            self.Window.Process = ExecuteProcess(self, games[:])
+            sequence = self.Process.Options.compile()
+            self.Window.Process = ExecuteProcess(self, sequence, games[:])
+
+    def startSpecificProcess(self, sequence, games):
+        if not self.Window.Process:
+            self.Window.Process = ExecuteProcess(self, sequence, games[:])
 
     def onProcessing(self, processing):
         if not processing:

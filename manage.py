@@ -1070,6 +1070,7 @@ class repository(MetaData):
 
     def refresh(self):
         if not self.Refreshed:
+            self.print("Refreshing repository")
             self.refresh_branches()
             self.refresh_tags()
             self.refresh_releases()
