@@ -42,6 +42,8 @@ context menu:
 -------
 Update README, Tutorial
 
+- Handle when a repository changes names
+
 Compile to executable for release:
 https://nuitka.net/
 '''

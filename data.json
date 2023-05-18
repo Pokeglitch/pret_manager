@@ -518,6 +518,7 @@
   "PlagueVonKarma": {
     "kep-hack": {
       "title": "Kanto Expansion Pak",
+      "description" : "A ROM Hack based on the Kanto Expansion Pak (KEP) Showdown Mod",
       "rgbds": "0.6.1",
       "tags": [
         "red",
@@ -869,7 +870,7 @@
   },
   "ViWalls": {
     "pureRGB-FakeMime": {
-      "title": "Pure RGB (Fake Beta Pokemon)",
+      "title": "PureRGB-FakeMime",
       "rgbds": "0.6.1",
       "tags": [
         "red",
@@ -884,7 +885,7 @@
   },
   "Vortyne": {
     "pureRGB": {
-      "title": "Pure RGB",
+      "title": "PureRGB",
       "rgbds": "0.6.1",
       "tags": [
         "red",
