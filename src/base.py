@@ -7,11 +7,10 @@ from src.Files import *
 
 OfficialTags = ['red','green','blue','yellow','gold','silver','crystal','spaceworld','tcg1','tcg2','official','binary','disasm','vc-patch','analogue','debug','extras']
 
-
-def openDir(path):
-    if os.path.exists(path):
-        link = QUrl.fromLocalFile(path)
-        QDesktopServices.openUrl(link)
+def open_path(path):
+    if path and os.path.exists(path):
+        url = QUrl.fromLocalFile(path)
+        QDesktopServices.openUrl(url)
 
 def listToDict(list):
     data = {}

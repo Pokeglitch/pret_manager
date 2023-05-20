@@ -10,7 +10,7 @@ from PyQt5.QtCore import pyqtSignal
 
 build_extensions = ['gb','gbc','pocket','patch']
 release_extensions = build_extensions + ['ips','bps','bsp','zip']
-repo_metadata_properties = ['Branches','GitTags','CurrentBranch','RGBDS','Excluding','Favorites']
+repo_metadata_properties = ['PrimaryGame','Branches','GitTags','CurrentBranch','RGBDS','Excluding','Favorites']
 rgbds_files = ['rgbasm','rgbfix','rgblink','rgbgfx']
 
 def error(msg):
@@ -727,6 +727,7 @@ class repository(MetaData):
     BuildSignal = pyqtSignal()
     ReleaseSignal = pyqtSignal()
     ProcessingSignal = pyqtSignal(bool)
+    PrimaryGameSignal = pyqtSignal(str, QTreeWidgetItem)
 
     def __init__(self, manager, author, title, data):
         super().__init__(repo_metadata_properties)
@@ -786,6 +787,8 @@ class repository(MetaData):
         if not os.path.exists(self.Boxart):
             self.Boxart = 'assets/images/gb.png'
 
+        self.PrimaryGame = None
+
         self.Missing = None
         self.Outdated = None
         self.Excluding = False
@@ -803,6 +806,8 @@ class repository(MetaData):
 
         self.Initialized = True
 
+        modified_metadata = False
+
         # if meta data includes a current branch, but it was detected as missing, then update
         if self.Missing and self.CurrentBranch:
             self.CurrentBranch = None
@@ -813,8 +818,16 @@ class repository(MetaData):
                 if "LastUpdate" in self.Branches[branch]:
                     del self.Branches[branch]["LastUpdate"]
 
+            modified_metadata = True
+
+        if self.PrimaryGame and not os.path.exists(self.PrimaryGame):
+            self.print('Primary File does not exist: ' + self.PrimaryGame)
+            self.PrimaryGame = None
+            modified_metadata = True
+
+        if modified_metadata:
             self.updateMetaData()
-                
+        
         if self.manager.GUI:
             self.init_GUI()
 
@@ -1279,6 +1292,48 @@ class repository(MetaData):
         
         return release_found
      
+    def setPrimaryGame(self, path, item):
+        if path != self.PrimaryGame:
+            self.PrimaryGame = path
+            self.updateMetaData()
+            
+            self.PrimaryGameSignal.emit(path, item)
+
+    def findNewestGame(self):
+        all_releases = [*self.releases.keys()]
+        newest_release = max(all_releases) if all_releases else None
+
+        all_builds = {}
+        for branch in self.builds:
+            branch_builds = list(self.builds[branch].keys())
+            if branch_builds:
+                build = max(branch_builds)
+                all_builds[build] = branch
+
+        newest_build = max(all_builds.keys()) if all_builds else None
+
+        if newest_build and newest_release:
+            if newest_release < newest_build:
+                newest_release = None
+            else:
+                newest_build = None
+
+        newest_dir = None
+
+        if newest_build:
+            newest_dir = self.path['builds'] + all_builds[newest_build] + '/' + newest_build
+        elif newest_release:
+            newest_dir = self.path['releases'] + newest_release
+        
+        if newest_dir:
+            files = get_releases(newest_dir)
+            files.sort(key=os.path.getmtime)
+            return str(files[-1])
+        else:
+            return None
+
+
+
 ######### Flag Methods
 
     # TODO - all these gui update should be emitters?

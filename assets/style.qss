@@ -782,7 +782,9 @@ QTreeView::branch:closed:has-children {
 
 QTreeView::item {
     border: 1px solid #252526;
-    border-radius: 5px;
+    min-height:20px;
+    max-height:20px;
+    border-radius: 6px;
     color: #ffffff;
 }
 

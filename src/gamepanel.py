@@ -105,7 +105,7 @@ class AuthorField(HBox):
 
     def openFolder(self, event):
         if event.button() == Qt.LeftButton:
-            openDir(self.GUI.Manager.Directory + self.Game.author)
+            open_path(self.GUI.Manager.Directory + self.Game.author)
 
     def openURL(self, event):
         if event.button() == Qt.LeftButton:
@@ -136,7 +136,7 @@ class RepositoryField(HBox):
 
     def openFolder(self, event):
         if event.button() == Qt.LeftButton:
-            openDir(self.Game.path["repo"])
+            open_path(self.Game.path["repo"])
 
     def openURL(self, event):
         if event.button() == Qt.LeftButton:
@@ -283,6 +283,7 @@ class GameTree(VBox):
         self.addTo(parent, 1)
 
     def _draw(self):
+        self.PrimaryGame = None
         self.Tree.blockSignals(True)
         self.Tree.clear()
         self.draw()
@@ -292,6 +293,7 @@ class GameTree(VBox):
         item = QTreeWidgetItem(parent, self.Types[type].value)
         item.setText(0, text)
         item.path = path
+        item.Tree = self.Tree
         return item
     
     def process(self, branch):
@@ -316,13 +318,7 @@ class BranchProcessesMenu(QMenu):
 
 class OpenAction(Action):
     def __init__(self, parent, label, path):
-        super().__init__(parent, label, self.open)
-        self.Path = path
-
-    def open(self):
-        if self.Path and os.path.exists(self.Path):
-            url = QUrl.fromLocalFile(self.Path)
-            QDesktopServices.openUrl(url)
+        super().__init__(parent, label, lambda: open_path(path))
 
 class OpenFolder(OpenAction):
     def __init__(self, parent, path):
@@ -369,7 +365,6 @@ class BranchContextMenu(TreeContextMenu):
         self.start()
 
     def canSwitchTo(self):
-        print(not self.Item.isSelected(), not self.Game.Missing, not self.GUI.Window.Process, self.Name != self.Game.CurrentBranch)
         return not self.Item.isSelected() and not self.Game.Missing and not self.GUI.Window.Process and self.Name != self.Game.CurrentBranch
     
     def switchTo(self):
@@ -392,6 +387,11 @@ class FileContextMenu(TreeContextMenu):
         if self.Item.path and os.path.exists(self.Item.path):
             self.addAction( LaunchFile(self.Parent, self.Item.path) )
 
+            if self.Item.path == self.Game.PrimaryGame:
+                self.addAction( Action(self.Parent, "Remove as Primary", lambda: self.Game.setPrimaryGame(None, self.Item)) )
+            else:
+                self.addAction( Action(self.Parent, "Set as Primary", lambda: self.Game.setPrimaryGame(self.Item.path, self.Item) ) )
+
         self.start()
 
 class BranchesTree(GameTree):
@@ -403,6 +403,24 @@ class BranchesTree(GameTree):
         })
 
         self.Tree.itemChanged.connect(self.onItemChanged)
+        self.Game.PrimaryGameSignal.connect(self.onPrimaryGame)
+
+    def onPrimaryGame(self, path, item):
+        if item == self.PrimaryGame:
+            if not path:
+                if self.PrimaryGame:
+                    self.PrimaryGame.setIcon(0, QIcon())
+            
+                self.PrimaryGame = None
+        else:
+            if self.PrimaryGame:
+                self.PrimaryGame.setIcon(0, QIcon())
+
+            if path and item.Tree == self.Tree:
+                item.setIcon(0, QIcon('assets/images/library_14.png'))
+                self.PrimaryGame = item
+            else:
+                self.PrimaryGame = None
 
     def onItemChanged(self, item, col):
         if item.type() == self.Types["Branch"].value:
@@ -428,7 +446,10 @@ class BranchesTree(GameTree):
                         buildItem = self.addItem(branchItem, 'Build', buildName, self.Game.path['builds'] + branchName + '/' + buildName)
 
                         for fileName, path in branchBuilds[buildName].items():
-                            self.addItem(buildItem, 'File', fileName, str(path))
+                            path = str(path)
+                            fileItem = self.addItem(buildItem, 'File', fileName, path)
+                            if path == self.Game.PrimaryGame:
+                                self.onPrimaryGame(path, fileItem)
         else:
             noneItem = self.addItem(self.Tree, 'None', "None")
             noneItem.setFlags(Qt.NoItemFlags)
@@ -548,7 +569,7 @@ class PanelIconFolder(Icon):
 
     def mouseDoubleClickEvent(self, event):
         if event.button() == Qt.LeftButton:
-            openDir(self.Game.path['base'])
+            open_path(self.Game.path['base'])
         
 class PanelIconLibrary(PanelIcon):
     def __init__(self, parent):

@@ -4,7 +4,11 @@ class GameBaseContextMenu(ContextMenu):
     def __init__(self, parent, event):
         gui = parent.GameGUI
         game = gui.Game
+        self.Game = game
         super().__init__(parent, event)
+
+        if game.Library:
+            self.addAction( Action(parent, "Launch Game", self.launch_game) )
         
         if gui.isQueued:
             self.addAction( gui.RemoveFromQueue )
@@ -38,8 +42,11 @@ class GameBaseContextMenu(ContextMenu):
         if not gui.GUI.Window.Process:
             self.addMenu( ProcessesMenu(parent, gui) )
 
-        # Todo - way to delete game data from disk
-        # - option to keep builds, releases
+    def launch_game(self):
+        if self.Game.PrimaryGame and os.path.exists(self.Game.PrimaryGame):
+            open_path(self.Game.PrimaryGame)
+        else:
+            open_path( self.Game.findNewestGame() )
 
 class GameContextMenu(GameBaseContextMenu):
     def __init__(self, parent, event):
