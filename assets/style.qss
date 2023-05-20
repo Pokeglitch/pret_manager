@@ -699,6 +699,8 @@ PanelBody QComboBox {
     padding: 5px;
     color:white;
     border-radius:5px;
+    min-width:100px;
+    max-width:100px;
     border: 1px solid black;
     background-color: #3a3a3b;
 }
@@ -883,6 +885,12 @@ QMenu {
     color: white;
     margin: 0px;
     padding: 0px;
+}
+
+#MenuLabel {
+    font-size: 11px;
+    margin: 2px;
+    padding: 2px;
 }
 
  QMenu::item {

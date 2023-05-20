@@ -555,7 +555,7 @@ class PRET_Manager(MetaData):
         # Load lists
         for file in get_files(list_dir):
             with open(list_dir + file, 'r') as f:
-                list = json.loads(f.read())
+                list = json.loads(f.read() or '{}')
             
             self.addList(file.split('.')[0], list)
 
@@ -630,7 +630,7 @@ class PRET_Manager(MetaData):
             error(filepath + ' not found')
 
         with open(filepath,"r") as f:
-            data = json.loads(f.read())
+            data = json.loads(f.read() or '{}')
 
         # do rgbds first
         if 'gbdev' in data and 'rgbds' in data['gbdev']:
@@ -742,6 +742,7 @@ class repository(MetaData):
         self.Data = data
         self.Branches = {}
         self.GitTags = {}
+        self.commits = {}
         self.CurrentBranch = None
 
         self.name = self.title + ' (' + self.author + ')'
@@ -804,7 +805,7 @@ class repository(MetaData):
         self.parse_builds()
         self.parse_releases()
 
-        self.setLibrary(bool(self.releases or self.builds))
+        self.setLibrary(bool(self.releases or self.builds or self.commits))
 
         self.Initialized = True
 
@@ -829,7 +830,7 @@ class repository(MetaData):
 
         if modified_metadata:
             self.updateMetaData()
-        
+
         if self.manager.GUI:
             self.init_GUI()
 
@@ -881,19 +882,19 @@ class repository(MetaData):
 
                 for branch in self.Branches:
                     if branch != starting_branch and self.check_branch_tracking(branch):
-                        self.switch(branch)
-                        self.process_make(sequence)
+                        if self.switch(branch):
+                            self.process_make(sequence)
 
                 if self.CurrentBranch != starting_branch:
                     self.switch(starting_branch)
                 
                 self.get_current_branch_info()
             else:
-                self.switch(*build_options)
-                self.process_make(sequence)
-                self.print('Switching back to previous branch/commit')
-                self.git.switch('-')
-                self.get_current_branch_info()
+                if self.switch(*build_options):
+                    self.process_make(sequence)
+                    self.print('Switching back to previous branch/commit')
+                    self.git.switch('-')
+                    self.get_current_branch_info()
 
         self.updateMetaData()
         self.print('Processing Finished')
@@ -990,13 +991,24 @@ class repository(MetaData):
 
 ######### Builds Methods
     def get_build_data(self, branchName, dirName):
-        if branchName not in self.builds:
-            self.builds[branchName] = {}
-        
-        if dirName not in self.builds[branchName]:
-            self.builds[branchName][dirName] = {}
+        if branchName == "HEAD":
+            lastCommit = self.get_commit()
+            
+            if lastCommit not in self.commits:
+                self.commits[lastCommit] = {}
 
-        return self.builds[branchName][dirName]
+            if dirName not in self.commits[lastCommit]:
+                self.commits[lastCommit][dirName] = {}
+
+            return self.commits[lastCommit][dirName]
+        else:
+            if branchName not in self.builds:
+                self.builds[branchName] = {}
+            
+            if dirName not in self.builds[branchName]:
+                self.builds[branchName][dirName] = {}
+
+            return self.builds[branchName][dirName]
 
     def parse_builds(self):
         self.builds = {}
@@ -1050,11 +1062,9 @@ class repository(MetaData):
 
     def set_branch(self, branch):
         if branch != self.CurrentBranch:
-            self.switch(branch)
-            # TODO - handle if failed
-            self.updateMetaData()
-            
-            self.BranchSignal.emit()
+            if self.switch(branch):
+                self.updateMetaData()
+                self.BranchSignal.emit()
 
     def set_RGBDS(self, RGBDS):
         if RGBDS != self.RGBDS:
@@ -1075,8 +1085,8 @@ class repository(MetaData):
 
         for branchName in self.Branches:
             if self.check_branch_outdated(branchName):
-                self.switch(branchName)
-                self.pull()
+                if self.switch(branchName):
+                    self.pull()
         
         if self.CurrentBranch != starting_branch:
             self.switch(starting_branch)
@@ -1085,9 +1095,15 @@ class repository(MetaData):
             self.BranchSignal.emit()
 
     def switch(self, *args):
-        self.print('Switching to branch/commit: ' + ' '.join(args))
+        # if its a commit, use the detach flag
+        if len(args) == 1 and args[0] not in self.Branches:
+            cmds = ['-d', args[0]]
+        else:
+            cmds = args[:]
 
-        result = self.git.switch(*args)
+        self.print('Switching to: ' + ' '.join(args))
+
+        result = self.git.switch(*cmds)
 
         if result.returncode:
             self.print('Failed to switch to ' + ' '.join(args))
@@ -1095,20 +1111,26 @@ class repository(MetaData):
             self.print('Switched to ' + ' '.join(args))
             self.get_current_branch_info()
 
-        return result
+        return not result.returncode
     
     def get_current_branch_info(self):
         # todo - move to Git class
         branch = self.git.run('rev-parse --abbrev-ref HEAD', CaptureOutput=True)[0]
+
         lastUpdate = self.get_date()
         lastCommit = self.get_commit()
 
-        if branch not in self.Branches:
-            self.Branches[branch] = {}
-            
-        if "LastCommit" not in self.Branches[branch] or lastCommit != self.Branches[branch]["LastCommit"]:
-            self.Branches[branch]["LastCommit"] = lastCommit
-            self.Branches[branch]["LastUpdate"] = lastUpdate
+        if branch == 'HEAD':
+            # Get the corresponding GitTag data
+            data = [self.GitTags[tag] for tag in self.GitTags if self.GitTags[tag]['commit'] == lastCommit][0]
+            data['date'] = lastUpdate
+        else:
+            if branch not in self.Branches:
+                self.Branches[branch] = {}
+                
+            if "LastCommit" not in self.Branches[branch] or lastCommit != self.Branches[branch]["LastCommit"]:
+                self.Branches[branch]["LastCommit"] = lastCommit
+                self.Branches[branch]["LastUpdate"] = lastUpdate
 
         self.CurrentBranch = branch
 
@@ -1116,6 +1138,7 @@ class repository(MetaData):
 
     def refresh(self):
         if not self.Refreshed:
+            self.setOutdated(False)
             self.print("Refreshing repository")
             self.refresh_branches()
             self.refresh_tags()
@@ -1214,6 +1237,8 @@ class repository(MetaData):
         self.releases = {}
 
         for tag, data in self.GitTags.items():
+            release_dir = None
+
             if "release" in data:
                 release_name = data["release"]
                 release_dir = self.path['releases'] + release_name
@@ -1222,6 +1247,22 @@ class repository(MetaData):
                     files = self.check_releases(release_dir)
                     if files:
                         self.store_release(tag, files)
+
+            elif "date" in data:
+                release_name = data['date'][:10] + ' - ' + tag + ' (' + tag + ')'
+                release_dir = self.path['releases'] + release_name
+
+            if release_dir:
+                for dirName in get_dirs(release_dir):
+                    files = get_builds(release_dir + '/' + dirName)
+                    if files:
+                        if data["commit"] not in self.commits:
+                            self.commits[data["commit"]] = {}
+
+                        self.commits[data["commit"]][dirName] = {}
+
+                        for file in files:
+                            self.commits[data["commit"]][dirName][file.name] = file
     
     def store_release(self, tag, files):
         release_name = self.GitTags[tag]["release"]
@@ -1246,12 +1287,26 @@ class repository(MetaData):
 
                     if tag not in self.GitTags:
                         error_message = 'Tag does not exist: ' + tag
+                    else:
+                        build_dirs = get_dirs(release_dir)
+                        if build_dirs:
+                            for build_dir_name in build_dirs:
+                                build_dir = release_dir + '/' + build_dir_name
+                                build_error_message = ''
+                                
+                                # if the dir name matches the template, then it is a build
+                                if re.match(r'^\d{4}-\d{2}-\d{2} [a-fA-F\d]{8} \([^)]+\)$', build_dir_name):
+                                    # if no builds exist in the directory:
+                                    if not get_builds(build_dir):
+                                        build_error_message = 'Missing valid build files in pre-existing directory: ' + build_dir
+                                else:
+                                    build_error_message = 'Invalid build directory name: ' + build_dir_name
 
-                    elif "release" not in self.GitTags[tag]:
-                        error_message = 'Tag does not have associated release: ' + tag
+                                if build_error_message:
+                                    self.rmdir(build_dir, build_error_message)
 
-                    elif not self.check_releases(release_dir):
-                        error_message = 'Missing release files for tag: ' + tag
+                        if not self.check_releases(release_dir) and not get_dirs(release_dir):
+                            error_message = 'Missing release files for tag: ' + tag
                 else:
                     error_message = 'Invalid release directory name: ' + dirname
                     
@@ -1411,8 +1466,21 @@ class repository(MetaData):
     def get_build_info(self, version):
         commit = self.get_commit()
         date = self.get_date()
-        self.build_name = date[:10] + ' ' + commit[:8] + ' (' + version + ')'
-        self.build_dir = self.path['builds'] + self.CurrentBranch + '/' + self.build_name + '/'
+
+        if self.CurrentBranch == 'HEAD':
+            tag = [tag for tag in self.GitTags if self.GitTags[tag]['commit'] == commit][0]
+            data = self.GitTags[tag]
+
+            if "release" in data:
+                dirName = data["release"]
+            else:
+                dirName = date[:10] + ' - ' + tag + ' (' + tag + ')'
+
+            self.build_name = date[:10] + ' ' + commit[:8] + ' (' + version + ')'
+            self.build_dir = self.path['releases'] + dirName + '/' + self.build_name + '/'
+        else:
+            self.build_name = date[:10] + ' ' + commit[:8] + ' (' + version + ')'
+            self.build_dir = self.path['builds'] + self.CurrentBranch + '/' + self.build_name + '/'
 
     def build(self, *args):
         # if the repository doesnt exist, then update
@@ -1429,7 +1497,8 @@ class repository(MetaData):
         self.Cleaned = False
 
         if len(args):
-            self.switch(*args)
+            if not self.switch(*args):
+                return
 
         version = self.RGBDS or self.rgbds
 
@@ -1438,10 +1507,16 @@ class repository(MetaData):
             
         self.get_build_info(version)
 
+        if self.CurrentBranch == 'HEAD':
+            lastCommit = self.get_commit()
+            alreadyBuilt = lastCommit in self.commits and self.build_name in self.commits[lastCommit] and self.commits[lastCommit][self.build_name]
+        else:
+            alreadyBuilt = self.CurrentBranch in self.builds and self.build_name in self.builds[self.CurrentBranch]
+
         # only build if commit not already built
-        if self.CurrentBranch in self.builds and self.build_name in self.builds[self.CurrentBranch]:
+        if  alreadyBuilt:
             self.print('Commit has already been built: ' + self.build_name)
-        # if rgbds version is known and configured, switch to and make:
+        # if rgbds version is known and configured, then utilize for make
         elif version and version != "None": 
             self.print('Building with RGBDS v' + version)
             self.build_rgbds(version)
@@ -1544,12 +1619,15 @@ class repository(MetaData):
             files = get_builds(self.path['repo'])
             if files:
                 names = copy_files(files, self.build_dir)
-                self.print('Placed build file(s) in ' + self.CurrentBranch + '/' + self.build_name + ': ' + ', '.join(names))
+                self.print('Placed build file(s) in ' + self.build_dir + ': ' + ', '.join(names))
                 
                 self.store_build(self.CurrentBranch, self.build_name, files)
 
                 if self.GUI:
-                    self.BuildSignal.emit()
+                    if self.CurrentBranch == "HEAD":
+                        self.ReleaseSignal.emit()
+                    else:
+                        self.BuildSignal.emit()
 
                 return True
             else:
@@ -1634,6 +1712,35 @@ class RGBDS(repository):
         for tag, data in self.GitTags.items():
             if "release" in data:
                 self.ReleaseIDs.insert(0, tag)
+
+    def clean_releases(self):
+        if os.path.exists(self.path['releases']):
+            for dirname in get_dirs(self.path['releases']):
+                release_dir = self.path['releases'] + dirname
+                error_message = ''
+
+                # if the dir name matches the template, then it is a release
+                match = re.match(r'^\d{4}-\d{2}-\d{2} - .* \((.*)\)$', dirname)
+                if match:
+                    tag = match.group(1)
+
+                    if tag not in self.GitTags:
+                        error_message = 'Tag does not exist: ' + tag
+
+                    elif "release" not in self.GitTags[tag]:
+                        error_message = 'Tag does not have associated release: ' + tag
+
+                    elif not self.check_releases(release_dir):
+                        error_message = 'Missing release files for tag: ' + tag
+                else:
+                    error_message = 'Invalid release directory name: ' + dirname
+                    
+                if error_message:
+                    self.rmdir(release_dir, error_message)
+
+            # if the releases directory is empty, then delete
+            if not get_dirs(self.path['releases']):
+                self.rmdir(self.path['releases'], 'Release directory is empty')
 
     def parse_builds(self):
         self.clean_builds()

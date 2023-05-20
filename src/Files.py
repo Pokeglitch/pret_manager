@@ -5,7 +5,7 @@ def read_json(path):
     output = {}
     try:
         with open(path, 'r') as f:
-            output = json.loads(f.read())
+            output = json.loads(f.read() or '{}')
     except Exception as e:
         print(e)
 

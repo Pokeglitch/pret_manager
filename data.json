@@ -745,7 +745,7 @@
         "upgrade",
         "base"
       ],
-      "basis": "aaaaaa123456789/pokecrystal-16"
+      "basis": "aaaaaa123456789/pokecrystal16"
     }
   },
   "TheScarletSword": {
@@ -1524,7 +1524,7 @@
         "new-story",
         "WiP"
       ],
-      "basis": "aaaaaa123456789/pokecrystal-16",
+      "basis": "aaaaaa123456789/pokecrystal16",
       "description": "Based on Pokemon Crystal. New storyline based off the Pokemon Gold & Silver prototype maps from October and November 1998. Featuring cut Pokemon."
     }
   },

@@ -57,22 +57,8 @@ class RepositoryBody(GamePanelBody):
         self.Author = AuthorField(self)
         self.Repository = RepositoryField(self)
         self.Basis = BasisField(self)
-        self.Branches = GameBranches(self)
-        self.Commit = Field(self, 'Commit', '-')
-        self.LastUpdate = Field(self, 'Last Update', '-')
         self.RGBDS = GameRGBDSVersion(self)
         self.Trees = GameTrees(self)
-
-        self.Game.on("Branch", self.updateCommitData)
-
-    def updateCommitData(self):
-        if self.Game.CurrentBranch:
-            data = self.Game.Branches[self.Game.CurrentBranch]
-            self.Commit.Right.setText(data['LastCommit'][:8] if 'LastCommit' in data else '-')
-            self.LastUpdate.Right.setText(data['LastUpdate'][:19] if 'LastUpdate' in data else '-')
-        else:
-            self.Commit.Right.setText('-')
-            self.LastUpdate.Right.setText('-')
 
 class AuthorField(HBox):
     def __init__(self, parent):
@@ -170,49 +156,12 @@ class BasisField(HBox):
     def selectBasis(self, event):
         if self.BasisGame and event.button() == Qt.LeftButton:
             self.GUI.Panel.setActive(self.BasisGame.GUI)
-
-class GameBranches(HBox):
-    def __init__(self, parent):
-        super().__init__(parent.GUI)
-        self.Game = parent.Game
-
-        self.Label = self.label("Branch:")
-        self.ComboBox = QComboBox()
-        self.ComboBox.currentTextChanged.connect(self.handleBranchSelected)
-        self.add(self.ComboBox)
-
-        self.GUI.Window.Processing.connect(self.handleProcessing)
-
-        self.Game.on("Branch", self.updateComboBox)
-
-        self.addTo(parent)
-        
-    def handleProcessing(self, processing):
-        self.ComboBox.setEnabled(not processing)
-        self.ComboBox.setProperty('processing', processing)
-        self.ComboBox.style().polish(self.ComboBox)
-
-    def handleBranchSelected(self, branch):
-        if not self.Game.Missing and not self.GUI.Window.Process and branch != self.Game.CurrentBranch:
-            self.GUI.switchBranch(self.Game, branch)
-
-    def updateComboBox(self):
-        self.ComboBox.blockSignals(True)
-
-        self.ComboBox.clear()
-        self.ComboBox.addItems(self.Game.Branches.keys())
-
-        if self.Game.CurrentBranch:
-            self.ComboBox.setCurrentText(self.Game.CurrentBranch)
-
-        self.ComboBox.blockSignals(False)
-
 class GameRGBDSVersion(HBox):
     def __init__(self, parent):
         super().__init__(parent.GUI)
         self.Game = parent.Game
         
-        self.Label = self.label("RGBDS:")
+        self.Label = self.label("RGBDS:", 1)
         self.ComboBox = QComboBox()
         
         items = ["None"]
@@ -234,7 +183,12 @@ class GameRGBDSVersion(HBox):
         self.ComboBox.setCurrentIndex(default_index)
 
         self.ComboBox.currentTextChanged.connect(self.handleRGBDSSelected)
-        self.add(self.ComboBox)
+
+        self.ComboBoxContainer = HBox(self.GUI)
+        self.ComboBoxContainer.addTo(self, 1)
+        self.ComboBoxContainer.add(self.ComboBox)
+        self.ComboBoxContainer.addStretch()
+
         self.addTo(parent)
 
     def handleRGBDSSelected(self, version):
@@ -246,7 +200,7 @@ class GameTrees(HBox):
         self.Game = parent.Game
         
         self.Builds = BranchesTree(self)
-        self.Releases = ReleasesTree(self)
+        self.Tags = TagsTree(self)
 
         self.addTo(parent)
 
@@ -276,11 +230,30 @@ class GameTree(VBox):
         for key in keys:
             self.Game.on(key, self._draw, False)
 
+        self.Game.PrimaryGameSignal.connect(self.onPrimaryGame)
+        
         self._draw()
 
         self.Label = self.label(label + ':')
         self.add(self.Tree)
         self.addTo(parent, 1)
+
+    def onPrimaryGame(self, path, item):
+        if item == self.PrimaryGame:
+            if not path:
+                if self.PrimaryGame:
+                    self.PrimaryGame.setIcon(0, QIcon())
+            
+                self.PrimaryGame = None
+        else:
+            if self.PrimaryGame:
+                self.PrimaryGame.setIcon(0, QIcon())
+
+            if path and item.Tree == self.Tree:
+                item.setIcon(0, QIcon('assets/images/library_14.png'))
+                self.PrimaryGame = item
+            else:
+                self.PrimaryGame = None
 
     def _draw(self):
         self.PrimaryGame = None
@@ -309,13 +282,6 @@ class GameTree(VBox):
             contextMenu = self.ContextMenus[type]
             contextMenu(self, item, event)
 
-class BranchProcessesMenu(QMenu):
-    def __init__(self, menu):
-        super().__init__("Process", menu.Parent)
-        self.addAction( Action(menu.Parent, 'Current Sequence', lambda: menu.Widget.process(menu.Name)))
-        self.addAction( Action(menu.Parent, 'Clean', lambda: menu.Widget.specificProcess(menu.Name, 'c')))
-        self.addAction( Action(menu.Parent, 'Build', lambda: menu.Widget.specificProcess(menu.Name, 'b')))
-
 class OpenAction(Action):
     def __init__(self, parent, label, path):
         super().__init__(parent, label, lambda: open_path(path))
@@ -342,17 +308,15 @@ class TreeContextMenu(ContextMenu):
         self.GUI = parent.GUI
         super().__init__(self.Parent, event)
 
-        title = QLabel(self.Name)
-        title.setAlignment(Qt.AlignCenter)
-        titleAction = QWidgetAction(self)
-        titleAction.setDisabled(True)
-        titleAction.setDefaultWidget(title)
-        self.addAction(titleAction)
-        self.addSeparator()
-
 class BranchContextMenu(TreeContextMenu):
     def __init__(self, *args):
         super().__init__(*args)
+
+        self.addLabel(self.Name)
+        if self.Name in self.Game.Branches and 'LastUpdate' in self.Game.Branches[self.Name]:
+            self.addLabel(self.Game.Branches[self.Name]['LastUpdate'][:19])
+
+        self.addSeparator()
         
         if self.canSwitchTo():
             self.addAction(SwitchTo(self.Parent, self))
@@ -361,7 +325,7 @@ class BranchContextMenu(TreeContextMenu):
             self.addAction( OpenFolder(self.Parent, self.Item.path) )
 
         if not self.GUI.Window.Process:
-            self.addMenu(BranchProcessesMenu(self))
+            self.addAction( Action(self.Parent, 'Build', lambda: self.Widget.specificProcess(self.Name, 'b')))
 
         self.start()
 
@@ -372,13 +336,45 @@ class BranchContextMenu(TreeContextMenu):
         if self.canSwitchTo():
             self.GUI.switchBranch(self.Game, self.Name)
 
+class TagContextMenu(TreeContextMenu):
+    def __init__(self, *args):
+        super().__init__(*args)
+        
+        self.addLabel(self.Name)
+
+        if hasattr(self.Item, 'date'):
+            self.addLabel(self.Item.date)
+
+        self.addSeparator()
+        
+        if not self.GUI.Window.Process:
+            self.addAction( Action(self.Parent, 'Build', lambda: self.Widget.specificProcess(self.Item.commit, 'b')))
+        
+        self.start()
+
 class FolderContextMenu(TreeContextMenu):
     def __init__(self, *args):
         super().__init__(*args)
+        
+        if self.Item.path and os.path.exists(self.Item.path):
+            self.addAction( OpenFolder(self.Parent, self.Item.path) )
+
+        self.start()
+
+class ReleaseContextMenu(TreeContextMenu):
+    def __init__(self, *args):
+        super().__init__(*args)
+        
+        self.addLabel(self.Name)
+        self.addLabel(self.Item.date)
+        self.addSeparator()
 
         if self.Item.path and os.path.exists(self.Item.path):
             self.addAction( OpenFolder(self.Parent, self.Item.path) )
 
+        if not self.GUI.Window.Process:
+            self.addAction( Action(self.Parent, 'Build', lambda: self.Widget.specificProcess(self.Item.commit, 'b')))
+        
         self.start()
 
 class FileContextMenu(TreeContextMenu):
@@ -404,24 +400,6 @@ class BranchesTree(GameTree):
         })
 
         self.Tree.itemChanged.connect(self.onItemChanged)
-        self.Game.PrimaryGameSignal.connect(self.onPrimaryGame)
-
-    def onPrimaryGame(self, path, item):
-        if item == self.PrimaryGame:
-            if not path:
-                if self.PrimaryGame:
-                    self.PrimaryGame.setIcon(0, QIcon())
-            
-                self.PrimaryGame = None
-        else:
-            if self.PrimaryGame:
-                self.PrimaryGame.setIcon(0, QIcon())
-
-            if path and item.Tree == self.Tree:
-                item.setIcon(0, QIcon('assets/images/library_14.png'))
-                self.PrimaryGame = item
-            else:
-                self.PrimaryGame = None
 
     def onItemChanged(self, item, col):
         if item.type() == self.Types["Branch"].value:
@@ -505,32 +483,86 @@ class BranchesTreeDelegate(TreeDelegate):
 
         return super().editorEvent(event, model, option, index)
 
-class ReleasesTree(GameTree):
+class TagsTree(GameTree):
     def __init__(self, parent):
-        super().__init__(parent, ['Release'], 'Tags', ReleasesTreeDelegate, {
-            'Tag' : TreeContextMenu,
-            'Release' : FolderContextMenu,
+        super().__init__(parent, ['Release'], 'Tags', TagsTreeDelegate, {
+            'Tag' : TagContextMenu,
+            'Release' : ReleaseContextMenu,
+            'Build' : FolderContextMenu,
             'File' : FileContextMenu
         })
 
     def draw(self):
-        if self.Game.releases.keys():
-            releases = list(self.Game.releases.keys())
-            releases.sort()
+        if self.Game.GitTags:
+            tags = list(self.Game.GitTags.keys())
+            tags.sort()
 
-            for releaseName in reversed(releases):
-                releases = self.Game.releases[releaseName]
-                text = re.match(r'^\d{4}-\d{2}-\d{2} - .* \((.*)\)$', releaseName).group(1)
-                releaseItem = self.addItem(self.Tree, 'Release', text, self.Game.path['releases'] + releaseName)
+            for tagName in reversed(tags):
+                tagData = self.Game.GitTags[tagName]
+                
+                releaseName = None
 
-                for fileName, path in releases.items():
-                    self.addItem(releaseItem, 'File', fileName, str(path))
+                if 'release' in tagData:
+                    releaseName = tagData['release']
+                    tagItem = self.addItem(self.Tree, 'Release', tagName, self.Game.path['releases'] + releaseName)
+                    tagItem.date = re.match(r'^(\d{4}-\d{2}-\d{2}) - .* \(.*\)$', releaseName).group(1)                
+                else:
+                    tagItem = self.addItem(self.Tree, 'Tag', tagName)
+
+                tagItem.commit = tagData["commit"]
+                if 'date' in tagData:
+                    tagItem.date = tagData['date'][:19]
+
+                if tagData["commit"] in self.Game.commits:
+                    if not releaseName:
+                        releaseName = tagData['date'][:10] + ' - ' + tagName + ' (' + tagName + ')'
+                    
+                    commitBuilds = self.Game.commits[tagData["commit"]]
+                    builds = list(commitBuilds.keys())
+                    builds.sort()
+                    for buildName in reversed(builds):
+                        buildItem = self.addItem(tagItem, 'Build', buildName, self.Game.path['releases'] + releaseName + '/' + buildName)
+
+                        for fileName, path in commitBuilds[buildName].items():
+                            path = str(path)
+                            fileItem = self.addItem(buildItem, 'File', fileName, path)
+                            if path == self.Game.PrimaryGame:
+                                self.onPrimaryGame(path, fileItem)
+
+                if 'release' in tagData:
+                    if releaseName in self.Game.releases:
+                        for fileName, path in self.Game.releases[releaseName].items():
+                            path = str(path)
+                            fileItem = self.addItem(tagItem, 'File', fileName, path)
+                            if path == self.Game.PrimaryGame:
+                                self.onPrimaryGame(path, fileItem)
         else:
             noneItem = self.addItem(self.Tree, 'None', "None")
             noneItem.setFlags(Qt.NoItemFlags)
             
-class ReleasesTreeDelegate(BranchesTreeDelegate):
-    pass
+class TagsTreeDelegate(TreeDelegate):
+    def editorEvent(self, event, model, option, index):
+        if event.type() == QEvent.MouseButtonDblClick:
+            return True
+        
+        if event.type() == QEvent.MouseButtonPress:
+            # rect does not include the side arrow or whitespace
+            labelRect = self.Tree.style().subElementRect(QStyle.SE_TreeViewDisclosureItem, option)
+            
+            pos = event.pos()
+            item = self.Tree.itemFromIndex(index)
+
+            if pos in labelRect:
+                # toggle expanded on left click
+                if event.button() == Qt.LeftButton:
+                    if item.childCount():
+                        item.setExpanded(not item.isExpanded())
+                # emit signal on right click
+                elif event.button() == Qt.RightButton:
+                    self.RightClickSignal.emit(event, item)
+            return True
+
+        return super().editorEvent(event, model, option, index)
 
 class PatchBody(GamePanelBody):
     def __init__(self, parent):

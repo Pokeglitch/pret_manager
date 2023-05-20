@@ -2,6 +2,9 @@
 
 ## GUI
 
+### Settings
+  * Option to not auto-download Releases
+
 ### Filter
   * Invert Filter
   * Save / Load Filter
@@ -18,6 +21,11 @@
 
 ### Game Panel
   * Tabbed Panel Display instead of one at a time
+  * Shows lists containing Game
+  * Don't show build details for 'extras' repos
+  * Don't re-draw the trees on update, only refresh the changed items
+  * Show which branches are outdated
+  * Add 'Delete' option to all Context Menus
   
 ## Content
   * Unique Artwork for all Games
@@ -58,6 +66,7 @@
     * Identify and use required versions & libraries for Python, Node, C, Linux packages, etc
 
 ## Functionality
+  * Handle when a repository changes names
   * Export Game Builds to external Directory
   * Add Local / Custom repositories
   * Download & apply binary patches

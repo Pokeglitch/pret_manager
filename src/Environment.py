@@ -177,10 +177,6 @@ class Github(Command):
 
         if assets:
             self.run('release download {0} -R {1} -D "{2}" -p "*"'.format(id, self.Game.url, destination))
-        else:
-            # todo - add option to build
-            # dont download at all?
-            self.run('release download {0} -R {1} -D "{2}" -A zip'.format(id, self.Game.url, destination))
 
 class Git(GameCommand):
     def __init__(self, game):

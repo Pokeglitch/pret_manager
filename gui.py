@@ -13,29 +13,20 @@ Check remaining TODOs throughout source
 ------
 Game Panel:
 - Folder icons should be faded if folder does not exist
--- right click for option to delete?
 
 Options for Auto-refresh/Auto-Update
 
-Branches:
--- show which ones are outdated (if tracking)
--- can right click on each to: delete
-
--Show all releases & git tags in tree, even if no downloads
--- can right click to download, switch to, delete, or build if missing
+Tags Tree:
+- right click to download if Release
 
 context menu:
-- have all tag options be a submenu
+- have all 'tag' options be a submenu (favorite, etc)
 - same with the list actions
 - set/reset auto-refresh
 - set/reset auto-update
 
-- show lists containing this game
-- Dont show process or build details for 'extras'
 -------
 Update README, Tutorial
-
-- Handle when a repository changes names
 
 Compile to executable for release:
 https://nuitka.net/

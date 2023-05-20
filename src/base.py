@@ -217,7 +217,7 @@ class MetaData(Emitter):
         path = self.path['base'] + 'metadata.json'
         if os.path.exists(path):
             with open(path, 'r') as f:
-                data = json.loads(f.read())
+                data = json.loads(f.read() or '{}')
 
             self.MetaData = {}
             for prop in self.MetaDataProperties:
@@ -370,6 +370,15 @@ class ContextMenu(QMenu):
     def __init__(self, parent, event):
         super().__init__(parent)
         self.Coords = parent.mapToGlobal(event.pos())
+
+    def addLabel(self, label):
+        title = QLabel(label)
+        title.setObjectName('MenuLabel')
+        title.setAlignment(Qt.AlignCenter)
+        titleAction = QWidgetAction(self)
+        titleAction.setDisabled(True)
+        titleAction.setDefaultWidget(title)
+        self.addAction(titleAction)
 
     def start(self):
         self.exec_(self.Coords)
