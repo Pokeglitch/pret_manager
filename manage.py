@@ -804,6 +804,8 @@ class repository(MetaData):
         self.parse_builds()
         self.parse_releases()
 
+        self.setLibrary(bool(self.releases or self.builds))
+
         self.Initialized = True
 
         modified_metadata = False
@@ -866,7 +868,7 @@ class repository(MetaData):
             sequence = sequence[1:]
 
         if len(sequence) and sequence[0] == 'u':
-            self.refresh()
+            self.update()
             sequence = sequence[1:]
 
         if len(sequence) and ('b' in sequence or 'c' in sequence):

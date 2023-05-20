@@ -360,7 +360,8 @@ class BranchContextMenu(TreeContextMenu):
         if self.Item.path and os.path.exists(self.Item.path):
             self.addAction( OpenFolder(self.Parent, self.Item.path) )
 
-        self.addMenu(BranchProcessesMenu(self))
+        if not self.GUI.Window.Process:
+            self.addMenu(BranchProcessesMenu(self))
 
         self.start()
 

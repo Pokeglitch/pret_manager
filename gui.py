@@ -25,7 +25,8 @@ Branches:
 -- can right click to download, switch to, delete, or build if missing
 
 context menu:
-- launch game
+- have all tag options be a submenu
+- same with the list actions
 - set/reset auto-refresh
 - set/reset auto-update
 
