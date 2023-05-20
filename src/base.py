@@ -1,6 +1,6 @@
-from PyQt5.QtCore import Qt, QTimer, QThread, QCoreApplication, QProcess, QPoint, pyqtSignal, QObject, QUrl, QThreadPool, QRunnable, QMargins, QPoint, QRect, QSize
-from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QDialog, QAction, QMenu, QSlider, QStackedWidget, QLineEdit, QSplashScreen, QComboBox, QHeaderView, QTreeWidgetItem, QFileDialog, QTreeWidget, QApplication, QStyleOption, QStyle, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
-from PyQt5.QtGui import QBrush, QColor, QImage, QPixmap, QDesktopServices, QIcon, QPainter
+from PyQt5.QtCore import Qt, QModelIndex, QEvent, QTimer, QThread, QCoreApplication, QProcess, QPoint, pyqtSignal, QObject, QUrl, QThreadPool, QRunnable, QMargins, QPoint, QRect, QSize
+from PyQt5.QtWidgets import QWidgetAction, QTreeView, QStyleOptionButton, QGraphicsDropShadowEffect, QDialog, QAction, QMenu, QSlider, QStackedWidget, QLineEdit, QSplashScreen, QComboBox, QHeaderView, QTreeWidgetItem, QFileDialog, QTreeWidget, QApplication, QStyleOption, QStyledItemDelegate, QStyleOptionFrame, QStyle, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
+from PyQt5.QtGui import QBrush, QMouseEvent, QColor, QImage, QPixmap, QDesktopServices, QIcon, QPainter
 import time, json, copy, os
 
 from src.Files import *
@@ -194,13 +194,14 @@ class VScroll(VBox):
             self.setParent(None)
 
 class Emitter(QObject):
-    def on(self, key, handler):
+    def on(self, key, handler, execNow=True):
         if hasattr(self, key + 'Signal'):
             getattr(self, key + 'Signal').connect(handler)
-            if hasattr(self, key):
-                handler( getattr(self, key) )
-            else:
-                handler()
+            if execNow:
+                if hasattr(self, key):
+                    handler( getattr(self, key) )
+                else:
+                    handler()
 
     def off(self, key, handler):
         if hasattr(self, key + 'Signal'):
@@ -467,7 +468,6 @@ class ClearBrowser(Action):
 class ClearQueue(Action):
     def __init__(self, parent):
         super().__init__(parent, 'Clear Queue', parent.erase)
-
 
 class ProcessesMenu(QMenu):
     def __init__(self, parent, target=None):

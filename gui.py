@@ -12,28 +12,20 @@ Bugs:
 Check remaining TODOs throughout source
 ------
 Game Panel:
-- dbl click cartridge to lauch preset game or latest
 - Folder icons should be faded if folder does not exist
+-- right click for option to delete?
 
 Options for Auto-refresh/Auto-Update
 
-- rename Builds to Branches, and show all possible branches
--- checkmarks nexts to ones to track
---- also (if tracked) whether to include in 'build' or not
----- need separate rgbds version?
----- extras tag will turn this off by default
+Branches:
 -- show which ones are outdated (if tracking)
--- can right click to: switch to, delete, update, etc
---- right click on specific builds of that branch to delete
--- can double click to switch to
+-- can right click on each to: delete
 
 -Show all releases & git tags in tree, even if no downloads
 -- can right click to download, switch to, delete, or build if missing
 
 context menu:
 - launch game
-- way to delete a game(s) from disk
--- or specifically, a repo, build(s), release(s)
 - set/reset auto-refresh
 - set/reset auto-update
 
@@ -638,10 +630,11 @@ class SwitchBranch(ManagerThread):
         self.Game.set_branch(self.Branch)
 
 class ExecuteProcess(ManagerThread):
-    def __init__(self, GUI, sequence, games):
+    def __init__(self, GUI, sequence, games, build_options=[]):
         self.Games = games
         self.Game = None
         self.Sequence = sequence
+        self.BuildOptions = build_options
 
         super().__init__(GUI)
 
@@ -651,7 +644,7 @@ class ExecuteProcess(ManagerThread):
         elif self.Sequence:
             for game in self.Games:
                 self.Game = game
-                game.process(self.Sequence, [])
+                game.process(self.Sequence, self.BuildOptions)
         else:
             self.GUI.Manager.print('No actions to process')
 
@@ -706,14 +699,14 @@ class MainContents(HBox):
         if not self.Window.Process or isAuto:
             self.Window.Process = UpdatePRETManager(self)
 
-    def startProcess(self, games):
+    def startProcess(self, games, *build_options):
         if not self.Window.Process:
             sequence = self.Process.Options.compile()
-            self.Window.Process = ExecuteProcess(self, sequence, games[:])
+            self.Window.Process = ExecuteProcess(self, sequence, games[:], build_options)
 
-    def startSpecificProcess(self, sequence, games):
+    def startSpecificProcess(self, sequence, games, *build_options):
         if not self.Window.Process:
-            self.Window.Process = ExecuteProcess(self, sequence, games[:])
+            self.Window.Process = ExecuteProcess(self, sequence, games[:], build_options)
 
     def onProcessing(self, processing):
         if not processing:

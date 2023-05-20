@@ -848,19 +848,50 @@ class repository(MetaData):
         self.print('Processing Starting')
         self.setProcessing(True)
 
-        for process in sequence:
-            if process == 'b':
-                self.build(*build_options)
-            elif process == 'c':
-                self.clean()
-            elif process == 'r':
-                self.refresh()
-            elif process == 'u':
-                self.update()
+        if len(sequence) and sequence[0] == 'r':
+            self.refresh()
+            sequence = sequence[1:]
+
+        if len(sequence) and sequence[0] == 'u':
+            self.refresh()
+            sequence = sequence[1:]
+
+        if len(sequence) and ('b' in sequence or 'c' in sequence):
+            # if no specific build options, then build for all branches
+            if not build_options:
+                starting_branch = self.CurrentBranch
+
+                if self.check_branch_tracking(starting_branch):
+                    self.process_make(sequence)
+
+                for branch in self.Branches:
+                    if branch != starting_branch and self.check_branch_tracking(branch):
+                        self.switch(branch)
+                        self.process_make(sequence)
+
+                if self.CurrentBranch != starting_branch:
+                    self.switch(starting_branch)
+                
+                self.get_current_branch_info()
+            else:
+                self.switch(*build_options)
+                self.process_make(sequence)
+                self.print('Switching back to previous branch/commit')
+                self.git.switch('-')
+                self.get_current_branch_info()
 
         self.updateMetaData()
         self.print('Processing Finished')
         self.setProcessing(False)
+
+    def process_make(self, sequence):
+        self.Cleaned = False
+        for process in sequence:
+            if process == 'b':
+                self.build()
+            elif process == 'c':
+                self.clean()
+
 
 ######### IO Methods
     def rmdir(self, path, msg=''):
@@ -1110,12 +1141,30 @@ class repository(MetaData):
         if not self.Branches or any([self.check_branch_outdated(branch) for branch in self.Branches]):
             self.setOutdated(True)
 
-    # only track branchs that exist locally
-    def check_branch_outdated(self, branch):
+    def set_branch_tracking(self, branch, value):
+        data = self.get_branch_data(branch)
+        data["Tracking"] = value
+        self.updateMetaData()
+
+    def check_branch_tracking(self, branch):
         data = self.get_branch_data(branch)
 
-        if "LastRemoteCommit" in data and "LastCommit" in data:
-            return data["LastRemoteCommit"] != data["LastCommit"]
+        # If 'Tracking' is explicitly set, use that value
+        if "Tracking" in data:
+            return data["Tracking"]
+        
+        # Otherwise, see if the data includes both a Remote and Local commit value
+        return "LastRemoteCommit" in data and "LastCommit" in data
+
+    # only track branchs that exist locally
+    def check_branch_outdated(self, branch):
+        # if tracking:
+        if self.check_branch_tracking(branch):
+            data = self.get_branch_data(branch)
+            if "LastRemoteCommit" in data and "LastCommit" in data:
+                return data["LastRemoteCommit"] != data["LastCommit"]
+            
+            return True
 
         return False
 
@@ -1311,7 +1360,6 @@ class repository(MetaData):
     def build(self, *args):
         # if the repository doesnt exist, then update
         if self.Missing:
-
             if not self.Updated:
                 self.print('Repository not found. Updating')
                 self.update()
@@ -1344,6 +1392,7 @@ class repository(MetaData):
         if len(args):
             self.print('Switching back to previous branch/commit')
             self.git.switch('-')
+            self.get_current_branch_info()
     
     def update_repo(self):
         self.print("Updating repository")
@@ -1473,6 +1522,7 @@ class repository(MetaData):
 
         if len(args):
             self.git.switch('-')
+            self.get_current_branch_info()
 
 class RGBDS(repository):
     def __init__(self, *args):

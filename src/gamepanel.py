@@ -1,4 +1,5 @@
 import re, webbrowser
+from enum import Enum
 from src.gamebase import *
 
 class GamePanelArtworkPixmap(Scaled):
@@ -166,7 +167,6 @@ class BasisField(HBox):
 
         self.addTo(parent)
 
-
     def selectBasis(self, event):
         if self.BasisGame and event.button() == Qt.LeftButton:
             self.GUI.Panel.setActive(self.BasisGame.GUI)
@@ -245,13 +245,13 @@ class GameTrees(HBox):
         super().__init__(parent.GUI)
         self.Game = parent.Game
         
-        self.Builds = BuildsTree(self)
+        self.Builds = BranchesTree(self)
         self.Releases = ReleasesTree(self)
 
         self.addTo(parent)
 
 class GameTree(VBox):
-    def __init__(self, parent, key):
+    def __init__(self, parent, keys, label, delegate, contextMenus):
         super().__init__(parent.GUI)
         self.Game = parent.Game
 
@@ -261,78 +261,254 @@ class GameTree(VBox):
         self.Tree.header().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.Tree.header().hide()
         self.Tree.setIndentation(10)
-        self.Tree.itemDoubleClicked.connect(lambda e: hasattr(e,"Path") and QDesktopServices.openUrl(e.Path))
-        
-        self.Game.on(key, self.draw)
+        self.Tree.setMouseTracking(True)
 
+        self.TreeDelegate = delegate(self.Tree)
+        self.Tree.setItemDelegateForColumn(0, self.TreeDelegate)
+        self.TreeDelegate.RightClickSignal.connect(self.onRightClick)
+        
+        self.Types = Enum('Types', ['None', *contextMenus.keys()], start=1000)
+
+        self.ContextMenus = {}
+        for type, contextMenu in contextMenus.items():
+            self.ContextMenus[self.Types[type].value] = contextMenu
+
+        for key in keys:
+            self.Game.on(key, self._draw, False)
+
+        self._draw()
+
+        self.Label = self.label(label + ':')
         self.add(self.Tree)
         self.addTo(parent, 1)
 
-class BuildsTree(GameTree):
+    def _draw(self):
+        self.Tree.blockSignals(True)
+        self.Tree.clear()
+        self.draw()
+        self.Tree.blockSignals(False)
+
+    def addItem(self, parent, type, text, path=None):
+        item = QTreeWidgetItem(parent, self.Types[type].value)
+        item.setText(0, text)
+        item.path = path
+        return item
+    
+    def process(self, branch):
+        self.GUI.startProcess([self.Game], branch)
+
+    def specificProcess(self, branch, sequence):
+        self.GUI.startSpecificProcess(sequence, [self.Game], branch)
+
+    def onRightClick(self, event, item):
+        type  = item.type()
+        
+        if type in self.ContextMenus:
+            contextMenu = self.ContextMenus[type]
+            contextMenu(self, item, event)
+
+class BranchProcessesMenu(QMenu):
+    def __init__(self, menu):
+        super().__init__("Process", menu.Parent)
+        self.addAction( Action(menu.Parent, 'Current Sequence', lambda: menu.Widget.process(menu.Name)))
+        self.addAction( Action(menu.Parent, 'Clean', lambda: menu.Widget.specificProcess(menu.Name, 'c')))
+        self.addAction( Action(menu.Parent, 'Build', lambda: menu.Widget.specificProcess(menu.Name, 'b')))
+
+class OpenAction(Action):
+    def __init__(self, parent, label, path):
+        super().__init__(parent, label, self.open)
+        self.Path = path
+
+    def open(self):
+        if self.Path and os.path.exists(self.Path):
+            url = QUrl.fromLocalFile(self.Path)
+            QDesktopServices.openUrl(url)
+
+class OpenFolder(OpenAction):
+    def __init__(self, parent, path):
+        super().__init__(parent, "Open Folder", path)
+
+class LaunchFile(OpenAction):
+    def __init__(self, parent, path):
+        super().__init__(parent, "Launch File", path)
+
+class SwitchTo(Action):
+    def __init__(self, parent, menu):
+        super().__init__(parent, "Switch To", menu.switchTo)
+
+class TreeContextMenu(ContextMenu):
+    def __init__(self, parent, item, event):
+        self.Item = item
+        self.Name = item.text(0)
+        self.Widget = parent
+        self.Game = parent.Game
+        self.Parent = parent.Tree.viewport()
+        self.GUI = parent.GUI
+        super().__init__(self.Parent, event)
+
+        title = QLabel(self.Name)
+        title.setAlignment(Qt.AlignCenter)
+        titleAction = QWidgetAction(self)
+        titleAction.setDisabled(True)
+        titleAction.setDefaultWidget(title)
+        self.addAction(titleAction)
+        self.addSeparator()
+
+class BranchContextMenu(TreeContextMenu):
+    def __init__(self, *args):
+        super().__init__(*args)
+        
+        if self.canSwitchTo():
+            self.addAction(SwitchTo(self.Parent, self))
+
+        if self.Item.path and os.path.exists(self.Item.path):
+            self.addAction( OpenFolder(self.Parent, self.Item.path) )
+
+        self.addMenu(BranchProcessesMenu(self))
+
+        self.start()
+
+    def canSwitchTo(self):
+        print(not self.Item.isSelected(), not self.Game.Missing, not self.GUI.Window.Process, self.Name != self.Game.CurrentBranch)
+        return not self.Item.isSelected() and not self.Game.Missing and not self.GUI.Window.Process and self.Name != self.Game.CurrentBranch
+    
+    def switchTo(self):
+        if self.canSwitchTo():
+            self.GUI.switchBranch(self.Game, self.Name)
+
+class FolderContextMenu(TreeContextMenu):
+    def __init__(self, *args):
+        super().__init__(*args)
+
+        if self.Item.path and os.path.exists(self.Item.path):
+            self.addAction( OpenFolder(self.Parent, self.Item.path) )
+
+        self.start()
+
+class FileContextMenu(TreeContextMenu):
+    def __init__(self, *args):
+        super().__init__(*args)
+        
+        if self.Item.path and os.path.exists(self.Item.path):
+            self.addAction( LaunchFile(self.Parent, self.Item.path) )
+
+        self.start()
+
+class BranchesTree(GameTree):
     def __init__(self, parent):
-        super().__init__(parent, 'Build')
+        super().__init__(parent, ['Build','Branch'], 'Branches', BranchesTreeDelegate, {
+            'Branch' : BranchContextMenu,
+            'Build' : FolderContextMenu,
+            'File' : FileContextMenu
+        })
+
+        self.Tree.itemChanged.connect(self.onItemChanged)
+
+    def onItemChanged(self, item, col):
+        if item.type() == self.Types["Branch"].value:
+            self.Game.set_branch_tracking(item.text(0), True if item.checkState(col) == Qt.Checked else False)
 
     def draw(self):
-        self.Tree.clear()
+        if self.Game.Branches:
+            for branchName in self.Game.Branches:
+                branchItem = self.addItem(self.Tree, 'Branch', branchName, self.Game.path['builds'] + branchName)
+                branchItem.setFlags(Qt.ItemIsSelectable | Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
 
-        buildsItem = QTreeWidgetItem(self.Tree)
-        buildsItem.setText(0, "Builds:")
-        buildsItem.setExpanded(True)
-        
-        if self.Game.builds.keys():
-            buildsItem.Path = QUrl.fromLocalFile(self.Game.path['builds'])
+                if branchName == self.Game.CurrentBranch:
+                    branchItem.setSelected(True)
 
-            for branchName, branchBuilds in self.Game.builds.items():
-                branchItem = QTreeWidgetItem(buildsItem)
-                branchItem.setText(0, branchName)
-                branchItem.Path = QUrl.fromLocalFile(self.Game.path['builds'] + branchName)
+                branchItem.setCheckState(0, Qt.Checked if self.Game.check_branch_tracking(branchName) else Qt.Unchecked)
 
-                builds = list(branchBuilds.keys())
-                builds.sort()
+                if os.path.exists(branchItem.path) and branchName in self.Game.builds:
+                    branchBuilds = self.Game.builds[branchName]
+                    builds = list(branchBuilds.keys())
+                    builds.sort()
 
-                for buildName in reversed(builds):
-                    roms = branchBuilds[buildName]
-                    buildItem = QTreeWidgetItem(branchItem)
-                    buildItem.setText(0, buildName)
-                    buildItem.Path = QUrl.fromLocalFile(self.Game.path['builds'] + branchName + '/' + buildName)
+                    for buildName in reversed(builds):
+                        buildItem = self.addItem(branchItem, 'Build', buildName, self.Game.path['builds'] + branchName + '/' + buildName)
 
-                    for romName, path in roms.items():
-                        romItem = QTreeWidgetItem(buildItem)
-                        romItem.setText(0, romName)
-                        romItem.Path = QUrl.fromLocalFile(str(path))
+                        for fileName, path in branchBuilds[buildName].items():
+                            self.addItem(buildItem, 'File', fileName, str(path))
         else:
-            noneItem = QTreeWidgetItem(buildsItem)
-            noneItem.setText(0, "None")
+            noneItem = self.addItem(self.Tree, 'None', "None")
+            noneItem.setFlags(Qt.NoItemFlags)
+
+class TreeDelegate(QStyledItemDelegate):
+    RightClickSignal = pyqtSignal(QEvent, QTreeWidgetItem)
+
+    def __init__(self, tree, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.Tree = tree
+
+class BranchesTreeDelegate(TreeDelegate):
+    def editorEvent(self, event, model, option, index):
+        if event.type() == QEvent.MouseButtonDblClick:
+            return True
+        
+        if event.type() == QEvent.MouseButtonPress:
+            # rect does not include the side arrow or whitespace
+            labelRect = self.Tree.style().subElementRect(QStyle.SE_TreeViewDisclosureItem, option)
+            
+            # rect will not include the checkbox
+            textOnlyRect = self.Tree.style().subElementRect(QStyle.SE_CheckBoxContents, option)
+
+            # rect will include checkbox
+            checkboxRect = self.Tree.style().subElementRect(QStyle.SE_CheckBoxIndicator, option)
+            checkboxRect.setLeft(checkboxRect.left() + 4) # for some reason, this rect includes are left of checkbox
+            
+            pos = event.pos()
+            item = self.Tree.itemFromIndex(index)
+
+            clickableRect = None
+
+            if not (item.flags() & Qt.ItemIsUserCheckable):
+                clickableRect = labelRect
+            elif pos not in checkboxRect:
+                clickableRect = textOnlyRect
+                    
+            if clickableRect:
+                if pos in clickableRect:
+                    # toggle expanded on left click
+                    if event.button() == Qt.LeftButton:
+                        if item.childCount():
+                            item.setExpanded(not item.isExpanded())
+                    # emit signal on right click
+                    elif event.button() == Qt.RightButton:
+                        self.RightClickSignal.emit(event, item)
+                return True
+            
+            # Ignore right clicks outside of clickable rect
+            if event.button() == Qt.RightButton:
+                return True
+
+        return super().editorEvent(event, model, option, index)
 
 class ReleasesTree(GameTree):
     def __init__(self, parent):
-        super().__init__(parent, 'Release')
+        super().__init__(parent, ['Release'], 'Tags', ReleasesTreeDelegate, {
+            'Tag' : TreeContextMenu,
+            'Release' : FolderContextMenu,
+            'File' : FileContextMenu
+        })
 
     def draw(self):
-        self.Tree.clear()
-        releasesItem = QTreeWidgetItem(self.Tree)
-        releasesItem.setText(0, "Releases:")
-        releasesItem.setExpanded(True)
-
         if self.Game.releases.keys():
-            releasesItem.Path = QUrl.fromLocalFile(self.Game.path['releases'])
-
             releases = list(self.Game.releases.keys())
             releases.sort()
 
             for releaseName in reversed(releases):
                 releases = self.Game.releases[releaseName]
-                releaseItem = QTreeWidgetItem(releasesItem)
-                releaseItem.setText(0, re.match(r'^\d{4}-\d{2}-\d{2} - .* \((.*)\)$', releaseName).group(1))
-                releaseItem.Path = QUrl.fromLocalFile(self.Game.path['releases'] + releaseName)
+                text = re.match(r'^\d{4}-\d{2}-\d{2} - .* \((.*)\)$', releaseName).group(1)
+                releaseItem = self.addItem(self.Tree, 'Release', text, self.Game.path['releases'] + releaseName)
 
-                for romName, path in releases.items():
-                    romItem = QTreeWidgetItem(releaseItem)
-                    romItem.setText(0, romName)
-                    romItem.Path = QUrl.fromLocalFile(str(path))
+                for fileName, path in releases.items():
+                    self.addItem(releaseItem, 'File', fileName, str(path))
         else:
-            noneItem = QTreeWidgetItem(releasesItem)
-            noneItem.setText(0, "None")
+            noneItem = self.addItem(self.Tree, 'None', "None")
+            noneItem.setFlags(Qt.NoItemFlags)
+            
+class ReleasesTreeDelegate(BranchesTreeDelegate):
+    pass
 
 class PatchBody(GamePanelBody):
     def __init__(self, parent):

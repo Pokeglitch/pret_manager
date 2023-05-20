@@ -774,11 +774,6 @@ QTreeView::branch:closed:has-children:hover {
 
 QTreeView::branch:open {
     image: url('assets/images/down_arrow.png');
-    background: #252526;
-}
-
-QTreeView::branch:closed {
-    background: #252526;
 }
 
 QTreeView::branch:closed:has-children {
@@ -786,17 +781,12 @@ QTreeView::branch:closed:has-children {
 }
 
 QTreeView::item {
-    background: #252526;
     border: 1px solid #252526;
     border-radius: 5px;
     color: #ffffff;
 }
 
-QTreeView::item:open, QTreeView::item:closed {
-    background: #252526;
-}
-
-QTreeView::item:open:hover, QTreeView::item:closed:hover {
+QTreeView::item:!selected:hover {
     border: 1px solid #888888;
 }
 
