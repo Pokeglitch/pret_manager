@@ -481,6 +481,31 @@ class SetAsDefaultQueue(Action):
     def __init__(self, parent):
         super().__init__(parent, 'Set as Default', parent.setAsDefault)
 
+class QueueMenu(QMenu):
+    def __init__(self, parent):
+        super().__init__("Queue", parent)
+        self.addAction( parent.AddToQueue )
+        self.addAction( parent.RemoveFromQueue )
+        
+class ListsMenu(QMenu):
+    def __init__(self, parent, lists):
+        super().__init__("Lists", parent)
+        self.addMenu( AddListToListMenu(parent, lists) )
+        if lists:
+            self.addMenu( RemoveListFromListMenu(parent, lists) )
+
+class FavoritesMenu(QMenu):
+    def __init__(self, parent):
+        super().__init__("Favorites", parent)
+        self.addAction( parent.AddToFavorites )
+        self.addAction( parent.RemoveFromFavorites )
+
+class ExcludingMenu(QMenu):
+    def __init__(self, parent):
+        super().__init__("Excluding", parent)
+        self.addAction( parent.AddToExcluding )
+        self.addAction( parent.RemoveFromExcluding )
+
 class ProcessesMenu(QMenu):
     def __init__(self, parent, target=None):
         super().__init__("Process", parent)

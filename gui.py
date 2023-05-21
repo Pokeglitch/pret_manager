@@ -15,10 +15,6 @@ Need to update submodules when switching branches?
 
 Game Panel:
 - Folder icons should be faded if folder does not exist
-
-context menu:
-- have all 'tag' options be a submenu (favorite, etc)
-- same with the list actions
 -------
 Update README, Tutorial
 
@@ -142,28 +138,22 @@ class QueueContextMenu(ContextMenu):
     def __init__(self, queue, event):
         super().__init__(queue, event)
 
-        self.addAction( queue.AddToFavorites )
-        self.addAction( queue.RemoveFromFavorites )
-
-        self.addAction( queue.AddToExcluding )
-        self.addAction( queue.RemoveFromExcluding )
-
+        self.addMenu( FavoritesMenu(queue) )
+        self.addMenu( ExcludingMenu(queue) )
+        
         # Add to list/ remove from list (except itself)
         lists = []
 
         for list in queue.GUI.Manager.Catalogs.Lists.Entries.values():
             lists.append(list)
 
-        self.addMenu( AddListToListMenu(queue, lists) )
-
-        if lists:
-            self.addMenu( RemoveListFromListMenu(queue, lists) )
-
-        self.addAction( queue.ClearAction )
-        self.addAction( queue.SetAsDefault )
+        self.addMenu(ListsMenu(queue, lists))
         
         if queue.List and not queue.GUI.Window.Process:
             self.addMenu( ProcessesMenu(queue) )
+
+        self.addAction( queue.SetAsDefault )
+        self.addAction( queue.ClearAction )
 
         self.Coords = queue.ListContainer.Scroll.mapToGlobal(QPoint(0, 0))
         self.start()
@@ -321,30 +311,22 @@ class TilesContextMenu(ContextMenu):
         tiles = parent.GUI.Tiles
 
         if not tiles.isEmpty:
-            self.addAction( tiles.AddToQueue )
-            self.addAction( tiles.RemoveFromQueue )
-
-            self.addAction( tiles.AddToFavorites )
-            self.addAction( tiles.RemoveFromFavorites )
-
-            self.addAction( tiles.AddToExcluding )
-            self.addAction( tiles.RemoveFromExcluding )
+            self.addMenu(QueueMenu(tiles))
+            self.addMenu(FavoritesMenu(tiles))
+            self.addMenu(ExcludingMenu(tiles))
 
             lists = []
 
             for list in parent.GUI.Manager.Catalogs.Lists.Entries.values():
                 lists.append(list)
 
-            self.addMenu( AddListToListMenu(tiles, lists) )
-
-            if lists:
-                self.addMenu( RemoveListFromListMenu(tiles, lists) )
-
-        if [tiles.GUI.Manager.Search.GUI] != tiles.OR_Lists + tiles.AND_Lists + tiles.NOT_Lists:
-            self.addAction( tiles.ClearAction )
+            self.addMenu(ListsMenu(tiles, lists))
 
         if not tiles.isEmpty and not tiles.GUI.Window.Process:
             self.addMenu( ProcessesMenu(tiles) )
+
+        if [tiles.GUI.Manager.Search.GUI] != tiles.OR_Lists + tiles.AND_Lists + tiles.NOT_Lists:
+            self.addAction( tiles.ClearAction )
 
         self.Coords = tiles.Content.Scroll.mapToGlobal(QPoint(0, 0))
         self.start()

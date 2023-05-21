@@ -19,16 +19,13 @@ class CatalogEntryContextMenu(ContextMenu):
         games = parent.getData()
 
         if games:
-            self.addAction( parent.AddToQueue )
-            self.addAction( parent.RemoveFromQueue )
+            self.addMenu(QueueMenu(parent))
 
             if parent.Data != parent.GUI.Manager.Catalogs.Flags.get('Favorites'):
-                self.addAction( parent.AddToFavorites )
-                self.addAction( parent.RemoveFromFavorites )
+                self.addMenu( FavoritesMenu(parent) )
 
             if parent.Data != parent.GUI.Manager.Catalogs.Flags.get('Excluding'):
-                self.addAction( parent.AddToExcluding )
-                self.addAction( parent.RemoveFromExcluding )
+                self.addMenu( ExcludingMenu(parent) )
 
             # Add to list/ remove from list (except itself)
             lists = []
@@ -37,17 +34,14 @@ class CatalogEntryContextMenu(ContextMenu):
                 if list != parent.Data:
                     lists.append(list)
 
-            self.addMenu( AddListToListMenu(parent, lists) )
-
-            if lists:
-                self.addMenu( RemoveListFromListMenu(parent, lists) )
+            self.addMenu(ListsMenu(parent, lists))
+        
+        if games and not parent.GUI.Window.Process:
+            self.addMenu( ProcessesMenu(parent) )
 
         # if list, add Erase option
         if hasattr(parent, 'EraseAction'):
             self.addAction( parent.EraseAction )
-        
-        if games and not parent.GUI.Window.Process:
-            self.addMenu( ProcessesMenu(parent) )
 
         self.start()
 
