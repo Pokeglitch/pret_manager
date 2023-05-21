@@ -16,17 +16,9 @@ Need to update submodules when switching branches?
 Game Panel:
 - Folder icons should be faded if folder does not exist
 
-Options for Auto-refresh/Auto-Update
-
-Tags Tree:
-- right click to download if Release
-
 context menu:
 - have all 'tag' options be a submenu (favorite, etc)
 - same with the list actions
-- set/reset auto-refresh
-- set/reset auto-update
-
 -------
 Update README, Tutorial
 
@@ -646,6 +638,16 @@ class SwitchBranch(ManagerThread):
     def run(self):
         self.Game.set_branch(self.Branch)
 
+class DownloadRelease(ManagerThread):
+    def __init__(self, GUI, game, tag):
+        self.Game = game
+        self.Tag = tag
+
+        super().__init__(GUI)
+
+    def run(self):
+        self.Game.get_release(self.Tag)
+
 class ExecuteProcess(ManagerThread):
     def __init__(self, GUI, sequence, games, build_options=[]):
         self.Games = games
@@ -724,6 +726,10 @@ class MainContents(HBox):
     def startSpecificProcess(self, sequence, games, *build_options):
         if not self.Window.Process:
             self.Window.Process = ExecuteProcess(self, sequence, games[:], build_options)
+
+    def downloadRelease(self, game, tag):
+        if not self.Window.Process:
+            self.Window.Process = DownloadRelease(self, game, tag)
 
     def onProcessing(self, processing):
         if not processing:

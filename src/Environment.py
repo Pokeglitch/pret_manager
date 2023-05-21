@@ -169,14 +169,28 @@ class Github(Command):
     def list(self):
         return self.run('release list -R {0}'.format(self.Game.url))
 
-    def download(self, id, destination):
+    def download(self, id, destination, clobber=False):
         # view assets
-        assets = json.loads(self.run('release view --json assets {0} -R {1}'.format(id, self.Game.url))[0])["assets"]
+        result = self.run('release view --json assets {0} -R {1}'.format(id, self.Game.url))[0]
+
+        if not result:
+            return 'Release not found: ' + id
+        
+        assets = json.loads(result)["assets"]
 
         destination = self.path(destination)
 
         if assets:
-            self.run('release download {0} -R {1} -D "{2}" -p "*"'.format(id, self.Game.url, destination))
+            command = 'release download {0} -R {1} -D "{2}" -p "*"'.format(id, self.Game.url, destination)
+            if clobber:
+                command += ' --clobber'
+            if self.run(command, CaptureOutput=False).returncode:
+                return 'Failed to download release: ' + id
+            
+            return None
+
+
+        return 'Release has no assets:' + id
 
 class Git(GameCommand):
     def __init__(self, game):

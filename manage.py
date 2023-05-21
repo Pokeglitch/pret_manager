@@ -1353,15 +1353,18 @@ class repository(MetaData):
                     release_dir = self.path['releases'] + data["release"]
 
                     temp_dir = temp_mkdir(release_dir)
-                    # TODO - handle error
-                    self.github.download(tag, release_dir)
+                    msg = self.github.download(tag, release_dir)
 
-                    files = self.check_releases(release_dir)
-                    if files:
-                        self.store_release(tag, files)
-                        release_found = True
+                    if msg:
+                        self.print(msg)
                     else:
-                        self.rmdir(temp_dir, 'Release does not have valid content: ' + data["release"])
+                        files = self.check_releases(release_dir)
+                        if files:
+                            self.store_release(tag, files)
+                            self.print('Placed files in: ' + data["release"])
+                            release_found = True
+                        else:
+                            self.rmdir(temp_dir, 'Release does not have valid content: ' + data["release"])
 
         if release_found:
             if self.GUI:
@@ -1610,6 +1613,27 @@ class repository(MetaData):
 
         return releases_found
     
+    def get_release(self, tag):
+        if tag in self.GitTags:
+            data = self.GitTags[tag]
+            if 'release' in data:
+                self.print('Downloading release: ' + tag)
+                release_dir = self.path['releases'] + data["release"]
+
+                temp_dir = temp_mkdir(release_dir)
+                msg = self.github.download(tag, release_dir, True)
+
+                if msg:
+                    self.print(msg)
+                else:
+                    files = self.check_releases(release_dir)
+                    if files:
+                        self.store_release(tag, files)
+                        self.print('Placed files in: ' + data["release"])
+                        self.ReleaseSignal.emit()
+                    else:
+                        self.rmdir(temp_dir, 'Release does not have valid content: ' + data["release"])
+
     def get_submodules(self):
         submodules = {}
 

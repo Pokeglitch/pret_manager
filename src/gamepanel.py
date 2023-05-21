@@ -275,6 +275,9 @@ class GameTree(VBox):
     def specificProcess(self, branch, sequence):
         self.GUI.startSpecificProcess(sequence, [self.Game], branch)
 
+    def downloadRelease(self, tag):
+        self.GUI.downloadRelease(self.Game, tag)
+
     def onRightClick(self, event, item):
         type  = item.type()
         
@@ -373,6 +376,7 @@ class ReleaseContextMenu(TreeContextMenu):
             self.addAction( OpenFolder(self.Parent, self.Item.path) )
 
         if not self.GUI.Window.Process:
+            self.addAction( Action(self.Parent, 'Download', lambda: self.Widget.downloadRelease(self.Item.text(0)) ))
             self.addAction( Action(self.Parent, 'Build', lambda: self.Widget.specificProcess(self.Item.commit, 'b')))
         
         self.start()

@@ -2,9 +2,6 @@
 
 ## GUI
 
-### Settings
-  * Option to not auto-download Releases
-
 ### Filter
   * Invert Filter
   * Save / Load Filter
