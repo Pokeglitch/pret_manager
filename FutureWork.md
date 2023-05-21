@@ -28,8 +28,7 @@
   * Add 'Delete' option to all Context Menus
   
 ## Content
-  * Unique Artwork for all Games
-  * Proper Tags for all Games
+  * Proper Title, Artwork, Tags, Description, and Basis for all Games
   * Make Tags Nestable
     * i.e. Gen1, Gen2, TCG
   * Associate Authors with Teams or Collaborative Projects

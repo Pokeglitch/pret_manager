@@ -873,8 +873,10 @@ class repository(MetaData):
             sequence = sequence[1:]
 
         if len(sequence) and ('b' in sequence or 'c' in sequence):
+            if not self.validate_repo():
+                self.print('Cannot run \'make\' on missing repository')
             # if no specific build options, then build for all branches
-            if not build_options:
+            elif not build_options:
                 starting_branch = self.CurrentBranch
 
                 if self.check_branch_tracking(starting_branch):
@@ -937,17 +939,11 @@ class repository(MetaData):
 
     def clean(self):
         if not self.Cleaned:
-            if self.Missing:
-
-                if not self.Updated:
-                    self.print('Repository not found. Updating')
-                    self.update()
-                
-                if self.Missing:
-                    self.print('Cannot clean missing repository')
-            else:
+            if self.validate_repo():
                 self.print('Cleaning')
                 self.make.clean()
+            else:
+                self.print('Cannot clean missing repository')
 
             self.Cleaned = True
 
@@ -958,8 +954,11 @@ class repository(MetaData):
         return self.git.fetch()
 
     def pull(self):
-        self.git.pull()
-        self.get_current_branch_info()
+        success = not self.git.pull().returncode
+        if success:
+            self.get_current_branch_info()
+
+        return success
 
     def get_url(self):
         return self.git.get('remote.origin.url')[0]
@@ -1077,22 +1076,35 @@ class repository(MetaData):
 
     def update_branches(self):
         starting_branch = self.CurrentBranch
+
+        updateSuccess = True
         branchUpdated = False
 
         if self.check_branch_outdated(starting_branch):
-            self.pull()
-            branchUpdated = True
+            if self.pull():
+                self.print('Updated ' + starting_branch)
+                branchUpdated = True
+            else:
+                self.print('Failed to update ' + starting_branch)
+                updateSuccess = False
 
         for branchName in self.Branches:
             if self.check_branch_outdated(branchName):
                 if self.switch(branchName):
-                    self.pull()
+                    if self.pull():
+                        self.print('Updated ' + branchName)
+                        branchUpdated = True
+                    else:
+                        self.print('Failed to update ' + branchName)
+                        updateSuccess = False
         
         if self.CurrentBranch != starting_branch:
             self.switch(starting_branch)
 
         if branchUpdated:
             self.BranchSignal.emit()
+
+        return updateSuccess
 
     def switch(self, *args):
         # if its a commit, use the detach flag
@@ -1124,7 +1136,7 @@ class repository(MetaData):
             # Get the corresponding GitTag data
             data = [self.GitTags[tag] for tag in self.GitTags if self.GitTags[tag]['commit'] == lastCommit][0]
             data['date'] = lastUpdate
-        else:
+        elif branch:
             if branch not in self.Branches:
                 self.Branches[branch] = {}
                 
@@ -1138,13 +1150,16 @@ class repository(MetaData):
 
     def refresh(self):
         if not self.Refreshed:
-            self.setOutdated(False)
             self.print("Refreshing repository")
-            self.refresh_branches()
+            branchesOutdated = self.refresh_branches()
             self.refresh_tags()
-            self.refresh_releases()
+            releasesOutdated = self.refresh_releases()
 
             self.clean_directory()
+
+            isOutdated = branchesOutdated or releasesOutdated or self.Missing
+            self.setOutdated(isOutdated)
+
             self.Refreshed = True
 
     def clean_directory(self):
@@ -1161,6 +1176,7 @@ class repository(MetaData):
 
     def refresh_branches(self):
         newBranch = False
+        isOutdated = False
         for branch, commit in self.list('head'):
             data = self.get_branch_data(branch)
 
@@ -1170,10 +1186,12 @@ class repository(MetaData):
             data['LastRemoteCommit'] = commit
 
             if self.check_branch_outdated(branch):
-                self.setOutdated(True)
+                isOutdated = True
                 
         if newBranch:
             self.BranchSignal.emit()
+
+        return isOutdated
 
     def parse_branches(self):
         if not self.Branches or any([self.check_branch_outdated(branch) for branch in self.Branches]):
@@ -1222,6 +1240,7 @@ class repository(MetaData):
   
     def refresh_releases(self):
         releases = self.github.list()
+        isOutdated = False
         for release in releases:
             # ignore empty lines
             if release:
@@ -1231,7 +1250,8 @@ class repository(MetaData):
 
                 if "release" not in data:
                     data["release"] = legal_name(datetime.split('T')[0] + ' - ' + title + ' (' + tag + ')')
-                    self.setOutdated(True)
+                    isOutdated = True
+        return isOutdated
     
     def parse_releases(self):
         self.releases = {}
@@ -1330,6 +1350,7 @@ class repository(MetaData):
                     release_dir = self.path['releases'] + data["release"]
 
                     temp_dir = temp_mkdir(release_dir)
+                    # TODO - handle error
                     self.github.download(tag, release_dir)
 
                     files = self.check_releases(release_dir)
@@ -1482,16 +1503,19 @@ class repository(MetaData):
             self.build_name = date[:10] + ' ' + commit[:8] + ' (' + version + ')'
             self.build_dir = self.path['builds'] + self.CurrentBranch + '/' + self.build_name + '/'
 
-    def build(self, *args):
+    def validate_repo(self):
         # if the repository doesnt exist, then update
         if self.Missing:
             if not self.Updated:
                 self.print('Repository not found. Updating')
                 self.update()
 
-            if self.Missing:
-                self.print('Cannot build missing repository')
-                return
+        return not self.Missing
+
+    def build(self, *args):
+        if not self.validate_repo():
+            self.print('Cannot build missing repository')
+            return
 
         # Unset the cleaned flag
         self.Cleaned = False
@@ -1504,6 +1528,10 @@ class repository(MetaData):
 
         if not self.CurrentBranch:
             self.get_current_branch_info()
+
+            if not self.CurrentBranch:
+                self.print("Failed to obtain current branch information")
+                return
             
         self.get_build_info(version)
 
@@ -1534,18 +1562,24 @@ class repository(MetaData):
         
         self.refresh()
         
+        updateSuccess = self.Outdated
+
         if self.Outdated:
-            self.update_branches()
+            branchUpdateSuccess = self.update_branches()
+
+        return updateSuccess and branchUpdateSuccess
 
     def init_repo(self):
         self.print("Initializing repository")
         result = self.git.clone()
         if result.returncode:
             self.print('Could not clone repository')
+            return False
         else:
             self.get_current_branch_info()
             self.refresh()
             self.setMissing(False)
+            return True
 
     def update(self, release_id=None):
         self.Updated = True
@@ -1553,13 +1587,9 @@ class repository(MetaData):
         mkdir(self.path['base'])
 
         if self.Missing:
-            self.init_repo()
-
-            # if still missing, then exit
-            if self.Missing:
-                return
+            repoUpdateSuccess = self.init_repo()
         else:
-            self.update_repo()
+            repoUpdateSuccess = self.update_repo()
     
         # check the shortcut
         shortcut = self.path['base'] + self.name + ' Repository.url'
@@ -1572,8 +1602,8 @@ class repository(MetaData):
 
         self.updateMetaData()
 
-        # todo - handle if update fails
-        self.setOutdated(False)
+        if repoUpdateSuccess:
+            self.setOutdated(False)
 
         return releases_found
     

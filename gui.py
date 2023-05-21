@@ -11,6 +11,8 @@ Bugs:
 
 Check remaining TODOs throughout source
 ------
+Need to update submodules when switching branches?
+
 Game Panel:
 - Folder icons should be faded if folder does not exist
 
