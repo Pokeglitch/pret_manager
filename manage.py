@@ -1582,8 +1582,9 @@ class repository(MetaData):
             self.print('Could not clone repository')
             return False
         else:
-            self.get_current_branch_info()
             self.refresh()
+            self.get_current_branch_info()
+            self.BranchSignal.emit()
             self.setMissing(False)
             return True
 

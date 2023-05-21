@@ -536,6 +536,7 @@
     "poketre2": {
       "title": "Team Rocket Edition 2",
       "rgbds": "0.6.1",
+      "basis" : "pret/pokered",
       "tags": [
         "red",
         "disasm",
@@ -545,6 +546,7 @@
     "poketre2_old": {
       "title": "Team Rocket Edition 2 (old)",
       "rgbds": "0.2.5",
+      "basis" : "pret/pokered",
       "tags": [
         "red",
         "disasm",
@@ -1494,6 +1496,16 @@
   "pkmncoraldev": {
     "polishedcoral": {
       "title": "Coral",
+      "rgbds": "0.6.1",
+      "tags": [
+        "crystal",
+        "disasm",
+        "new-story",
+        "new-region"
+      ]
+    },
+    "polishedcoral2022": {
+      "title": "Coral (2022 Demo)",
       "rgbds": "0.6.1",
       "tags": [
         "crystal",
