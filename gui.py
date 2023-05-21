@@ -168,6 +168,7 @@ class QueueContextMenu(ContextMenu):
             self.addMenu( RemoveListFromListMenu(queue, lists) )
 
         self.addAction( queue.ClearAction )
+        self.addAction( queue.SetAsDefault )
         
         if queue.List and not queue.GUI.Window.Process:
             self.addMenu( ProcessesMenu(queue) )
@@ -234,12 +235,15 @@ class Queue(VBox):
         self.RemoveFromExcluding = RemoveFromExcluding(self)
         self.ClearAction = ClearQueue(self)
         self.ProcessAction = ProcessAction(self)
+        self.SetAsDefault = SetAsDefaultQueue(self)
 
         self.NewList = NewList(self)
 
         self.updateIsEmpty()
 
         self.addTo(GUI.Col1, 1)
+
+        self.GUI.Window.InitializedSignal.connect(self.loadDefault)
 
     def updateIsEmpty(self):
         if self.isEmpty == bool(self.List):
@@ -273,13 +277,32 @@ class Queue(VBox):
     def erase(self):
         self.removeGames(self.getData())
 
-    def process(self):
+    def process(self, isAuto=False):
         if self.List:
-            self.GUI.startProcess(self.getData())
+            self.GUI.startProcess(self.getData(), isAuto=isAuto)
             
     def specificProcess(self, sequence):
         if self.List:
             self.GUI.startSpecificProcess(sequence, self.getData())
+
+    def loadDefault(self):
+        if os.path.exists('data/queue.json'):
+            with open('data/queue.json', 'r') as f:
+                list = json.loads(f.read() or '{}')
+                
+            games = []
+            for author in list:
+                for title in list[author]:
+                    games.append(self.GUI.Manager.Catalogs.Authors.get(author).getGame(title))
+
+            self.addGames(games)
+
+        self.GUI.Panel.Body.Options.setQueueReady()
+
+    def setAsDefault(self):
+        structure = listToDict(self.getData())
+        with open('data/queue.json', 'w') as f:
+            f.write(json.dumps(structure, indent=4))
 
     def saveList(self):
         self.GUI.saveList(self.getData())
@@ -693,8 +716,8 @@ class MainContents(HBox):
         if not self.Window.Process or isAuto:
             self.Window.Process = UpdatePRETManager(self)
 
-    def startProcess(self, games, *build_options):
-        if not self.Window.Process:
+    def startProcess(self, games, *build_options, isAuto=False):
+        if not self.Window.Process or isAuto:
             sequence = self.Process.Options.compile()
             self.Window.Process = ExecuteProcess(self, sequence, games[:], build_options)
 
@@ -716,8 +739,8 @@ class PRET_Manager_GUI(QMainWindow):
     Logger = pyqtSignal(str)
     Processing = pyqtSignal(bool)
     InitializedSignal = pyqtSignal()
-    UpdateFoundSignal = pyqtSignal()
-    UpdateAppliedSignal = pyqtSignal()
+    UpdateFoundSignal = pyqtSignal(bool)
+    UpdateAppliedSignal = pyqtSignal(bool)
 
     def __init__(self, manager):
         super().__init__()

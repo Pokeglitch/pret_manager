@@ -137,8 +137,12 @@ class OptionToggleField(ToggleField):
         self.GUI.Manager.updateMetaData()
 
 class PRETManagerOptions(PanelOptionsWidget):
+    AutoSequenceFinishedSignal = pyqtSignal()
+
     def __init__(self, parent):
         super().__init__(parent, 'pret manager')
+
+        self.AutoSequenceFinished = False
 
         container = HBox(self.GUI)
         self.CheckForUpdate = ProcessPanelButton(container, 'Check for Update', self.GUI.refreshPRETManager)
@@ -170,14 +174,24 @@ class PRETManagerOptions(PanelOptionsWidget):
     def checkAutoRefresh(self):
         if self.AutoCheckForUpdate.value():
             self.GUI.refreshPRETManager(True)
+        else:
+            self.finishAutoSequence()
 
-    def checkAutoApply(self):
-        if self.AutoApplyUpdate.value():
+    def checkAutoApply(self, isOutdated):
+        if isOutdated and self.AutoApplyUpdate.value():
             self.GUI.updatePRETManager(True)
+        else:
+            self.finishAutoSequence()
 
-    def checkAutoRestart(self):
-        if self.AutoRestart.value():
+    def checkAutoRestart(self, isOutdated):
+        if not isOutdated and self.AutoRestart.value():
             self.GUI.restartPRETManager(True)
+        else:
+            self.finishAutoSequence()
+
+    def finishAutoSequence(self):
+        self.AutoSequenceFinished = True
+        self.AutoSequenceFinishedSignal.emit()
 
 class BrowserOptions(PanelOptionsWidget):
     def __init__(self, parent):
@@ -192,8 +206,6 @@ class ProcessingOptions(PanelOptionsWidget):
         super().__init__(parent, 'Processing')
 
         # TODO:
-        # Auto-refresh on start
-        # Auto-update on start
         # Include Releases when 'Update'
         # Remove from Queue after Processed
         # Replace previous builds
@@ -201,6 +213,7 @@ class ProcessingOptions(PanelOptionsWidget):
         container = HBox(self.GUI)
         self.SaveDefaultProcesses = PanelButton(container, 'Save Current as Default', self.saveDefaultProcesses)
         self.RestoreDefaultProcesses = PanelButton(container, 'Restore Default', self.restoreDefaultProcesses)
+        self.AutoProcess = OptionToggleField(container, 'Auto:', 'AutoProcess')
         CenterH(container).addTo(self)
 
     def saveDefaultProcesses(self):
@@ -209,6 +222,10 @@ class ProcessingOptions(PanelOptionsWidget):
 
     def restoreDefaultProcesses(self):
         self.GUI.Process.Options.setSettings()
+
+    def checkAutoProcess(self):
+        if self.AutoProcess.value():
+            self.GUI.Queue.process(True)
 
 class EnvironmentsOptions(PanelOptionsWidget):
     def __init__(self, parent):
@@ -296,6 +313,13 @@ class PanelOptions(VBox):
             self.Environments = EnvironmentsOptions(self)
 
         self.addStretch()
+
+    def setQueueReady(self):
+        if self.PRETManager.AutoSequenceFinished:
+            self.Processing.checkAutoProcess()
+        else:
+            self.PRETManager.AutoSequenceFinishedSignal.connect(self.Processing.checkAutoProcess)
+
 
 class PanelBody(VScroll):
     def __init__(self, panel):

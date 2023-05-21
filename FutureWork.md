@@ -39,6 +39,7 @@
     * Manage w64devkit repository if no Linux option available
 
 ## Source Code
+  * General improvement of organiation and consistent paradigm
   * Clean up Parameter handling for subprocess.Popen
   * Safer File Operations
     * Handle reading corrupted files
@@ -49,17 +50,12 @@
     * Thumbnails
 
 ## Processing
-  * Disable ability to Process if no action is enabled
-  * Add each individual Process action to Context Menus
   * Fallback Plan when `gh` is available
-    * Memoize into data.json and download via http
-  * Ability to save a Processing script:
-    * X Actions for Y Games (@ Z Branch/Commit)
+    * Memoize into data.json and download via http (?)
 
 ## Building
   * Extract Make targets
     * Provide option to select which to include
-  * Option to checkout commit or build specific commit
   * Fix repositories that do not build
     * Some require rgbds to be inside the repository (BW3G)
     * Identify and use required versions & libraries for Python, Node, C, Linux packages, etc

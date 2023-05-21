@@ -477,6 +477,10 @@ class ClearQueue(Action):
     def __init__(self, parent):
         super().__init__(parent, 'Clear Queue', parent.erase)
 
+class SetAsDefaultQueue(Action):
+    def __init__(self, parent):
+        super().__init__(parent, 'Set as Default', parent.setAsDefault)
+
 class ProcessesMenu(QMenu):
     def __init__(self, parent, target=None):
         super().__init__("Process", parent)

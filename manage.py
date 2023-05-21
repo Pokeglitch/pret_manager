@@ -408,7 +408,7 @@ class PRET_Manager(MetaData):
     w64devkitPathSignal = pyqtSignal(str)
 
     def __init__(self):
-        super().__init__(['Outdated','AutoRefresh','AutoUpdate','AutoRestart'])
+        super().__init__(['Outdated','AutoRefresh','AutoUpdate','AutoRestart','AutoProcess'])
         self.Manager = self
         self.Directory = games_dir
         
@@ -433,6 +433,7 @@ class PRET_Manager(MetaData):
 
         self.Outdated = False
         self.AutoRefresh = False
+        self.AutoProcess = False
         self.AutoUpdate = False
         self.AutoRestart = False
         self.readMetaData(False)
@@ -513,9 +514,10 @@ class PRET_Manager(MetaData):
 
         if self.Outdated:
             self.print('Update available')
-            self.Manager.GUI.UpdateFoundSignal.emit()
         else:
             self.print('Already up to date')
+        
+        self.Manager.GUI.UpdateFoundSignal.emit(self.Outdated)
 
     def update(self):
         if self.Outdated:
@@ -526,9 +528,10 @@ class PRET_Manager(MetaData):
                 self.print('Failed to update')
             else:
                 self.print('Updated successful. Restart to load changes')
-                self.Manager.GUI.UpdateAppliedSignal.emit()
         else:
             self.print('Already up to date')
+        
+        self.Manager.GUI.UpdateAppliedSignal.emit(self.Outdated)
 
     def checkForUpdate(self):
         data = dict(self.list('head'))
