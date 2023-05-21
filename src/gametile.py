@@ -2,7 +2,7 @@ from src.gamebase import *
 
 class CartridgePixmap(Scaled):
     def __init__(self, name):
-        super().__init__('assets/images/{0}.png'.format(name), 150)
+        super().__init__('assets/images/{0}.png'.format(name), 135, 150)
         self.Faded = Faded(self)
 
 class CartridgeImage(QLabel):
@@ -13,8 +13,8 @@ class CartridgeImage(QLabel):
         
         self.setAlignment(Qt.AlignCenter)
 
-        self.LibraryPixmap = CartridgePixmap('cartridge')
-        self.NotLibraryPixmap =  CartridgePixmap('cartridge_dark')
+        self.LibraryPixmap = CartridgePixmap('cartridge_scaled')
+        self.NotLibraryPixmap =  CartridgePixmap('cartridge_dark_scaled')
 
         self.Game.on('Library', self.update)
         self.Game.on('Excluding', self.update)

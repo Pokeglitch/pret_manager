@@ -4,7 +4,7 @@ from src.gamebase import *
 
 class GamePanelArtworkPixmap(Scaled):
     def __init__(self, game):
-        super().__init__(game.Boxart, 300)
+        super().__init__(game.Boxart, 320, 288)
         self.Game = game
         self.Faded = Faded(self)
 

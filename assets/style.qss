@@ -316,34 +316,37 @@ GameTile * {
 }
 
 LabelImage {
-    margin-top:38px;
+    margin-top:24px;
     border: 1px solid black;
     padding: 0px;
     border-radius:5px;
 }
 
 GameTileTitle {
+    font-size: 10px;
     padding: 0px;
-    margin-top:18px;
-    min-height:24px;
-    max-height:24px;
+    margin-top:16px;
+    min-height:25px;
+    max-height:25px;
     min-width:100px;
     max-width: 100px;
-    border-radius: 12px;
-    color: black;
-    border: 2px solid black;
+    font-weight: 550;
 }
 
-GameTileTitle[excluding=true] {
-    border-color: rgba(0, 0, 0, 0.5)
+GameTileTitle[library=false][excluding=false]{
+    color: #707070;
 }
 
-GameTileTitle[library=false]{
-    background-color: rgba(255, 255, 255, 0.08)
+GameTileTitle[library=true][excluding=false]{
+    color: #b8b8b8;
 }
 
-GameTileTitle[library=true]{
-    background-color: rgba(200, 200, 200, 0.08)
+GameTileTitle[library=false][excluding=true]{
+    color: #484848;
+}
+
+GameTileTitle[library=true][excluding=true]{
+    color: #5c5c5c;
 }
 
 #TileArt {
@@ -664,10 +667,10 @@ TagGUI[which=obsolete]:hover {
 }
 
 GamePanelArtwork {
-    min-height: 300px;
-    max-height: 300px;
-    min-width: 300px;
-    max-width: 300px;
+    min-height: 288px;
+    max-height: 288px;
+    min-width: 320px;
+    max-width: 320px;
     border: 1px solid black;
     margin:5px;
     padding: 0;

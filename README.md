@@ -86,4 +86,6 @@ Please see this file for potential [Future Work](FutureWork.md)
 
 Any help towards this project will be much appreciated!  This could be anything from sharing bugs, informing of missing repositories, adding better Tags/Titles/Descriptions/Artwork, or any feature requests!
 
+Please see [this page](contributors.md) for recognition of some other those who have contributed to this project
+
 [Join the Discord Here](https://discord.gg/dvgYzaZcjK)

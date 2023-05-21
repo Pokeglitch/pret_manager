@@ -287,8 +287,10 @@ class Button(QLabel):
         self.updateStyle()
 
 class Scaled(QPixmap):
-    def __init__(self, path, dim):
-        super().__init__(dim, dim)
+    def __init__(self, path, width, height=None):
+        if height is None:
+            height=width
+        super().__init__(width, height)
         self.fill(Qt.transparent)
         painter = QPainter(self)
         painter.setRenderHints(QPainter.Antialiasing, QPainter.SmoothPixmapTransform)
