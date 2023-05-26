@@ -294,7 +294,7 @@ class Scaled(QPixmap):
         self.fill(Qt.transparent)
         painter = QPainter(self)
         painter.setRenderHints(QPainter.Antialiasing, QPainter.SmoothPixmapTransform)
-        painter.drawImage(self.rect(), QImage(path))
+        painter.drawImage(self.rect(), QImage(path).scaled(width, height, transformMode=Qt.SmoothTransformation))
         painter.end()
 
 class Darkened(QPixmap):
