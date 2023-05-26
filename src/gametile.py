@@ -16,7 +16,7 @@ class CartridgePixmap(Scaled):
         self.Darkened = Darkened(self)
 
 # todo - skipping green
-games = ['red', 'blue', 'yellow', 'gold', 'silver', 'crystal', 'tcg', 'tcg2']
+games = ['red', 'blue', 'yellow', 'gold', 'silver', 'crystal', 'tcg1', 'tcg2']
 
 class CartridgeImage(QLabel):
     def __init__(self, cartridge):
