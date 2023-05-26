@@ -331,22 +331,15 @@ GameTileTitle {
     min-width:100px;
     max-width: 100px;
     font-weight: 550;
+    color: #ffffff;
 }
 
-GameTileTitle[library=false][excluding=false]{
-    color: #707070;
+GameTileTitle[excluding=true], GameTileTitle[library=false] {
+    color: #7f7f7f;
 }
 
-GameTileTitle[library=true][excluding=false]{
-    color: #b8b8b8;
-}
-
-GameTileTitle[library=false][excluding=true]{
-    color: #484848;
-}
-
-GameTileTitle[library=true][excluding=true]{
-    color: #5c5c5c;
+GameTileTitle[excluding=true][library=false] {
+    color: #5f5f5f;
 }
 
 #TileArt {

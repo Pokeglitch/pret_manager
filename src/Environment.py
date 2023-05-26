@@ -22,9 +22,11 @@ class Environment:
     
     def run(self, command, options):
         try:
-            parameters = {
-                'creationflags' : subprocess.CREATE_NEW_PROCESS_GROUP
-            }
+            parameters = {}
+
+            if platform.system() == 'Windows':
+                parameters['creationflags'] = subprocess.CREATE_NEW_PROCESS_GROUP
+            
             input = ''
             stdout = False
 

@@ -7,3 +7,5 @@
   * The-Desert-Tiger
     * Original Cartridge Art
       * https://www.deviantart.com/the-desert-tiger/art/Game-Boy-Cartridge-Vector-386409017
+  * LJSTAR
+    * Colorized Cartridge Art

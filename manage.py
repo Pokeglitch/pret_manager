@@ -451,11 +451,7 @@ class PRET_Manager(MetaData):
         self.print('Terminating Process')
         
         if self.Process:
-            if platform.system() == 'Windows':
-                sig = signal.CTRL_BREAK_EVENT
-            else:
-                sig = signal.SIGBREAK
-
+            sig = signal.SIGINT
             os.kill(self.Process.pid, sig)
             self.setProcess(None)
 

@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt, QModelIndex, QEvent, QTimer, QThread, QCoreApplication, QProcess, QPoint, pyqtSignal, QObject, QUrl, QThreadPool, QRunnable, QMargins, QPoint, QRect, QSize
 from PyQt5.QtWidgets import QWidgetAction, QTreeView, QStyleOptionButton, QGraphicsDropShadowEffect, QDialog, QAction, QMenu, QSlider, QStackedWidget, QLineEdit, QSplashScreen, QComboBox, QHeaderView, QTreeWidgetItem, QFileDialog, QTreeWidget, QApplication, QStyleOption, QStyledItemDelegate, QStyleOptionFrame, QStyle, QLabel, QMainWindow, QLayout, QSizePolicy, QVBoxLayout, QGridLayout, QHBoxLayout, QScrollArea, QWidget
-from PyQt5.QtGui import QBrush, QMouseEvent, QColor, QImage, QPixmap, QDesktopServices, QIcon, QPainter
-import time, json, copy, os
+from PyQt5.QtGui import QPen, QFontMetrics, QPainterPath, QFont, QBrush, QMouseEvent, QColor, QImage, QPixmap, QDesktopServices, QIcon, QPainter
+import time, json, copy, os, math
 
 from src.Files import *
 
@@ -297,6 +297,22 @@ class Scaled(QPixmap):
         painter.drawImage(self.rect(), QImage(path))
         painter.end()
 
+class Darkened(QPixmap):
+    def __init__(self, pixmap):
+        super().__init__(pixmap.size())
+        self.fill(Qt.transparent)
+
+        image = self.toImage()
+        pixmapImage = pixmap.toImage()
+
+        for x in range(image.width()):
+            for y in range(image.height()):
+                color = pixmapImage.pixelColor(x, y)
+                image.setPixelColor(x, y, color.darker())
+
+        self.convertFromImage(image)
+        self.Faded = Faded(self)
+
 class Faded(QPixmap):
     def __init__(self, pixmap):
         super().__init__(pixmap.size())
@@ -367,6 +383,22 @@ class Label(QLabel):
 
     def updateStyle(self):
         self.style().polish(self)
+
+class OutlineShadow(QGraphicsDropShadowEffect):
+    def __init__(self):
+        super().__init__()
+        self.setBlurRadius(1)
+        self.setColor(QColor("#000000"))
+
+    def draw(self, painter):
+        self.setOffset(1, 0)
+        super().draw(painter)
+        self.setOffset(-1, 0)
+        super().draw(painter)
+        self.setOffset(0, 1)
+        super().draw(painter)
+        self.setOffset(0, -1)
+        super().draw(painter)
 
 class ContextMenu(QMenu):
     def __init__(self, parent, event):

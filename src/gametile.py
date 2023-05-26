@@ -1,9 +1,22 @@
 from src.gamebase import *
+cartridges = ['red', 'blue', 'redblue', 'green', 'yellow', 'gold', 'silver', 'goldsilver', 'crystal', 'tcg', 'tcg2']
+
+CartridgePixmaps = {}
+
+def getCartridgePixmap(color):
+    if color not in CartridgePixmaps:
+        CartridgePixmaps[color] = CartridgePixmap('cartridge_' + color)
+
+    return CartridgePixmaps[color]
 
 class CartridgePixmap(Scaled):
     def __init__(self, name):
         super().__init__('assets/images/{0}.png'.format(name), 135, 150)
         self.Faded = Faded(self)
+        self.Darkened = Darkened(self)
+
+# todo - skipping green
+games = ['red', 'blue', 'yellow', 'gold', 'silver', 'crystal', 'tcg', 'tcg2']
 
 class CartridgeImage(QLabel):
     def __init__(self, cartridge):
@@ -13,8 +26,19 @@ class CartridgeImage(QLabel):
         
         self.setAlignment(Qt.AlignCenter)
 
-        self.LibraryPixmap = CartridgePixmap('cartridge_scaled')
-        self.NotLibraryPixmap =  CartridgePixmap('cartridge_dark_scaled')
+        color = ''
+
+        for game in games:
+            if game in self.Game.tags:
+                color += game
+
+        if not color:
+            color = 'gray'
+        
+        self.Cartridge.setProperty('color', color)
+
+        self.LibraryPixmap = getCartridgePixmap(color) #CartridgePixmap('cartridge_' + color)
+        self.NotLibraryPixmap =  self.LibraryPixmap.Darkened
 
         self.Game.on('Library', self.update)
         self.Game.on('Excluding', self.update)
@@ -66,6 +90,7 @@ class GameTileTitle(Label):
         super().__init__(parent.GUI, self.Game.FullTitle)
 
         self.setWordWrap(True)
+        self.setGraphicsEffect(OutlineShadow())
         CenterH(self).addTo(parent)
         
         self.Game.on('Excluding', self.updateExcluding)
