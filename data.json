@@ -19,13 +19,15 @@
       "rgbds": "0.5.2",
       "tags": [
         "red",
-        "disasm"
+        "disasm",
+        "WiP"
       ],
       "basis": "dannye/pokered-crysaudio"
     }
   },
   "Aegide": {
     "custom-fusion-sprites": {
+      "title": "Custom Fusion Sprites",
       "tags": [
         "extras"
       ]
@@ -79,6 +81,7 @@
     },
     "pokeplat-gen2-old": {
       "title": "Platinum Gen 2 (old)",
+      "rgbds": "0.4.1",
       "tags": [
         "crystal",
         "disasm",
@@ -443,6 +446,7 @@
   },
   "MoriyaFaith": {
     "neocrystal": {
+      "rgbds": "0.6.1",
       "tags": [
         "crystal",
         "disasm"
@@ -634,19 +638,22 @@
       "tags": [
         "red",
         "disasm",
-        "asset-swap"
+        "WiP"
       ],
-      "basis": "pret/pokered"
+      "basis": "pret/pokered",
+      "description": "An interpretation of Gen 1 prototype material, including the earliest version of the Kanto maps."
     },
     "protogs": {
       "title": "Gold & Silver Proto",
+      "rgbds": "0.6.1",
       "tags": [
         "gold",
         "silver",
         "disasm",
-        "asset-swap"
+        "WiP"
       ],
-      "basis": "pret/pokegold"
+      "basis": "pret/pokegold",
+      "description": "An interpretation of Gen 2 prototype material, featuring the 1998 Kansai (Johto) map backups."
     }
   },
   "SheerSt": {
@@ -901,6 +908,7 @@
   "ZoomTen": {
     "gold98-walking-sim": {
       "title": "Gold 1998 Walking Simulator",
+      "rgbds": "0.5.2",
       "tags": [
         "gold",
         "silver",
@@ -913,6 +921,7 @@
     },
     "pokegold-mapless": {
       "title": "Gold Mapless",
+      "rgbds": "0.5.2",
       "tags": [
         "gold",
         "silver",
@@ -945,6 +954,18 @@
       "basis": "pret/pokered",
       "description": "Pokemon Red with Super Game Boy audio. Includes MSU-1 enhancement branch."
     },
+    "pokered-studio-edition": {
+      "title": "Pokemon Red & Blue: GBS Edition",
+      "rgbds": "0.6.0",
+      "tags": [
+        "red",
+        "blue",
+        "disasm",
+        "WiP"
+      ],
+      "basis": "pret/pokered",
+      "description": "Pokemon Red, but it looks like a GB Studio game"
+    },
     "znmpa": {
       "title": "Zilo and Monty's Pokemon Adventure",
       "rgbds": "0.2.5",
@@ -968,16 +989,6 @@
       ],
       "basis": "pret/pokegold",
       "description": "Remake of the Pokemon Lost Silver creepypasta."
-    },
-    "pokered-studio-edition": {
-      "title": "Red - Studio Edition",
-      "rgbds": "0.6.1",
-      "tags": [
-        "red",
-        "disasm"
-      ],
-      "basis": "pret/pokered",
-      "description": "Pokemon Red, but it looks like a GB Studio game"
     }
   },
   "aaaaaa123456789": {
@@ -1116,7 +1127,7 @@
   "erosunica": {
     "Gold97SGB-es": {
       "title": "Super Gold 97 (in Spanish)",
-      "rgbds": "0.4.0",
+      "rgbds": "0.5.2",
       "tags": [
         "gold",
         "disasm",
@@ -1146,6 +1157,19 @@
         "crystal",
         "disasm"
       ]
+    }
+  },
+  "gb-mobile": {
+    "pokecrystal-mobile-en": {
+      "title": "Crystal Mobile",
+      "tags": [
+        "crystal",
+        "disassembly",
+        "Enhancement",
+        "Base"
+      ],
+      "basis": "pret/pokecrystal",
+      "description": "Pokemon Crystal with GB Mobile Adapter features. For use with REON Project."
     }
   },
   "gbdev": {
