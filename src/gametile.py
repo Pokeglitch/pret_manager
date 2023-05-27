@@ -15,7 +15,7 @@ class CartridgePixmap(Scaled):
         self.Faded = Faded(self)
         self.Darkened = Darkened(self)
 
-# todo - skipping green
+# todo - skipping green for now
 games = ['red', 'blue', 'yellow', 'gold', 'silver', 'crystal', 'tcg1', 'tcg2']
 
 class CartridgeImage(QLabel):

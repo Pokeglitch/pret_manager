@@ -408,7 +408,7 @@ class PRET_Manager(MetaData):
     w64devkitPathSignal = pyqtSignal(str)
 
     def __init__(self):
-        super().__init__(['Outdated','AutoRefresh','AutoUpdate','AutoRestart','AutoProcess'])
+        super().__init__(['Outdated','AutoRefresh','AutoUpdate','AutoRestart','AutoProcess','OnlyKeepLatestBuilds'])
         self.Manager = self
         self.Directory = games_dir
         
@@ -431,11 +431,13 @@ class PRET_Manager(MetaData):
         self.Settings = Settings(self)
         self.Environments = Environments(self)
 
+        # Default Settings
         self.Outdated = False
         self.AutoRefresh = False
         self.AutoProcess = False
         self.AutoUpdate = False
         self.AutoRestart = False
+        self.OnlyKeepLatestBuilds = False
         self.readMetaData(False)
         self.Initialized = True
         
@@ -911,10 +913,16 @@ class repository(MetaData):
 
 
 ######### IO Methods
-    def rmdir(self, path, msg=''):
-        self.print(msg)
-        self.print('Removing directory: ' + path)
-        rmdir(path)
+    def rmdir(self, paths, msg=''):
+        if paths:
+            self.print(msg)
+
+            if not isinstance(paths, list):
+                paths = [paths]
+
+            for path in paths:
+                self.print('Removing directory: ' + path)
+                rmdir(path)
         
     def print(self, msg):
         if msg:
@@ -1672,10 +1680,23 @@ class repository(MetaData):
         else:
             files = get_builds(self.path['repo'])
             if files:
+                dirNames = []
+                if self.Manager.OnlyKeepLatestBuilds and self.CurrentBranch != "HEAD":
+                    # get the list of dirs before copying
+                    dirNames = get_dirs(self.path['builds'] + self.CurrentBranch)
+                    
                 names = copy_files(files, self.build_dir)
                 self.print('Placed build file(s) in ' + self.build_dir + ': ' + ', '.join(names))
                 
                 self.store_build(self.CurrentBranch, self.build_name, files)
+
+                if dirNames:
+                    dirs = []
+                    for dirName in dirNames:
+                        dirs.append(self.path['builds'] + self.CurrentBranch + '/' + dirName)
+                        del self.builds[self.CurrentBranch][dirName]
+
+                    self.rmdir(dirs, 'Removing Previous Builds')
 
                 if self.GUI:
                     if self.CurrentBranch == "HEAD":

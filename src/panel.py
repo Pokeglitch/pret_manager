@@ -208,13 +208,16 @@ class ProcessingOptions(PanelOptionsWidget):
         # TODO:
         # Include Releases when 'Update'
         # Remove from Queue after Processed
-        # Replace previous builds
         # Show all logs in status widget (i.e. all build messages)
-        container = HBox(self.GUI)
-        self.SaveDefaultProcesses = PanelButton(container, 'Save Current as Default', self.saveDefaultProcesses)
-        self.RestoreDefaultProcesses = PanelButton(container, 'Restore Default', self.restoreDefaultProcesses)
-        self.AutoProcess = OptionToggleField(container, 'Auto:', 'AutoProcess')
-        CenterH(container).addTo(self)
+        buttonContainer = HBox(self.GUI)
+        self.SaveDefaultProcesses = PanelButton(buttonContainer, 'Save Current as Default', self.saveDefaultProcesses)
+        self.RestoreDefaultProcesses = PanelButton(buttonContainer, 'Restore Default', self.restoreDefaultProcesses)
+        self.AutoProcess = OptionToggleField(buttonContainer, 'Auto:', 'AutoProcess')
+        CenterH(buttonContainer).addTo(self)
+
+        onlyKeepLatestBuildsContainer = HBox(self.GUI)
+        self.OnlyKeepLatestBuilds = OptionToggleField(onlyKeepLatestBuildsContainer, 'Only Keep Latest Builds:', 'OnlyKeepLatestBuilds')
+        CenterH(onlyKeepLatestBuildsContainer).addTo(self)
 
     def saveDefaultProcesses(self):
         processes = self.GUI.Process.Options.getSettings()
