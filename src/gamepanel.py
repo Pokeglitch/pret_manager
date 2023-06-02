@@ -91,7 +91,7 @@ class AuthorField(HBox):
 
     def openFolder(self, event):
         if event.button() == Qt.LeftButton:
-            open_path(self.GUI.Manager.Directory + self.Game.author)
+            open_path(self.GUI.Manager.GameDirectory + self.Game.author)
 
     def openURL(self, event):
         if event.button() == Qt.LeftButton:
@@ -626,6 +626,31 @@ class PanelIconOutdated(PanelIcon):
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             pass
+    
+class GuidesContextMenu(ContextMenu):
+    def __init__(self, parent, event):
+        super().__init__(parent, event)
+        
+        if parent.Game.Guides:
+            self.addAction( OpenFolder(parent, parent.Game.path["guides"]) )
+        elif not parent.GUI.Window.Process:
+            self.addAction( Action(parent, 'Download', parent.downloadGuides))
+
+        self.start()
+
+class PanelIconGuides(PanelIcon):
+    def __init__(self, parent):
+        super().__init__(parent, 'Guides')
+
+    # TODO - either check for updated, or download update?
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            pass
+        elif event.button() == Qt.RightButton:
+            GuidesContextMenu(self, event)
+
+    def downloadGuides(self):
+        self.GUI.downloadGuides(self.Game)
 
 class IconsRight(VBox):
     def __init__(self, parent):
@@ -635,6 +660,9 @@ class IconsRight(VBox):
         self.Favorites = PanelIconFavorites(self)
         self.Library = PanelIconLibrary(self)
         self.Outdated = PanelIconOutdated(self)
+
+        if self.Game.hasGuides:
+            self.Guides = PanelIconGuides(self)
 
         self.addStretch()
         CenterH(self).addTo(parent)

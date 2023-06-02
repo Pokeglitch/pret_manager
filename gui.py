@@ -630,6 +630,16 @@ class DownloadRelease(ManagerThread):
     def run(self):
         self.Game.get_release(self.Tag)
 
+
+class DownloadGuides(ManagerThread):
+    def __init__(self, GUI, game):
+        self.Game = game
+
+        super().__init__(GUI)
+
+    def run(self):
+        self.Game.get_guides()
+
 class ExecuteProcess(ManagerThread):
     def __init__(self, GUI, sequence, games, build_options=[]):
         self.Games = games
@@ -712,6 +722,10 @@ class MainContents(HBox):
     def downloadRelease(self, game, tag):
         if not self.Window.Process:
             self.Window.Process = DownloadRelease(self, game, tag)
+
+    def downloadGuides(self, game):
+        if not self.Window.Process:
+            self.Window.Process = DownloadGuides(self, game)
 
     def onProcessing(self, processing):
         if not processing:

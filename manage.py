@@ -410,8 +410,11 @@ class PRET_Manager(MetaData):
     def __init__(self):
         super().__init__(['Outdated','AutoRefresh','AutoUpdate','AutoRestart','AutoProcess','OnlyKeepLatestBuilds'])
         self.Manager = self
-        self.Directory = games_dir
+        self.GameDirectory = games_dir
+        self.DataDirectory = data_dir
         
+        self.AuxListing = {}
+
         self.All = []
         self.Process = None
         self.GUI = None
@@ -419,7 +422,7 @@ class PRET_Manager(MetaData):
         self.Search = None
         self.url = 'https://github.com/Pokeglitch/pret_manager'
 
-        self.FlagLists = ["Library", "Favorites", "Excluding", "Outdated", "Missing"]
+        self.FlagLists = ["Library", "Favorites", "Excluding", "Outdated", "Missing","Guides"]
 
         self.Queue = []
 
@@ -448,6 +451,25 @@ class PRET_Manager(MetaData):
     def setCygwinPath(self, path):
         self.Settings.set('Environment.cygwin', path)
         self.CygwinPathSignal.emit( str(path) )
+
+    def get_aux(self, game, type):
+        success = False
+        name = game.author + '/' + game.title
+        self.Aux.git.run("fetch origin {}:{} --depth 1".format(name, name))
+        self.Aux.switch(name, isCommit = False)
+        targetFiles = game.Aux[type]
+        allFiles = [file for file in get_all_files(self.Aux.path["repo"]) if file.name in targetFiles]
+
+        if len(targetFiles) == len(allFiles):
+            copy_files(allFiles, game.path[type])
+            success = True
+
+        self.Aux.switch("master")
+        self.Aux.git.run("branch -D " + name)
+        self.Aux.git.run("reflog expire --expire-unreachable=now --all")
+        self.Aux.git.run("gc --aggressive --prune=all")
+
+        return success
 
     def terminateProcess(self):
         self.print('Terminating Process')
@@ -510,12 +532,14 @@ class PRET_Manager(MetaData):
             self.print('Refreshing pret-manager')
             self.checkForUpdate()
 
-        if self.Outdated:
+        outdated = self.Outdated or self.Aux.Outdated
+
+        if outdated:
             self.print('Update available')
         else:
             self.print('Already up to date')
         
-        self.Manager.GUI.UpdateFoundSignal.emit(self.Outdated)
+        self.Manager.GUI.UpdateFoundSignal.emit(outdated)
 
     def update(self):
         if self.Outdated:
@@ -526,14 +550,18 @@ class PRET_Manager(MetaData):
                 self.print('Failed to update')
             else:
                 self.print('Updated successful. Restart to load changes')
-        else:
+        elif not self.Aux.Outdated:
             self.print('Already up to date')
+
+        if self.Aux.Outdated:
+            self.Aux.update(single_branch="master")
         
-        self.Manager.GUI.UpdateAppliedSignal.emit(self.Outdated)
+        self.Manager.GUI.UpdateAppliedSignal.emit(self.Outdated or self.Aux.Outdated)
 
     def checkForUpdate(self):
         data = dict(self.list('head'))
         outdated = data["master"] != self.git.head()
+        self.Aux.refresh()
         self.setOutdated(outdated)
         self.updateMetaData()
 
@@ -631,21 +659,38 @@ class PRET_Manager(MetaData):
             error(filepath + ' not found')
 
         with open(filepath,"r") as f:
-            data = json.loads(f.read() or '{}')
+            file = json.loads(f.read() or '{}')
+
+        data = file["data"]
+        for name in data:
+            info = data[name]
+            datum = info["data"] if "data" in info else {}
+            setattr(self, name, repository(self, info['author'], info['title'], datum, False))
+
+        if not self.Aux.Missing:
+            listing = self.Aux.path["repo"] + "/data.json"
+            if not os.path.exists(listing):
+                self.Aux.switch('master')
+
+                # TODO - delete whichever branch it was originally on
+            
+            self.AuxListing = read_json(listing)
+
+        games = file["games"]
 
         # do rgbds first
-        if 'gbdev' in data and 'rgbds' in data['gbdev']:
-            self.RGBDS = RGBDS(self, 'gbdev', 'rgbds', data['gbdev']['rgbds'])
-            del data['gbdev']
+        if 'gbdev' in games and 'rgbds' in games['gbdev']:
+            self.RGBDS = RGBDS(self, 'gbdev', 'rgbds', games['gbdev']['rgbds'])
+            del games['gbdev']
 
-        authors = list(data.keys())
+        authors = list(games.keys())
         authors.sort(key=str.casefold)
 
         for author in authors:
             self.Catalogs.Authors.add(author)
 
-            for title in data[author]:
-                repo = repository(self, author, title, data[author][title])
+            for title in games[author]:
+                repo = repository(self, author, title, games[author][title])
                 self.All.append(repo)
 
                 self.Catalogs.Authors.get(author).addGame(repo)
@@ -719,6 +764,7 @@ class PRET_Manager(MetaData):
                 self.keep_in_queue(self.Catalogs.Tags.get(tag).GameList)
 
 class repository(MetaData):
+    GuidesSignal = pyqtSignal(bool)
     MissingSignal = pyqtSignal(bool)
     OutdatedSignal = pyqtSignal(bool)
     ExcludingSignal = pyqtSignal(bool)
@@ -730,7 +776,7 @@ class repository(MetaData):
     ProcessingSignal = pyqtSignal(bool)
     PrimaryGameSignal = pyqtSignal(str, QTreeWidgetItem)
 
-    def __init__(self, manager, author, title, data):
+    def __init__(self, manager, author, title, data, isGame=True):
         super().__init__(repo_metadata_properties)
         self.manager = manager
         self.Manager = manager
@@ -753,6 +799,11 @@ class repository(MetaData):
         self.rgbds = data["rgbds"] if "rgbds" in data else ""
         self.RGBDS = None
         
+        if isGame and author in manager.AuxListing and title in manager.AuxListing[author]:
+            self.Aux = manager.AuxListing[author][title]
+        else:
+            self.Aux = {}
+
         if "tags" in data:
             if isinstance(data["tags"], list):
                 self.tags = data["tags"]
@@ -771,12 +822,17 @@ class repository(MetaData):
         else:
             self.Description = ""
         
-        dir = self.manager.Directory + self.author + '/' + self.title + '/'
+        if isGame:
+            dir = self.manager.GameDirectory + self.author + '/' + self.title + '/'
+        else:
+            dir = self.manager.DataDirectory + self.title + '/'
+        
         self.path = {
             'base' : dir,
             'repo' : dir + self.title,
             'releases' : dir + 'releases/',
-            'builds' : dir + 'builds/'
+            'builds' : dir + 'builds/',
+            'guides' : dir + 'guides/'
         }
 
         self.resetSequence()
@@ -788,6 +844,12 @@ class repository(MetaData):
         self.Boxart = 'assets/artwork/{0}.png'.format(self.name)
         if not os.path.exists(self.Boxart):
             self.Boxart = 'assets/images/gb.png'
+
+        self.Guides = False
+        self.hasGuides = "guides" in self.Aux
+
+        if self.hasGuides:
+            self.Manager.Catalogs.Flags.get('Guides').addGames([self])
 
         self.PrimaryGame = None
 
@@ -832,7 +894,7 @@ class repository(MetaData):
         if modified_metadata:
             self.updateMetaData()
 
-        if self.manager.GUI:
+        if self.manager.GUI and isGame:
             self.init_GUI()
 
 ######### GUI Methods
@@ -1113,9 +1175,12 @@ class repository(MetaData):
 
         return updateSuccess
 
-    def switch(self, *args):
+    def switch(self, *args, isCommit=None):
+        if isCommit is None:
+            isCommit = len(args) == 1 and args[0] not in self.Branches
+
         # if its a commit, use the detach flag
-        if len(args) == 1 and args[0] not in self.Branches:
+        if isCommit:
             cmds = ['-d', args[0]]
         else:
             cmds = args[:]
@@ -1138,6 +1203,8 @@ class repository(MetaData):
 
         lastUpdate = self.get_date()
         lastCommit = self.get_commit()
+
+        print(branch)
 
         if branch == 'HEAD':
             # Get the corresponding GitTag data
@@ -1429,6 +1496,10 @@ class repository(MetaData):
     def setFlag(self, flagList, value):
         getattr(self, 'set' + flagList.Name)(value, False)
 
+    def setGuides(self, hasGuides, addToList=True):
+        self.Guides = os.path.exists(self.path["guides"]) and ~is_empty(self.path["guides"])
+        self.GuidesSignal.emit(self.Guides)
+
     def setLibrary(self, library, addToList=True):
         if self.Library != library:
             self.Library = library
@@ -1579,9 +1650,13 @@ class repository(MetaData):
 
         return updateSuccess and branchUpdateSuccess
 
-    def init_repo(self):
+    def init_repo(self, single_branch=None):
         self.print("Initializing repository")
-        result = self.git.clone()
+        if single_branch:
+            result = self.git.clone("--single-branch --branch {} --depth 1".format(single_branch))
+        else:
+            result = self.git.clone()
+
         if result.returncode:
             self.print('Could not clone repository')
             return False
@@ -1592,13 +1667,13 @@ class repository(MetaData):
             self.setMissing(False)
             return True
 
-    def update(self, release_id=None):
+    def update(self, release_id=None, single_branch=None):
         self.Updated = True
 
         mkdir(self.path['base'])
 
         if self.Missing:
-            repoUpdateSuccess = self.init_repo()
+            repoUpdateSuccess = self.init_repo(single_branch=single_branch)
         else:
             repoUpdateSuccess = self.update_repo()
     
@@ -1638,6 +1713,19 @@ class repository(MetaData):
                         self.ReleaseSignal.emit()
                     else:
                         self.rmdir(temp_dir, 'Release does not have valid content: ' + data["release"])
+
+    def get_guides(self):
+        if self.hasGuides:
+            self.print("Downloading Guides")
+            if self.Manager.get_aux(self, "guides"):
+                self.print("Successfully downloaded Guides")
+            else:
+                self.print("Failed to download Guides")
+        else:
+            self.print("Guides are not available")
+        
+        # setGuides ignore the input value and checks independently
+        self.setGuides(None)
 
     def get_submodules(self):
         submodules = {}
