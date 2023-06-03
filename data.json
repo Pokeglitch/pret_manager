@@ -59,6 +59,17 @@
         ]
       }
     },
+    "AndrzejKurek": {
+      "PL-poketcg" : {
+        "title" : "TCG (Polish)",
+        "basis" : "pret/poketcg",
+        "tags": [
+          "tcg1",
+          "translation",
+          "disasm"
+        ]
+      }
+    },
     "AtmaBuster": {
       "crystalleaf": {
         "title": "Crystal Leaf",
@@ -188,6 +199,16 @@
       "pkmn-route-rando": {
         "tags": [
           "extras"
+        ]
+      }
+    },
+    "Cram-o-dev": {
+      "cramorantedition": {
+        "title": "Cramorant Edition",
+        "basis" : "pret/pokeyellow",
+        "tags": [
+          "yellow",
+          "disasm"
         ]
       }
     },

@@ -1204,8 +1204,6 @@ class repository(MetaData):
         lastUpdate = self.get_date()
         lastCommit = self.get_commit()
 
-        print(branch)
-
         if branch == 'HEAD':
             # Get the corresponding GitTag data
             data = [self.GitTags[tag] for tag in self.GitTags if self.GitTags[tag]['commit'] == lastCommit][0]
