@@ -565,6 +565,15 @@
       }
     },
     "Pokeglitch": {
+      "poketre": {
+        "title": "Team Rocket Edition",
+        "basis" : "pret/pokered",
+        "type" : "patch",
+        "tags": [
+          "red",
+          "binary"
+        ]
+      },
       "poketre2": {
         "title": "Team Rocket Edition 2",
         "rgbds": "0.6.1",
@@ -1193,8 +1202,8 @@
         "tags": [
           "crystal",
           "disassembly",
-          "Enhancement",
-          "Base"
+          "upgrade",
+          "base"
         ],
         "basis": "pret/pokecrystal",
         "description": "Pokemon Crystal with GB Mobile Adapter features. For use with REON Project."

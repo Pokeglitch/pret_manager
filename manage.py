@@ -6,10 +6,12 @@ import gui
 from src.base import *
 from src.Environment import *
 from src.Files import *
+from src.bps import Patcher
 from PyQt5.QtCore import pyqtSignal
 
 build_extensions = ['gb','gbc','pocket','patch']
-release_extensions = build_extensions + ['ips','bps','bsp','zip']
+patch_extensions = ['ips','bps','bsp']
+release_extensions = build_extensions + patch_extensions + ['zip']
 repo_metadata_properties = ['PrimaryGame','Branches','GitTags','CurrentBranch','RGBDS','Excluding','Favorites']
 rgbds_files = ['rgbasm','rgbfix','rgblink','rgbgfx']
 
@@ -24,6 +26,9 @@ def get_releases(path):
 
 def get_builds(path):
     return [file for file in Path(path).iterdir() if file.suffix[1:] in build_extensions]
+
+def get_patches(path):
+    return [file for file in Path(path).iterdir() if file.suffix[1:] in patch_extensions]
 
 def get_rgbds(path):
     return [file for file in Path(path).iterdir() if file.name in rgbds_files]
@@ -804,6 +809,11 @@ class repository(MetaData):
         else:
             self.Aux = {}
 
+        if "type" in data:
+            self.Type = data["type"]
+        else:
+            self.Type = "disassembly"
+
         if "tags" in data:
             if isinstance(data["tags"], list):
                 self.tags = data["tags"]
@@ -832,7 +842,8 @@ class repository(MetaData):
             'repo' : dir + self.title,
             'releases' : dir + 'releases/',
             'builds' : dir + 'builds/',
-            'guides' : dir + 'guides/'
+            'guides' : dir + 'guides/',
+            'patches' : dir + 'patches/'
         }
 
         self.resetSequence()
@@ -859,14 +870,25 @@ class repository(MetaData):
         self.Favorites = False
         self.Library = False
 
-        self.setMissing(not os.path.exists(self.path['repo']))
+        if self.Type == "patch":
+            # TODO - need to check the actual self.Aux content
+            self.setMissing(not os.path.exists(self.path['patches']) and not os.path.exists(self.path['builds']))
+        else:
+            self.setMissing(not os.path.exists(self.path['repo']))
+
         self.setOutdated(self.Missing)
 
         self.readMetaData()
 
-        self.parse_branches()
-        self.parse_builds()
-        self.parse_releases()
+        if self.Type == "patch":
+            self.releases = {}
+            self.patches = {}
+            self.parse_patches()
+            self.parse_patch_builds()
+        else:
+            self.parse_branches()
+            self.parse_builds()
+            self.parse_releases()
 
         self.setLibrary(bool(self.releases or self.builds or self.commits))
 
@@ -896,6 +918,7 @@ class repository(MetaData):
 
         if self.manager.GUI and isGame:
             self.init_GUI()
+
 
 ######### GUI Methods
     def init_GUI(self):
@@ -935,7 +958,12 @@ class repository(MetaData):
             self.update()
             sequence = sequence[1:]
 
-        if len(sequence) and ('b' in sequence or 'c' in sequence):
+        if self.Type == "patch":
+            if len(sequence) and sequence[0] == 'b':
+                self.build()
+                sequence = sequence[1:]
+
+        elif len(sequence) and ('b' in sequence or 'c' in sequence):
             if not self.validate_repo():
                 self.print('Cannot run \'make\' on missing repository')
             # if no specific build options, then build for all branches
@@ -1007,7 +1035,7 @@ class repository(MetaData):
 ######### Make Methods
 
     def clean(self):
-        if not self.Cleaned:
+        if self.Type != "patch" and not self.Cleaned:
             if self.validate_repo():
                 self.print('Cleaning')
                 self.make.clean()
@@ -1092,6 +1120,24 @@ class repository(MetaData):
                     # if builds exist in the directory:
                     if files:
                         self.store_build(branchName, dirName, files)
+
+    def parse_patch_builds(self):
+        self.builds = {}
+
+        if os.path.exists(self.path["builds"]):
+            builds = get_builds(self.path["builds"])
+            # if builds exist in the directory:
+            if builds:
+                for build in builds:
+                    self.builds[build.name] = build
+
+    def parse_patches(self):
+        if os.path.exists(self.path["patches"]):
+            patches = get_patches(self.path["patches"])
+            # if patche exist in the directory:
+            if patches:
+                for patch in patches:
+                    self.patches[patch.name] = patch
 
     def store_build(self, branchName, dirName, files):
         data = self.get_build_data(branchName, dirName)
@@ -1221,7 +1267,7 @@ class repository(MetaData):
 ######### Refresh Methods
 
     def refresh(self):
-        if not self.Refreshed:
+        if self.Type != "patch" and not self.Refreshed:
             self.print("Refreshing repository")
             branchesOutdated = self.refresh_branches()
             self.refresh_tags()
@@ -1453,6 +1499,15 @@ class repository(MetaData):
             self.PrimaryGameSignal.emit(path, item)
 
     def findNewestGame(self):
+        if self.Type == "patch":
+            if self.builds:
+                builds = get_builds(self.path["builds"])
+                if builds:
+                    latest = max(builds, key=os.path.getctime)
+                    return str(latest)
+            
+            return None
+
         all_releases = [*self.releases.keys()]
         newest_release = max(all_releases) if all_releases else None
 
@@ -1591,7 +1646,69 @@ class repository(MetaData):
 
         return not self.Missing
 
+    # TODO:
+    # - apparent no metadata = outdated?
+    #  -   get ROM tos how up in builds
+    # - can build specific versions (tags/commits)
+    # - build basis if doesnt exist
+    # - handle "only keep latest builds"
+    def build_patch(self, *patches):
+        [author, title] = self.Data["basis"].split('/')
+        basis = self.Manager.Catalogs.Authors.get(author).getGame(title)
+        source = basis.findNewestGame()
+
+        if not source:
+            self.print("Building basis: " + self.Data["basis"])
+
+            basis.build()
+            source = basis.findNewestGame()
+
+            # if still no game found, then exit
+            if not source:
+                self.print("Basis does not have any game file to patch")
+                return False
+
+        if not len(patches):
+            patches = self.patches
+            if not patches:
+                self.print("No patches found. Updating")
+                self.update()
+
+                if not patches:
+                    self.print("Still no patches found")
+                    return False
+
+        for patch in patches:
+            with open(self.path["patches"] + patch, "rb") as f:
+                patchFile = f.read()
+                
+            with open(source, "rb") as f:
+                sourceFile = f.read()
+
+            patcher = Patcher(patchFile, sourceFile)
+
+            if patcher.Success:
+                filename = patch.replace('.bps', '.gbc')
+
+                mkdir(self.path["builds"])
+
+                with open(self.path["builds"] + filename, 'xb') as f:
+                    f.write(patcher.Target.Data)
+
+                self.print('Placed build file in ' + self.path["builds"] + ': ' + filename)
+
+                self.builds[filename] = Path(self.path["builds"] + filename)
+                
+                self.setLibrary(True)
+
+                self.BuildSignal.emit()
+            else:
+                self.print(patcher.Message)
+                
     def build(self, *args):
+        if self.Type == "patch":
+            return self.build_patch(*args)
+
         if not self.validate_repo():
             self.print('Cannot build missing repository')
             return
@@ -1665,7 +1782,27 @@ class repository(MetaData):
             self.setMissing(False)
             return True
 
+    def update_patch(self):
+        self.Updated = True
+
+        mkdir(self.path['base'])
+
+        # TODO - only copy missing patches
+        if "patches" in self.Aux:
+            self.print("Updating patches")
+            if self.Manager.get_aux(self, "patches"):
+                self.print("Successfully updated patches")
+                self.parse_patches()
+                self.setOutdated(False)
+            else:
+                self.print("Failed to update patches")
+        else:
+            self.print("Patches are not available")
+    
     def update(self, release_id=None, single_branch=None):
+        if self.Type == "patch":
+            return self.update_patch()
+
         self.Updated = True
 
         mkdir(self.path['base'])

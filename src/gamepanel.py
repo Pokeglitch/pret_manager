@@ -58,7 +58,7 @@ class RepositoryBody(GamePanelBody):
         self.Repository = RepositoryField(self)
         self.Basis = BasisField(self)
         self.RGBDS = GameRGBDSVersion(self)
-        self.Trees = GameTrees(self)
+        self.Trees = RepoTrees(self)
 
 class AuthorField(HBox):
     def __init__(self, parent):
@@ -77,8 +77,9 @@ class AuthorField(HBox):
         self.Folder = Icon(self.Right, 'assets/images/folder_15.png', 15)
         self.Folder.mouseDoubleClickEvent = self.openFolder
 
-        self.URL = Icon(self.Right, 'assets/images/new_window.png', 15)
-        self.URL.mouseDoubleClickEvent = self.openURL
+        if self.Game.Type != "patch":
+            self.URL = Icon(self.Right, 'assets/images/new_window.png', 15)
+            self.URL.mouseDoubleClickEvent = self.openURL
         
         self.Right.addStretch()
         self.Right.addTo(self, 1)
@@ -194,13 +195,23 @@ class GameRGBDSVersion(HBox):
     def handleRGBDSSelected(self, version):
         self.Game.set_RGBDS(version.split(' ')[0])
 
-class GameTrees(HBox):
+class RepoTrees(HBox):
     def __init__(self, parent):
         super().__init__(parent.GUI)
         self.Game = parent.Game
         
         self.Builds = BranchesTree(self)
         self.Tags = TagsTree(self)
+
+        self.addTo(parent)
+
+class PatchTrees(HBox):
+    def __init__(self, parent):
+        super().__init__(parent.GUI)
+        self.Game = parent.Game
+        
+        self.Builds = BuildsTree(self)
+        self.Tags = PatchesTree(self)
 
         self.addTo(parent)
 
@@ -395,6 +406,16 @@ class FileContextMenu(TreeContextMenu):
 
         self.start()
 
+class PatchContextMenu(TreeContextMenu):
+    def __init__(self, *args):
+        super().__init__(*args)
+        
+        if self.Item.path and os.path.exists(self.Item.path):
+            self.addAction( LaunchFile(self.Parent, self.Item.path) )
+            # TODO - Option to apply patch
+
+        self.start()
+
 class BranchesTree(GameTree):
     def __init__(self, parent):
         super().__init__(parent, ['Build','Branch'], 'Branches', BranchesTreeDelegate, {
@@ -436,6 +457,41 @@ class BranchesTree(GameTree):
         else:
             noneItem = self.addItem(self.Tree, 'None', "None")
             noneItem.setFlags(Qt.NoItemFlags)
+
+
+class BuildsTree(GameTree):
+    def __init__(self, parent):
+        super().__init__(parent, ['Build'], 'Builds', OtherTreeDelegate, {
+            'File' : FileContextMenu
+        })
+
+    def draw(self):
+        if self.Game.builds:
+            for fileName, path in self.Game.builds.items():
+                path = str(path)
+                fileItem = self.addItem(self.Tree, 'File', fileName, path)
+                if path == self.Game.PrimaryGame:
+                    self.onPrimaryGame(path, fileItem)
+        else:
+            noneItem = self.addItem(self.Tree, 'None', "None")
+            noneItem.setFlags(Qt.NoItemFlags)
+
+
+class PatchesTree(GameTree):
+    def __init__(self, parent):
+        super().__init__(parent, ['Outdated'], 'Patches', OtherTreeDelegate, {
+            'Patch' : PatchContextMenu
+        })
+
+    def draw(self):
+        if self.Game.patches:
+            for fileName, path in self.Game.patches.items():
+                path = str(path)
+                fileItem = self.addItem(self.Tree, 'Patch', fileName, path)
+        else:
+            noneItem = self.addItem(self.Tree, 'None', "None")
+            noneItem.setFlags(Qt.NoItemFlags)
+
 
 class TreeDelegate(QStyledItemDelegate):
     RightClickSignal = pyqtSignal(QEvent, QTreeWidgetItem)
@@ -489,7 +545,7 @@ class BranchesTreeDelegate(TreeDelegate):
 
 class TagsTree(GameTree):
     def __init__(self, parent):
-        super().__init__(parent, ['Release'], 'Tags', TagsTreeDelegate, {
+        super().__init__(parent, ['Release'], 'Tags', OtherTreeDelegate, {
             'Tag' : TagContextMenu,
             'Release' : ReleaseContextMenu,
             'Build' : FolderContextMenu,
@@ -544,7 +600,7 @@ class TagsTree(GameTree):
             noneItem = self.addItem(self.Tree, 'None', "None")
             noneItem.setFlags(Qt.NoItemFlags)
             
-class TagsTreeDelegate(TreeDelegate):
+class OtherTreeDelegate(TreeDelegate):
     def editorEvent(self, event, model, option, index):
         if event.type() == QEvent.MouseButtonDblClick:
             return True
@@ -571,7 +627,9 @@ class TagsTreeDelegate(TreeDelegate):
 class PatchBody(GamePanelBody):
     def __init__(self, parent):
         super().__init__(parent)
-        self.BaseROM = Field(self, 'Base', '<Select Base ROM>')
+        self.Author = AuthorField(self)
+        self.Basis = BasisField(self)
+        self.Trees = PatchTrees(self)
 
 class PanelIcon(QLabel):
     def __init__(self, parent, name):
@@ -611,12 +669,13 @@ class PanelIconFolder(Icon):
 class PanelIconLibrary(PanelIcon):
     def __init__(self, parent):
         super().__init__(parent, 'Library')
-        self.isDoubleClick = False
 
     def mouseDoubleClickEvent(self, event):
         if event.button() == Qt.LeftButton:
-            pass
-            # TODO - launch most recent build, or preset build
+            if self.Game.PrimaryGame and os.path.exists(self.Game.PrimaryGame):
+                open_path(self.Game.PrimaryGame)
+            else:
+                open_path( self.Game.findNewestGame() )
         
 class PanelIconOutdated(PanelIcon):
     def __init__(self, parent):
@@ -699,9 +758,4 @@ class GamePanel(VBox):
         self.Tags = GameTags(self)
         self.Description = GameDescription(self)
         
-        # If a git repository
-        if "repo" in self.Game.path:
-            self.Body = RepositoryBody(self)
-        # if a patch:
-        else:
-            self.Body = PatchBody(self)
+        self.Body = PatchBody(self) if self.Game.Type == "patch" else RepositoryBody(self)
