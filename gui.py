@@ -98,8 +98,8 @@ class GameGUI(QWidget):
     def process(self):
         self.GUI.startProcess([self.Game])
 
-    def specificProcess(self, sequence):
-        self.GUI.startSpecificProcess(sequence, [self.Game])
+    def specificProcess(self, sequence, *args):
+        self.GUI.startSpecificProcess(sequence, [self.Game], *args)
 
     def addToQueueHandler(self):
         self.GUI.Queue.addGame(self)
@@ -263,9 +263,9 @@ class Queue(VBox):
         if self.List:
             self.GUI.startProcess(self.getData(), isAuto=isAuto)
             
-    def specificProcess(self, sequence):
+    def specificProcess(self, sequence, *args):
         if self.List:
-            self.GUI.startSpecificProcess(sequence, self.getData())
+            self.GUI.startSpecificProcess(sequence, self.getData(), *args)
 
     def loadDefault(self):
         if os.path.exists('data/queue.json'):
@@ -586,9 +586,9 @@ class Tiles(VBox):
         if self.All_Games:
             self.GUI.startProcess(self.getData())
             
-    def specificProcess(self, sequence):
+    def specificProcess(self, sequence, *args):
         if self.All_Games:
-            self.GUI.startSpecificProcess(sequence, self.getData())
+            self.GUI.startSpecificProcess(sequence, self.getData(), *args)
 
 class ManagerThread(QThread):
     def __init__(self, GUI):

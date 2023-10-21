@@ -96,9 +96,9 @@ class CatalogEntryGUI(HBox):
         if self.Data.GameList:
             self.GUI.startProcess(self.getData())
 
-    def specificProcess(self, sequence):
+    def specificProcess(self, sequence, *args):
         if self.Data.GameList:
-            self.GUI.startSpecificProcess(sequence, self.getData())
+            self.GUI.startSpecificProcess(sequence, self.getData(), *args)
 
     def addToQueueHandler(self):
         self.GUI.Queue.addGames(self.getData())

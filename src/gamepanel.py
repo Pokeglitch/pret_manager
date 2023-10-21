@@ -283,8 +283,8 @@ class GameTree(VBox):
     def process(self, branch):
         self.GUI.startProcess([self.Game], branch)
 
-    def specificProcess(self, branch, sequence):
-        self.GUI.startSpecificProcess(sequence, [self.Game], branch)
+    def specificProcess(self, sequence, *args):
+        self.GUI.startSpecificProcess(sequence, [self.Game], *args)
 
     def downloadRelease(self, tag):
         self.GUI.downloadRelease(self.Game, tag)
@@ -339,7 +339,7 @@ class BranchContextMenu(TreeContextMenu):
             self.addAction( OpenFolder(self.Parent, self.Item.path) )
 
         if not self.GUI.Window.Process:
-            self.addAction( Action(self.Parent, 'Build', lambda: self.Widget.specificProcess(self.Name, 'b')))
+            self.addAction( Action(self.Parent, 'Build', lambda: self.Widget.specificProcess('b', self.Name)))
 
         self.start()
 
@@ -362,7 +362,7 @@ class TagContextMenu(TreeContextMenu):
         self.addSeparator()
         
         if not self.GUI.Window.Process:
-            self.addAction( Action(self.Parent, 'Build', lambda: self.Widget.specificProcess(self.Item.commit, 'b')))
+            self.addAction( Action(self.Parent, 'Build', lambda: self.Widget.specificProcess('b', self.Item.commit)))
         
         self.start()
 
@@ -388,7 +388,7 @@ class ReleaseContextMenu(TreeContextMenu):
 
         if not self.GUI.Window.Process:
             self.addAction( Action(self.Parent, 'Download', lambda: self.Widget.downloadRelease(self.Item.text(0)) ))
-            self.addAction( Action(self.Parent, 'Build', lambda: self.Widget.specificProcess(self.Item.commit, 'b')))
+            self.addAction( Action(self.Parent, 'Build', lambda: self.Widget.specificProcess('b', self.Item.commit)))
         
         self.start()
 
@@ -412,7 +412,7 @@ class PatchContextMenu(TreeContextMenu):
         
         if self.Item.path and os.path.exists(self.Item.path):
             self.addAction( LaunchFile(self.Parent, self.Item.path) )
-            # TODO - Option to apply patch
+            self.addAction( Action(self.Parent, "Apply Patch", lambda: self.Widget.specificProcess('b', self.Item.text(0)) ) )
 
         self.start()
 

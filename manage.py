@@ -1647,10 +1647,9 @@ class repository(MetaData):
         return not self.Missing
 
     # TODO:
-    # - apparent no metadata = outdated?
-    #  -   get ROM tos how up in builds
+    # - store patch in directory based on commit/date?
+    # - - how to build older versions?
     # - can build specific versions (tags/commits)
-    # - build basis if doesnt exist
     # - handle "only keep latest builds"
     def build_patch(self, *patches):
         [author, title] = self.Data["basis"].split('/')
@@ -1679,31 +1678,35 @@ class repository(MetaData):
                     return False
 
         for patch in patches:
-            with open(self.path["patches"] + patch, "rb") as f:
-                patchFile = f.read()
-                
-            with open(source, "rb") as f:
-                sourceFile = f.read()
-
-            patcher = Patcher(patchFile, sourceFile)
-
-            if patcher.Success:
-                filename = patch.replace('.bps', '.gbc')
-
-                mkdir(self.path["builds"])
-
-                with open(self.path["builds"] + filename, 'xb') as f:
-                    f.write(patcher.Target.Data)
-
-                self.print('Placed build file in ' + self.path["builds"] + ': ' + filename)
-
-                self.builds[filename] = Path(self.path["builds"] + filename)
-                
-                self.setLibrary(True)
-
-                self.BuildSignal.emit()
+            filename = patch.replace('.bps', '.gbc')
+            
+            if os.path.exists(self.path["builds"] + filename):
+                self.print(filename + " already exists")
             else:
-                self.print(patcher.Message)
+                with open(self.path["patches"] + patch, "rb") as f:
+                    patchFile = f.read()
+                    
+                with open(source, "rb") as f:
+                    sourceFile = f.read()
+
+                patcher = Patcher(patchFile, sourceFile)
+
+                if patcher.Success:
+
+                    mkdir(self.path["builds"])
+
+                    with open(self.path["builds"] + filename, 'xb') as f:
+                        f.write(patcher.Target.Data)
+
+                    self.print('Placed build file in ' + self.path["builds"] + ': ' + filename)
+
+                    self.builds[filename] = Path(self.path["builds"] + filename)
+                    
+                    self.setLibrary(True)
+
+                    self.BuildSignal.emit()
+                else:
+                    self.print(patcher.Message)
                 
     def build(self, *args):
         if self.Type == "patch":
