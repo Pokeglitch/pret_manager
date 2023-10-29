@@ -4,15 +4,14 @@ from src.gamebase import *
 
 class GamePanelArtworkPixmap(Scaled):
     def __init__(self, game):
-        super().__init__(game.Boxart, 320, 288)
+        super().__init__([320, 288], game.Boxart)
         self.Game = game
         self.Faded = Faded(self)
 
 # TODO - right click context menu
-class GamePanelArtwork(QLabel):
+class GamePanelArtwork(Label):
     def __init__(self, parent):
         super().__init__()
-        self.setAlignment(Qt.AlignCenter)
 
         self.GUI = parent.GUI
         self.Game = parent.Game
@@ -37,11 +36,10 @@ class GameTags(HBox):
         self.Tags = [TagGUI(self, tag) for tag in self.Game.tags]
         self.addStretch()
 
-class GameDescription(QLabel):
+class GameDescription(Label):
     def __init__(self, parent):
         self.Game = parent.Game
         super().__init__(self.Game.Description)
-        self.setAlignment(Qt.AlignCenter)
         self.setWordWrap(True)
         parent.add(self)
 
@@ -296,22 +294,6 @@ class GameTree(VBox):
             contextMenu = self.ContextMenus[type]
             contextMenu(self, item, event)
 
-class OpenAction(Action):
-    def __init__(self, parent, label, path):
-        super().__init__(parent, label, lambda: open_path(path))
-
-class OpenFolder(OpenAction):
-    def __init__(self, parent, path):
-        super().__init__(parent, "Open Folder", path)
-
-class LaunchFile(OpenAction):
-    def __init__(self, parent, path):
-        super().__init__(parent, "Launch File", path)
-
-class SwitchTo(Action):
-    def __init__(self, parent, menu):
-        super().__init__(parent, "Switch To", menu.switchTo)
-
 class TreeContextMenu(ContextMenu):
     def __init__(self, parent, item, event):
         self.Item = item
@@ -333,13 +315,13 @@ class BranchContextMenu(TreeContextMenu):
         self.addSeparator()
         
         if self.canSwitchTo():
-            self.addAction(SwitchTo(self.Parent, self))
+            self.addAction(SwitchTo(self.Parent, self.switchTo))
 
         if self.Item.path and os.path.exists(self.Item.path):
             self.addAction( OpenFolder(self.Parent, self.Item.path) )
 
         if not self.GUI.Window.Process:
-            self.addAction( Action(self.Parent, 'Build', lambda: self.Widget.specificProcess('b', self.Name)))
+            self.addAction( BuildProcessAction(self.Parent, self.Widget, self.Name))
 
         self.start()
 
@@ -362,7 +344,7 @@ class TagContextMenu(TreeContextMenu):
         self.addSeparator()
         
         if not self.GUI.Window.Process:
-            self.addAction( Action(self.Parent, 'Build', lambda: self.Widget.specificProcess('b', self.Item.commit)))
+            self.addAction( BuildProcessAction(self.Parent, self.Widget, self.Item.commit) )
         
         self.start()
 
@@ -387,8 +369,8 @@ class ReleaseContextMenu(TreeContextMenu):
             self.addAction( OpenFolder(self.Parent, self.Item.path) )
 
         if not self.GUI.Window.Process:
-            self.addAction( Action(self.Parent, 'Download', lambda: self.Widget.downloadRelease(self.Item.text(0)) ))
-            self.addAction( Action(self.Parent, 'Build', lambda: self.Widget.specificProcess('b', self.Item.commit)))
+            self.addAction( DownloadReleaseAction(self.Parent, lambda: self.Widget.downloadRelease(self.Item.text(0)) ))
+            self.addAction( BuildProcessAction(self.Parent, self.Widget, self.Item.commit) )
         
         self.start()
 
@@ -400,9 +382,9 @@ class FileContextMenu(TreeContextMenu):
             self.addAction( LaunchFile(self.Parent, self.Item.path) )
 
             if self.Item.path == self.Game.PrimaryGame:
-                self.addAction( Action(self.Parent, "Remove as Primary", lambda: self.Game.setPrimaryGame(None, self.Item)) )
+                self.addAction( RemovePrimaryAction(self.Parent, lambda: self.Game.setPrimaryGame(None, self.Item)) )
             else:
-                self.addAction( Action(self.Parent, "Set as Primary", lambda: self.Game.setPrimaryGame(self.Item.path, self.Item) ) )
+                self.addAction( SetPrimaryAction(self.Parent, lambda: self.Game.setPrimaryGame(self.Item.path, self.Item) ) )
 
         self.start()
 
@@ -412,7 +394,7 @@ class PatchContextMenu(TreeContextMenu):
         
         if self.Item.path and os.path.exists(self.Item.path):
             self.addAction( LaunchFile(self.Parent, self.Item.path) )
-            self.addAction( Action(self.Parent, "Apply Patch", lambda: self.Widget.specificProcess('b', self.Item.text(0)) ) )
+            self.addAction( ApplyPatchAction(self.Parent, self.Widget, self.Item.text(0)) )
 
         self.start()
 
@@ -631,18 +613,17 @@ class PatchBody(GamePanelBody):
         self.Basis = BasisField(self)
         self.Trees = PatchTrees(self)
 
-class PanelIcon(QLabel):
+class PanelIcon(Label):
     def __init__(self, parent, name):
         super().__init__()
-        self.setAlignment(Qt.AlignCenter)
         self.GUI = parent.GUI
         self.Game = parent.Game
-        self.Pixmap = Scaled('assets/images/{}.png'.format(name.lower()), 35)
+        self.Pixmap = Scaled(35, 'assets/images/{}.png'.format(name.lower()))
         self.Faded = Faded(self.Pixmap)
 
         self.Game.on(name, self.update)
 
-        CenterH(self).addTo(parent)
+        HCenter(self).addTo(parent)
 
     def update(self, value):
         self.setPixmap(self.Pixmap if value else self.Faded)
@@ -660,7 +641,7 @@ class PanelIconFolder(Icon):
         super().__init__(parent, 'assets/images/folder.png', 35)
         self.GUI = parent.GUI
         self.Game = parent.Game
-        CenterH(self).addTo(parent)
+        HCenter(self).addTo(parent)
 
     def mouseDoubleClickEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -693,7 +674,7 @@ class GuidesContextMenu(ContextMenu):
         if parent.Game.Guides:
             self.addAction( OpenFolder(parent, parent.Game.path["guides"]) )
         elif not parent.GUI.Window.Process:
-            self.addAction( Action(parent, 'Download', parent.downloadGuides))
+            self.addAction( DownloadGuidesAction(parent))
 
         self.start()
 
@@ -724,7 +705,7 @@ class IconsRight(VBox):
             self.Guides = PanelIconGuides(self)
 
         self.addStretch()
-        CenterH(self).addTo(parent)
+        HCenter(self).addTo(parent)
 
 class IconsLeft(VBox):
     def __init__(self, parent):
@@ -734,7 +715,7 @@ class IconsLeft(VBox):
         self.Folder = PanelIconFolder(self)
 
         self.addStretch()
-        CenterH(self).addTo(parent)
+        HCenter(self).addTo(parent)
 
 class ArtworkIconContainer(HBox):
     def __init__(self, parent):

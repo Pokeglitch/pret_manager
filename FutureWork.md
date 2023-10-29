@@ -2,6 +2,9 @@
 
 ## GUI
 
+### Customization
+  * User defined cart colors & labels
+
 ### Filter
   * Invert Filter
   * Save / Load Filter

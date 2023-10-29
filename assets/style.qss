@@ -840,7 +840,7 @@ ToggleBG[active=true] {
     background: #2a84c0;
 }
 
-Toggle {
+ToggleWidget {
     min-width:60px;
     max-width:60px;
 }
@@ -865,7 +865,7 @@ ProcessTitle[processing=true] {
     background-color: #1b5780;
 }
 
-ToggleField > QLabel {
+Toggle > QLabel {
     font-size:18px;
     color: white;
     margin-left: 10px;
@@ -883,7 +883,7 @@ QMenu {
     padding: 0px;
 }
 
-#MenuLabel {
+MenuLabel {
     font-size: 11px;
     margin: 2px;
     padding: 2px;

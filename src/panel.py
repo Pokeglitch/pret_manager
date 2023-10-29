@@ -11,6 +11,9 @@ class PanelHeaderMenuIcon(MenuIcon):
         super().__init__(parent)
         self.Panel = parent.Panel
 
+    def getData(self):
+        return [self.Panel.Active.Game]
+
     @property
     def GameGUI(self):
         return self.Panel.Active 
@@ -26,16 +29,15 @@ class PanelHeaderMenu(HBox):
         self.Menu = PanelHeaderMenuIcon(self)
         self.addTo(parent)
 
-class PanelHeaderClose(QLabel):
+class PanelHeaderClose(Label):
     def __init__(self, parent):
         super().__init__()
         self.GUI = parent.GUI
         self.Panel = parent.Panel
 
-        self.setAlignment(Qt.AlignCenter)
-        self.Pixmap = Scaled('assets/images/close.png', 20)
+        self.Pixmap = Scaled(20, 'assets/images/close.png')
         self.setPixmap(self.Pixmap)
-        CenterV(self).addTo(parent)
+        VCenter(self).addTo(parent)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton and self.Panel.Active:
@@ -71,9 +73,9 @@ class EnvironmentsRow(HBox):
         self.Label.setAlignment(Qt.AlignRight)
         self.ComboBox = EnvironmentComboBox(self, key, skip)
 
-        CenterH(self).addTo(parent)
+        HCenter(self).addTo(parent)
 
-class EnvironmentComboBox(QComboBox):
+class EnvironmentComboBox(ComboBox):
     def __init__(self, parent, key, skip=[]):
         super().__init__()
         self.GUI = parent.GUI
@@ -94,22 +96,21 @@ class EnvironmentComboBox(QComboBox):
     def handleProcessing(self, processing):
         self.setEnabled(not processing)
         self.setProperty('processing', processing)
-        self.style().polish(self)
+        self.updateStyle()
 
     def onTextChanged(self, text):
         self.Settings.set(self.Key, self.GUI.Manager.Environments.Options[text])
 
-class PanelHeading(QLabel):
+class PanelHeading(Label):
     def __init__(self, parent, text):
         super().__init__(text)
-        self.setAlignment(Qt.AlignCenter)
         parent.add(self)
 
 class PanelButton(Button):
     def __init__(self, parent, text, handler):
         self.GUI = parent.GUI
         super().__init__(parent, text, handler)
-        CenterH(self).addTo(parent)
+        HCenter(self).addTo(parent)
 
 class ProcessPanelButton(PanelButton):
     def __init__(self, parent, text, handler):
@@ -127,7 +128,7 @@ class PanelOptionsWidget(VBox):
         PanelHeading(self, name)
         self.addTo(parent)
 
-class OptionToggleField(ToggleField):
+class OptionToggle(Toggle):
     def __init__(self, parent, name, key):
         self.Key = key
         super().__init__(parent, name, getattr(parent.GUI.Manager, key), self.onToggle)
@@ -146,20 +147,20 @@ class PRETManagerOptions(PanelOptionsWidget):
 
         container = HBox(self.GUI)
         self.CheckForUpdate = ProcessPanelButton(container, 'Check for Update', self.GUI.refreshPRETManager)
-        self.AutoCheckForUpdate = OptionToggleField(container, 'Auto:', 'AutoRefresh')
-        CenterH(container).addTo(self)
+        self.AutoCheckForUpdate = OptionToggle(container, 'Auto:', 'AutoRefresh')
+        HCenter(container).addTo(self)
         self.GUI.Window.InitializedSignal.connect(self.checkAutoRefresh)
 
         container = HBox(self.GUI)
         self.ApplyUpdate = ProcessPanelButton(container, 'Apply Updates', self.GUI.updatePRETManager)
-        self.AutoApplyUpdate = OptionToggleField(container, 'Auto:', 'AutoUpdate')
-        CenterH(container).addTo(self)
+        self.AutoApplyUpdate = OptionToggle(container, 'Auto:', 'AutoUpdate')
+        HCenter(container).addTo(self)
         self.GUI.Window.UpdateFoundSignal.connect(self.checkAutoApply)
 
         container = HBox(self.GUI)
         self.Restart = ProcessPanelButton(container, 'Restart', self.GUI.restartPRETManager)
-        self.AutoRestart = OptionToggleField(container, 'Auto:', 'AutoRestart')
-        CenterH(container).addTo(self)
+        self.AutoRestart = OptionToggle(container, 'Auto:', 'AutoRestart')
+        HCenter(container).addTo(self)
         self.GUI.Window.UpdateAppliedSignal.connect(self.checkAutoRestart)
         
         self.GUI.Manager.on('Outdated', self.onOutdated)
@@ -212,12 +213,12 @@ class ProcessingOptions(PanelOptionsWidget):
         buttonContainer = HBox(self.GUI)
         self.SaveDefaultProcesses = PanelButton(buttonContainer, 'Save Current as Default', self.saveDefaultProcesses)
         self.RestoreDefaultProcesses = PanelButton(buttonContainer, 'Restore Default', self.restoreDefaultProcesses)
-        self.AutoProcess = OptionToggleField(buttonContainer, 'Auto:', 'AutoProcess')
-        CenterH(buttonContainer).addTo(self)
+        self.AutoProcess = OptionToggle(buttonContainer, 'Auto:', 'AutoProcess')
+        HCenter(buttonContainer).addTo(self)
 
         onlyKeepLatestBuildsContainer = HBox(self.GUI)
-        self.OnlyKeepLatestBuilds = OptionToggleField(onlyKeepLatestBuildsContainer, 'Only Keep Latest Builds:', 'OnlyKeepLatestBuilds')
-        CenterH(onlyKeepLatestBuildsContainer).addTo(self)
+        self.OnlyKeepLatestBuilds = OptionToggle(onlyKeepLatestBuildsContainer, 'Only Keep Latest Builds:', 'OnlyKeepLatestBuilds')
+        HCenter(onlyKeepLatestBuildsContainer).addTo(self)
 
     def saveDefaultProcesses(self):
         processes = self.GUI.Process.Options.getSettings()

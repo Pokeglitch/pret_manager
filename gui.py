@@ -37,6 +37,9 @@ class GameQueue(HBox):
 
         self.Game.on('Processing', self.setProcessing)
 
+    def getData(self):
+        return [self.Game]
+
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.GUI.Panel.setActive(self.GameGUI)
@@ -58,18 +61,6 @@ class GameGUI(QWidget):
         self.isIPS = False
         self.isGit = True
         
-        self.AddToQueue = AddToQueue(self)
-        self.RemoveFromQueue = RemoveFromQueue(self)
-
-        self.AddToFavorites = AddToFavorites(self)
-        self.RemoveFromFavorites = RemoveFromFavorites(self)
-
-        self.AddToExcluding = AddToExcluding(self)
-        self.RemoveFromExcluding = RemoveFromExcluding(self)
-
-        self.ProcessAction = ProcessAction(self)
-        self.NewList = NewList(self)
-
         self.isQueued = False
         
         self.Queue = GameQueue(self)
@@ -152,8 +143,8 @@ class QueueContextMenu(ContextMenu):
         if queue.List and not queue.GUI.Window.Process:
             self.addMenu( ProcessesMenu(queue) )
 
-        self.addAction( queue.SetAsDefault )
-        self.addAction( queue.ClearAction )
+        self.addAction( SetAsDefaultQueue(queue) )
+        self.addAction( ClearQueue(queue) )
 
         self.Coords = queue.ListContainer.Scroll.mapToGlobal(QPoint(0, 0))
         self.start()
@@ -210,16 +201,6 @@ class Queue(VBox):
         self.Process = Button(self.Footer, 'Process', self.process)
         self.GUI.Window.Processing.connect(self.Process.setProcessing)
         self.Footer.addTo(self)
-
-        self.AddToFavorites = AddToFavorites(self)
-        self.RemoveFromFavorites = RemoveFromFavorites(self)
-        self.AddToExcluding = AddToExcluding(self)
-        self.RemoveFromExcluding = RemoveFromExcluding(self)
-        self.ClearAction = ClearQueue(self)
-        self.ProcessAction = ProcessAction(self)
-        self.SetAsDefault = SetAsDefaultQueue(self)
-
-        self.NewList = NewList(self)
 
         self.updateIsEmpty()
 
@@ -326,7 +307,7 @@ class TilesContextMenu(ContextMenu):
             self.addMenu( ProcessesMenu(tiles) )
 
         if [tiles.GUI.Manager.Search.GUI] != tiles.OR_Lists + tiles.AND_Lists + tiles.NOT_Lists:
-            self.addAction( tiles.ClearAction )
+            self.addAction( ClearBrowser(tiles) )
 
         self.Coords = tiles.Content.Scroll.mapToGlobal(QPoint(0, 0))
         self.start()
@@ -371,15 +352,6 @@ class Tiles(VBox):
         self.Content = TileContent(self)
         self.reset()
         
-        self.AddToQueue = AddToQueue(self)
-        self.RemoveFromQueue = RemoveFromQueue(self)
-        self.AddToFavorites = AddToFavorites(self)
-        self.RemoveFromFavorites = RemoveFromFavorites(self)
-        self.AddToExcluding = AddToExcluding(self)
-        self.RemoveFromExcluding = RemoveFromExcluding(self)
-        self.ClearAction = ClearBrowser(self)
-        self.ProcessAction = ProcessAction(self)
-        self.NewList = NewList(self)
         self.addTo(GUI.Col2, 2)
 
     def reset(self):
@@ -763,10 +735,6 @@ class PRET_Manager_GUI(QMainWindow):
         if self.Process:
             self.Process.terminate()
             self.Manager.terminateProcess()
-            
-class TerminateProcess(Action):
-    def __init__(self, parent):
-        super().__init__(parent, "Terminate", parent.terminateProcess)
 
 class PRET_Manager_App(QApplication):
     def __init__(self, manager, *args):

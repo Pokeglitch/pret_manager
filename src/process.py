@@ -31,11 +31,11 @@ class ProcessOptions(VBox):
 
         settings = self.GUI.Manager.Settings.Active["Process"]
 
-        self.Refresh = ToggleField(self, 'Refresh', settings["Refresh"])
-        self.Update = ToggleField(self, 'Update', settings["Update"])
-        self.CleanBefore = ToggleField(self, 'Clean', settings["CleanBefore"])
-        self.Build = ToggleField(self, 'Build', settings["Build"])
-        self.CleanAfter = ToggleField(self, 'Clean', settings["CleanAfter"])
+        self.Refresh = Toggle(self, 'Refresh', settings["Refresh"])
+        self.Update = Toggle(self, 'Update', settings["Update"])
+        self.CleanBefore = Toggle(self, 'Clean', settings["CleanBefore"])
+        self.Build = Toggle(self, 'Build', settings["Build"])
+        self.CleanAfter = Toggle(self, 'Clean', settings["CleanAfter"])
 
         self.addTo(parent, 1)
 

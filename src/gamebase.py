@@ -8,22 +8,22 @@ class GameBaseContextMenu(ContextMenu):
         super().__init__(parent, event)
 
         if game.Library:
-            self.addAction( Action(parent, "Launch Game", self.launch_game) )
+            self.addAction( LaunchGameAction(parent, self.launch_game) )
         
         if gui.isQueued:
-            self.addAction( gui.RemoveFromQueue )
+            self.addAction( RemoveFromQueue(gui) )
         else:
-            self.addAction( gui.AddToQueue )
+            self.addAction( AddToQueue(gui) )
 
         if game.Favorites:
-            self.addAction( gui.RemoveFromFavorites )
+            self.addAction( RemoveFromFavorites(gui) )
         else:
-            self.addAction( gui.AddToFavorites )
+            self.addAction( AddToFavorites(gui) )
 
         if game.Excluding:
-            self.addAction( gui.RemoveFromExcluding )
+            self.addAction( RemoveFromExcluding(gui) )
         else:
-            self.addAction( gui.AddToExcluding )
+            self.addAction( AddToExcluding(gui) )
 
         addLists = []
         removeLists = []
@@ -37,7 +37,7 @@ class GameBaseContextMenu(ContextMenu):
         self.addMenu( AddGameToListMenu(parent, addLists) )
 
         if removeLists:
-            self.addMenu( RemoveGameFromListMenu(parent, removeLists) )
+            self.addMenu( RemoveFromListMenu(parent, removeLists) )
 
         if not gui.GUI.Window.Process:
             self.addMenu( ProcessesMenu(parent, gui) )

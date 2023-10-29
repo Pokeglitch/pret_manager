@@ -1,6 +1,6 @@
 from src.base import *
 
-class SearchBox(QLineEdit):
+class SearchBox(LineEdit):
     def __init__(self, searchList):
         super().__init__()
         self.Mode = "And"
@@ -53,18 +53,6 @@ class CatalogEntryGUI(HBox):
         self.Name = data.Name
         self.Label = self.label(data.Name)
         self.Mode = None
-
-        self.AddToQueue = AddToQueue(self)
-        self.RemoveFromQueue = RemoveFromQueue(self)
-
-        self.AddToFavorites = AddToFavorites(self)
-        self.RemoveFromFavorites = RemoveFromFavorites(self)
-
-        self.AddToExcluding = AddToExcluding(self)
-        self.RemoveFromExcluding = RemoveFromExcluding(self)
-
-        self.ProcessAction = ProcessAction(self)
-        self.NewList = NewList(self)
 
         self.addTo(parent)
 
