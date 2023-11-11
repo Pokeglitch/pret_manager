@@ -1,8 +1,27 @@
-from PyQt5.QtCore import Qt, QPoint, QSize
-from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QLabel
+from PyQt5.QtCore import Qt, QPoint
+from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QLabel, QSplashScreen
 from PyQt5.QtGui import QColor, QImage, QPixmap, QPainter
 
 from src.qt.layouts import HBox
+
+import time
+
+class SplashScreen(QSplashScreen):
+    def __init__(self, path):
+        # Create splashscreen
+        pixmap = QPixmap(path)
+        super().__init__(pixmap, Qt.WindowStaysOnTopHint)
+
+        # add fade to splashscreen 
+        opaqueness = 0.0
+        step = 0.05
+        self.setWindowOpacity(opaqueness)
+        self.show()
+
+        while opaqueness < 1:
+            self.setWindowOpacity(opaqueness)
+            time.sleep(0.05) # Gradually appears
+            opaqueness+=step
 
 class Pixmap(QPixmap):
     Painter: QPainter

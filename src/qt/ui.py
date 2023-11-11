@@ -1,6 +1,7 @@
 from typing import Callable
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QLabel, QLineEdit, QComboBox
+from PyQt5.QtWidgets import QLabel, QLineEdit, QComboBox, QTreeWidgetItem
+from PyQt5.QtGui import QIcon
 
 from src.qt.base import *
 from src.qt.layouts import HBox
@@ -10,6 +11,15 @@ class Label(QLabel, Styleable):
     def __init__(self, text=''):
         super().__init__(text)
         self.setAlignment(Qt.AlignCenter)
+
+class TreeItem(QTreeWidgetItem):
+    def setIcon(self, path):
+        if path is None:
+            icon = QIcon()
+        else:
+            icon = QIcon(path)
+
+        super().setIcon(0, icon)
 
 class LineEdit(QLineEdit):
     pass

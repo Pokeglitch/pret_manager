@@ -740,24 +740,7 @@ class PRET_Manager_App(QApplication):
     def __init__(self, manager, *args):
         self.Manager = manager
         super().__init__(*args)
-
-        # Create splashscreen
-        splash_pix = QPixmap('assets/images/logo.png')
-        splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
-        splash.setPixmap(splash_pix)
-
-        # add fade to splashscreen 
-        opaqueness = 0.0
-        step = 0.05
-        splash.setWindowOpacity(opaqueness)
-        splash.show()
-
-        while opaqueness < 1:
-            splash.setWindowOpacity(opaqueness)
-            time.sleep(0.05) # Gradually appears
-            opaqueness+=step
-            
-        self.Splash = splash
+        self.Splash = SplashScreen('assets/images/logo.png')
 
     def init(self):
         self.Splash.close()

@@ -779,7 +779,7 @@ class repository(MetaData):
     BuildSignal = pyqtSignal()
     ReleaseSignal = pyqtSignal()
     ProcessingSignal = pyqtSignal(bool)
-    PrimaryGameSignal = pyqtSignal(str, QTreeWidgetItem)
+    PrimaryGameSignal = pyqtSignal(str, TreeItem)
 
     def __init__(self, manager, author, title, data, isGame=True):
         super().__init__(repo_metadata_properties)

@@ -51,29 +51,24 @@ class CartridgeImage(Label):
             
         self.setPixmap(pixmap)
 
-class LabelPixmap(Pixmap):
-    def __init__(self, parent):
-        dim = 92
-        super().__init__(dim)
-        self.Game = parent.Game
-        
-        pixmap = Scaled(dim, self.Game.Boxart)
+class LabelPixmap(DerivedPixmap):
+    def __init__(self, game):
+        pixmap = Scaled(92, game.Boxart)
+        super().__init__(pixmap)
+        self.Faded = Faded(self)
 
-        painter = QPainter(self)
+    def paint(self, painter):
         painter.setRenderHints(QPainter.Antialiasing, QPainter.SmoothPixmapTransform)
-        painter.setBrush(QBrush(pixmap))
+        painter.setBrush(QBrush(self.Pixmap))
         painter.setPen(Qt.NoPen)
         painter.drawRoundedRect(self.rect(), 5, 5)
-        painter.end()
-
-        self.Faded = Faded(self)
 
 class LabelImage(Label):
     def __init__(self, cartridge, text=''):
         super().__init__(text)
         self.Game = cartridge.Game
         
-        self.Pixmap = LabelPixmap(self)
+        self.Pixmap = LabelPixmap(self.Game)
         self.Game.on('Excluding', self.update)
         
         VHCenter(self).addTo(cartridge, 1, 1)

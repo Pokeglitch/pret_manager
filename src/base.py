@@ -82,7 +82,7 @@ class SaveListDialog(Dialog):
         
         self.log.connect(GUI.print)
         
-        self.ListName = QLineEdit()
+        self.ListName = LineEdit()
         self.ListName.setPlaceholderText("List Name")
         self.ListName.textChanged.connect(self.onTextChanged)
         self.ListName.returnPressed.connect(self.accept)
@@ -138,7 +138,7 @@ class OverwriteMessage(Dialog):
     Title = "Overwrite"
 
     def init(self, GUI, name):
-        self.Message = QLabel(name + " Already Exists. Proceed?")
+        self.Message = Label(name + " Already Exists. Proceed?")
 
         self.Buttons = HBox(GUI)
         self.Overwrite = Button(self.Buttons, 'Overwrite', self.accept )

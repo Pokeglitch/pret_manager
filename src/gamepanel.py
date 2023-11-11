@@ -161,7 +161,7 @@ class GameRGBDSVersion(HBox):
         self.Game = parent.Game
         
         self.Label = self.label("RGBDS:", 1)
-        self.ComboBox = QComboBox()
+        self.ComboBox = ComboBox()
         
         items = ["None"]
         default_index = 0
@@ -251,15 +251,15 @@ class GameTree(VBox):
         if item == self.PrimaryGame:
             if not path:
                 if self.PrimaryGame:
-                    self.PrimaryGame.setIcon(0, QIcon())
+                    self.PrimaryGame.setIcon(None)
             
                 self.PrimaryGame = None
         else:
             if self.PrimaryGame:
-                self.PrimaryGame.setIcon(0, QIcon())
+                self.PrimaryGame.setIcon(None)
 
             if path and item.Tree == self.Tree:
-                item.setIcon(0, QIcon('assets/images/library_14.png'))
+                item.setIcon('assets/images/library_14.png')
                 self.PrimaryGame = item
             else:
                 self.PrimaryGame = None
@@ -272,7 +272,7 @@ class GameTree(VBox):
         self.Tree.blockSignals(False)
 
     def addItem(self, parent, type, text, path=None):
-        item = QTreeWidgetItem(parent, self.Types[type].value)
+        item = TreeItem(parent, self.Types[type].value)
         item.setText(0, text)
         item.path = path
         item.Tree = self.Tree
@@ -476,7 +476,7 @@ class PatchesTree(GameTree):
 
 
 class TreeDelegate(QStyledItemDelegate):
-    RightClickSignal = pyqtSignal(QEvent, QTreeWidgetItem)
+    RightClickSignal = pyqtSignal(QEvent, TreeItem)
 
     def __init__(self, tree, *args, **kwargs):
         super().__init__(*args, **kwargs)
